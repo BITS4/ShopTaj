@@ -1,49 +1,116 @@
 'use client'
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatPrice } from '@/lib/utils'
 import { useT } from '@/store/language.store'
+import { useCartStore } from '@/store/cart.store'
 import api from '@/lib/api'
 import { toast } from 'sonner'
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PK || '')
 
-function CheckoutForm({ clientSecret, total }: { clientSecret: string; total: number }) {
+function CheckoutForm({
+  clientSecret, total, paymentIntentId, addressId, shippingAmount, discountAmount, totalAmount,
+}: {
+  clientSecret: string; total: number; paymentIntentId: string
+  addressId: string; shippingAmount: number; discountAmount: number; totalAmount: number
+}) {
   const stripe = useStripe()
   const elements = useElements()
   const router = useRouter()
   const t = useT()
+  const qc = useQueryClient()
+  const { setCart } = useCartStore()
   const [paying, setPaying] = useState(false)
+  const [cardReady, setCardReady] = useState(false)
+  const [status, setStatus] = useState<'idle' | 'paying' | 'creating' | 'done'>('idle')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!stripe || !elements) return
+    if (!stripe || !elements || !cardReady) return
     setPaying(true)
-    const cardEl = elements.getElement(CardElement)!
-    const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-      payment_method: { card: cardEl },
-    })
-    if (error) {
-      toast.error(error.message)
-    } else if (paymentIntent?.status === 'succeeded') {
-      toast.success('Payment successful! 🎉')
-      router.push('/checkout/success')
+
+    try {
+      const cardEl = elements.getElement(CardElement)
+      if (!cardEl) { toast.error('Card element not ready'); setPaying(false); return }
+
+      // Step 1: Confirm payment with Stripe
+      setStatus('paying')
+      const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: { card: cardEl },
+      })
+
+      if (error) {
+        toast.error(error.message)
+        setPaying(false)
+        setStatus('idle')
+        return
+      }
+
+      if (paymentIntent?.status === 'succeeded') {
+        // Step 2: Create order in our backend
+        setStatus('creating')
+        await api.post('/payments/confirm-order', {
+          paymentIntentId,
+          addressId,
+          shippingAmount: Number(shippingAmount),
+          discountAmount: Number(discountAmount),
+          totalAmount: Number(totalAmount),
+        })
+
+        // Step 3: Clear cart everywhere
+        setCart({ id: '', items: [], total: 0 })
+        qc.removeQueries({ queryKey: ['cart'] })
+        qc.invalidateQueries({ queryKey: ['orders'] })
+
+        setStatus('done')
+        toast.success('Payment successful! 🎉')
+        router.push('/checkout/success')
+      }
+    } catch (err: any) {
+      console.error('Checkout error:', err?.response?.data || err?.message || err)
+      const msg = err?.response?.data?.message
+        || err?.response?.data?.error
+        || err?.message
+        || 'Order creation failed. Please contact support.'
+      toast.error(msg, { duration: 8000 })
+      setStatus('idle')
+      setPaying(false)
     }
-    setPaying(false)
   }
+
+  const btnLabel = {
+    idle: `${t.checkout.pay} ${formatPrice(total)}`,
+    paying: 'Verifying payment…',
+    creating: 'Creating your order…',
+    done: 'Redirecting…',
+  }[status]
+
+  const isReady = !!stripe && !!elements && cardReady
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="border rounded-md p-3">
-        <CardElement options={{ style: { base: { fontSize: '16px' } } }} />
+      <div className="border rounded-md p-4 bg-white min-h-[44px]">
+        <CardElement
+          onReady={() => setCardReady(true)}
+          options={{
+            style: {
+              base: { fontSize: '16px', color: '#374151', '::placeholder': { color: '#9ca3af' } },
+              invalid: { color: '#ef4444' },
+            },
+          }}
+        />
       </div>
-      <Button type="submit" className="w-full" size="lg" disabled={paying}>
-        {paying ? t.checkout.processing : `${t.checkout.pay} ${formatPrice(total)}`}
+      {!cardReady && (
+        <p className="text-xs text-center text-muted-foreground">Loading payment form…</p>
+      )}
+      <Button type="submit" className="w-full" size="lg" disabled={paying || !isReady}>
+        {!isReady ? 'Loading…' : btnLabel}
       </Button>
       <p className="text-xs text-center text-muted-foreground">{t.checkout.test_card}</p>
     </form>
@@ -162,7 +229,15 @@ export default function CheckoutPage() {
                 <div className="flex justify-between font-bold pt-1 border-t"><span>{t.cart.total}</span><span>{formatPrice(paymentData.totalAmount)}</span></div>
               </div>
               <Elements stripe={stripePromise} options={{ clientSecret: paymentData.clientSecret }}>
-                <CheckoutForm clientSecret={paymentData.clientSecret} total={paymentData.totalAmount} />
+                <CheckoutForm
+                  clientSecret={paymentData.clientSecret}
+                  total={paymentData.totalAmount}
+                  paymentIntentId={paymentData.paymentIntentId}
+                  addressId={selectedAddress!}
+                  shippingAmount={paymentData.shippingAmount}
+                  discountAmount={paymentData.discountAmount}
+                  totalAmount={paymentData.totalAmount}
+                />
               </Elements>
             </CardContent>
           </Card>

@@ -23,6 +23,7 @@ export default function OrderDetailPage() {
   const { data: order, isLoading } = useQuery({
     queryKey: ['order', id],
     queryFn: async () => { const { data } = await api.get(`/orders/${id}`); return data },
+    refetchOnWindowFocus: true,
   })
 
   const cancel = useMutation({

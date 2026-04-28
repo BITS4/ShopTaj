@@ -1,6 +1,6 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { IsString, IsOptional, IsUUID } from 'class-validator';
+import { IsString, IsOptional, IsUUID, IsNumber } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import Stripe from 'stripe';
 import { PrismaService } from '../prisma/prisma.service';
@@ -12,9 +12,18 @@ export class CreatePaymentIntentDto {
   @ApiPropertyOptional() @IsOptional() @IsString() shippingMethod?: string;
 }
 
+export class ConfirmOrderDto {
+  @ApiProperty() @IsString() paymentIntentId: string;
+  @ApiProperty() @IsString() addressId: string;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() shippingAmount?: number;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() discountAmount?: number;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() totalAmount?: number;
+}
+
 @Injectable()
 export class PaymentsService {
   private stripe: Stripe;
+  private readonly logger = new Logger(PaymentsService.name);
 
   constructor(
     private config: ConfigService,
@@ -27,9 +36,7 @@ export class PaymentsService {
   async createPaymentIntent(userId: string, dto: CreatePaymentIntentDto) {
     const cart = await this.prisma.cart.findUnique({
       where: { userId },
-      include: {
-        items: { include: { product: true, variant: true } },
-      },
+      include: { items: { include: { product: true, variant: true } } },
     });
 
     if (!cart || cart.items.length === 0) throw new BadRequestException('Cart is empty');
@@ -45,11 +52,9 @@ export class PaymentsService {
     if (dto.couponCode) {
       const coupon = await this.prisma.coupon.findUnique({ where: { code: dto.couponCode } });
       if (coupon && coupon.isActive) {
-        if (coupon.discountType === 'PERCENTAGE') {
-          discountAmount = (subtotal * Number(coupon.discountValue)) / 100;
-        } else {
-          discountAmount = Number(coupon.discountValue);
-        }
+        discountAmount = coupon.discountType === 'PERCENTAGE'
+          ? (subtotal * Number(coupon.discountValue)) / 100
+          : Number(coupon.discountValue);
         couponId = coupon.id;
       }
     }
@@ -60,7 +65,7 @@ export class PaymentsService {
     const paymentIntent = await this.stripe.paymentIntents.create({
       amount: Math.round(totalAmount * 100),
       currency: 'usd',
-      metadata: { userId, addressId: dto.addressId },
+      metadata: { userId, addressId: dto.addressId, couponId: couponId || '' },
     });
 
     return {
@@ -70,47 +75,56 @@ export class PaymentsService {
       discountAmount,
       shippingAmount,
       totalAmount,
+      couponId,
     };
   }
 
-  async handleWebhook(rawBody: Buffer, signature: string) {
-    const webhookSecret = this.config.get('STRIPE_WEBHOOK_SECRET');
-    let event: Stripe.Event;
+  async confirmOrder(userId: string, dto: ConfirmOrderDto) {
+    this.logger.log(`confirmOrder called for user=${userId} pi=${dto.paymentIntentId}`);
 
-    try {
-      event = this.stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
-    } catch {
-      throw new BadRequestException('Invalid webhook signature');
+    // Verify payment with Stripe
+    const pi = await this.stripe.paymentIntents.retrieve(dto.paymentIntentId);
+    this.logger.log(`PaymentIntent status: ${pi.status}`);
+
+    if (pi.status !== 'succeeded') {
+      throw new BadRequestException(`Payment not completed. Status: ${pi.status}`);
     }
 
-    if (event.type === 'payment_intent.succeeded') {
-      const pi = event.data.object as Stripe.PaymentIntent;
-      await this.fulfillOrder(pi);
+    // Return existing order if already created (idempotency)
+    const existing = await this.prisma.order.findFirst({
+      where: { stripePaymentIntentId: dto.paymentIntentId },
+      include: { items: true },
+    });
+    if (existing) {
+      this.logger.log(`Order already exists: ${existing.id}`);
+      // Still clear cart in case previous run failed mid-way
+      const cart = await this.prisma.cart.findUnique({ where: { userId } });
+      if (cart) await this.prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
+      return existing;
     }
 
-    return { received: true };
-  }
-
-  private async fulfillOrder(pi: Stripe.PaymentIntent) {
-    const { userId, addressId } = pi.metadata;
     const cart = await this.prisma.cart.findUnique({
       where: { userId },
       include: { items: { include: { product: true, variant: true } } },
     });
-    if (!cart || cart.items.length === 0) return;
 
-    const totalAmount = pi.amount / 100;
+    if (!cart) throw new BadRequestException('Cart not found');
+
+    // Allow empty cart here (user might have ordered, cart cleared, refreshed page)
+    const cartItems = cart.items.length > 0 ? cart.items : [];
 
     const order = await this.prisma.order.create({
       data: {
         userId,
-        shippingAddressId: addressId,
-        stripePaymentIntentId: pi.id,
-        totalAmount,
+        shippingAddressId: dto.addressId || null,
+        stripePaymentIntentId: dto.paymentIntentId,
+        totalAmount: dto.totalAmount ?? pi.amount / 100,
+        shippingAmount: dto.shippingAmount ?? 5,
+        discountAmount: dto.discountAmount ?? 0,
         paymentStatus: 'PAID',
         status: 'PROCESSING',
         items: {
-          create: cart.items.map((item) => ({
+          create: cartItems.map((item) => ({
             productId: item.productId,
             variantId: item.variantId,
             quantity: item.quantity,
@@ -123,7 +137,10 @@ export class PaymentsService {
       include: { items: true },
     });
 
-    for (const item of cart.items) {
+    this.logger.log(`Order created: ${order.id}`);
+
+    // Reduce stock
+    for (const item of cartItems) {
       if (item.variantId) {
         await this.prisma.productVariant.update({
           where: { id: item.variantId },
@@ -137,11 +154,76 @@ export class PaymentsService {
       }
     }
 
+    // Clear cart
+    await this.prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
+
+    // Send confirmation email (non-blocking)
+    this.prisma.user.findUnique({ where: { id: userId } }).then((user) => {
+      if (user) this.email.sendOrderConfirmationEmail(user.email, user.fullName, order.id).catch(() => {});
+    });
+
+    return order;
+  }
+
+  async handleWebhook(rawBody: Buffer, signature: string) {
+    const webhookSecret = this.config.get('STRIPE_WEBHOOK_SECRET');
+    if (!webhookSecret || webhookSecret === 'whsec_your_webhook_secret') {
+      return { received: true };
+    }
+    let event: Stripe.Event;
+    try {
+      event = this.stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
+    } catch {
+      throw new BadRequestException('Invalid webhook signature');
+    }
+    if (event.type === 'payment_intent.succeeded') {
+      const pi = event.data.object as Stripe.PaymentIntent;
+      const existing = await this.prisma.order.findFirst({ where: { stripePaymentIntentId: pi.id } });
+      if (!existing) await this.fulfillOrder(pi);
+    }
+    return { received: true };
+  }
+
+  private async fulfillOrder(pi: Stripe.PaymentIntent) {
+    const { userId, addressId } = pi.metadata;
+    const cart = await this.prisma.cart.findUnique({
+      where: { userId },
+      include: { items: { include: { product: true, variant: true } } },
+    });
+    if (!cart || cart.items.length === 0) return;
+
+    const order = await this.prisma.order.create({
+      data: {
+        userId,
+        shippingAddressId: addressId,
+        stripePaymentIntentId: pi.id,
+        totalAmount: pi.amount / 100,
+        paymentStatus: 'PAID',
+        status: 'PROCESSING',
+        items: {
+          create: cart.items.map((item) => ({
+            productId: item.productId,
+            variantId: item.variantId,
+            quantity: item.quantity,
+            priceAtPurchase: item.variant?.price ?? item.product.discountPrice ?? item.product.price,
+            productName: item.product.name,
+            productImage: null,
+          })),
+        },
+      },
+    });
+
+    for (const item of cart.items) {
+      if (item.variantId) {
+        await this.prisma.productVariant.update({ where: { id: item.variantId }, data: { stock: { decrement: item.quantity } } });
+      } else {
+        await this.prisma.product.update({ where: { id: item.productId }, data: { stock: { decrement: item.quantity } } });
+      }
+    }
+
     await this.prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (user) {
-      await this.email.sendOrderConfirmationEmail(user.email, user.fullName, order.id);
-    }
+    if (user) await this.email.sendOrderConfirmationEmail(user.email, user.fullName, order.id);
   }
 }

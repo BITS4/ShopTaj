@@ -10,6 +10,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import StarRating from '@/components/product/StarRating'
 import { useCart } from '@/hooks/useCart'
 import { formatPrice, formatDate } from '@/lib/utils'
+import { useLanguageStore, useT } from '@/store/language.store'
+import { localiseProduct } from '@/lib/localise'
 import api from '@/lib/api'
 import { useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -17,6 +19,8 @@ import { toast } from 'sonner'
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>()
   const { addItem } = useCart()
+  const { locale } = useLanguageStore()
+  const t = useT()
   const [selectedVariant, setSelectedVariant] = useState<string | undefined>()
   const [activeImage, setActiveImage] = useState(0)
   const [qty, setQty] = useState(1)
@@ -43,8 +47,9 @@ export default function ProductDetailPage() {
     </div>
   )
 
-  if (!product) return <div className="container mx-auto px-4 py-8 text-center">Product not found</div>
+  if (!product) return <div className="container mx-auto px-4 py-8 text-center">{t.common.not_found}</div>
 
+  const { name: productName, description: productDescription } = localiseProduct(product, locale)
   const price = Number(product.price)
   const discount = product.discountPrice ? Number(product.discountPrice) : null
   const sizes = [...new Set(product.variants.map((v: any) => v.size).filter(Boolean))]
@@ -85,14 +90,14 @@ export default function ProductDetailPage() {
         <div className="space-y-4">
           <div>
             <p className="text-sm text-muted-foreground">{product.category?.name}</p>
-            <h1 className="text-3xl font-bold mt-1">{product.name}</h1>
-            {product.brand && <p className="text-sm text-muted-foreground mt-1">by <span className="font-medium">{product.brand}</span></p>}
+            <h1 className="text-3xl font-bold mt-1">{productName}</h1>
+            {product.brand && <p className="text-sm text-muted-foreground mt-1">{t.product.by} <span className="font-medium">{product.brand}</span></p>}
           </div>
 
           {product.avgRating && (
             <div className="flex items-center gap-2">
               <StarRating rating={product.avgRating} />
-              <span className="text-sm text-muted-foreground">({product.reviewCount} reviews)</span>
+              <span className="text-sm text-muted-foreground">({product.reviewCount} {t.product.reviews})</span>
             </div>
           )}
 
@@ -108,14 +113,14 @@ export default function ProductDetailPage() {
             )}
           </div>
 
-          {product.description && (
-            <p className="text-muted-foreground leading-relaxed">{product.description}</p>
+          {productDescription && (
+            <p className="text-muted-foreground leading-relaxed">{productDescription}</p>
           )}
 
           {/* Variants */}
           {sizes.length > 0 && (
             <div>
-              <p className="text-sm font-semibold mb-2">Size</p>
+              <p className="text-sm font-semibold mb-2">{t.product.size}</p>
               <div className="flex gap-2 flex-wrap">
                 {sizes.map((size: any) => (
                   <button
@@ -130,7 +135,7 @@ export default function ProductDetailPage() {
 
           {colors.length > 0 && (
             <div>
-              <p className="text-sm font-semibold mb-2">Color</p>
+              <p className="text-sm font-semibold mb-2">{t.product.color}</p>
               <div className="flex gap-2 flex-wrap">
                 {colors.map((color: any) => (
                   <button key={color} className="px-4 py-2 border rounded-md text-sm hover:border-primary transition">{color}</button>
@@ -147,7 +152,7 @@ export default function ProductDetailPage() {
               <button className="px-3 py-2 hover:bg-muted" onClick={() => setQty(qty + 1)}>+</button>
             </div>
             <p className="text-sm text-muted-foreground">
-              {product.stock > 0 ? <span className="text-green-600">{product.stock} in stock</span> : <span className="text-destructive">Out of stock</span>}
+              {product.stock > 0 ? <span className="text-green-600">{product.stock} {t.products.in_stock}</span> : <span className="text-destructive">{t.products.out_of_stock}</span>}
             </p>
           </div>
 
@@ -158,7 +163,7 @@ export default function ProductDetailPage() {
               disabled={product.stock === 0}
               onClick={() => addItem.mutate({ productId: product.id, variantId: selectedVariant, quantity: qty })}
             >
-              <ShoppingCart className="h-5 w-5 mr-2" />Add to Cart
+              <ShoppingCart className="h-5 w-5 mr-2" />{t.product.add_to_cart}
             </Button>
             <Button size="lg" variant="outline" onClick={() => addToWishlist.mutate()}>
               <Heart className="h-5 w-5" />
@@ -167,7 +172,7 @@ export default function ProductDetailPage() {
 
           <div className="flex items-center gap-2 text-sm text-muted-foreground border rounded-md p-3">
             <Truck className="h-4 w-4 text-primary" />
-            Free shipping on orders over $50
+            {t.product.free_shipping}
           </div>
 
           {product.tags.length > 0 && (
@@ -183,7 +188,7 @@ export default function ProductDetailPage() {
       {/* Reviews */}
       {product.reviews.length > 0 && (
         <div className="mt-16">
-          <h2 className="text-2xl font-bold mb-6">Customer Reviews</h2>
+          <h2 className="text-2xl font-bold mb-6">{t.product.customer_reviews}</h2>
           <div className="space-y-4">
             {product.reviews.map((review: any) => (
               <div key={review.id} className="border rounded-lg p-4">

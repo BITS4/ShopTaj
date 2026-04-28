@@ -96,8 +96,12 @@ model Category {
 model Product {
   id            String  @id @default(uuid())
   name          String
+  nameRu        String? @map("name_ru")
+  nameTg        String? @map("name_tg")
   slug          String  @unique
   description   String?
+  descriptionRu String? @map("description_ru")
+  descriptionTg String? @map("description_tg")
   price         Decimal @db.Decimal(10, 2)
   discountPrice Decimal? @map("discount_price") @db.Decimal(10, 2)
   stock         Int     @default(0)

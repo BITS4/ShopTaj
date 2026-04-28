@@ -5,19 +5,27 @@ import { PrismaService } from '../prisma/prisma.service';
 export class OrdersService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(userId: string, page = 1, limit = 10) {
-    const skip = (page - 1) * limit;
+  async findAll(userId: string, page?: any, limit?: any) {
+    const p = Math.max(1, parseInt(page) || 1);
+    const l = Math.min(100, parseInt(limit) || 10);
+    const skip = (p - 1) * l;
     const [orders, total] = await Promise.all([
       this.prisma.order.findMany({
         where: { userId },
         orderBy: { createdAt: 'desc' },
         skip,
-        take: limit,
-        include: { items: { include: { product: { select: { name: true } } } } },
+        take: l,
+        include: {
+          items: {
+            include: {
+              product: { select: { name: true, images: { where: { isMain: true }, take: 1 } } },
+            },
+          },
+        },
       }),
       this.prisma.order.count({ where: { userId } }),
     ]);
-    return { data: orders, meta: { total, page, limit } };
+    return { data: orders, meta: { total, page: p, limit: l } };
   }
 
   async findOne(userId: string, orderId: string) {

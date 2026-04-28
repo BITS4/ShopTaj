@@ -15,22 +15,56 @@ const STATUS_COLOR: Record<string, 'default' | 'secondary' | 'destructive' | 'ou
 
 export default function OrdersPage() {
   const t = useT()
-  const { data, isLoading } = useQuery({
+
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['orders'],
-    queryFn: async () => { const { data } = await api.get('/orders'); return data },
+    queryFn: async () => {
+      const { data } = await api.get('/orders?page=1&limit=50')
+      return data
+    },
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    retry: 2,
   })
 
   return (
     <div className="container mx-auto max-w-3xl px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">{t.orders.title}</h1>
-      {isLoading ? (
-        <div className="space-y-4">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-xl" />)}</div>
-      ) : !data?.data.length ? (
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold">{t.orders.title}</h1>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          Refresh
+        </Button>
+      </div>
+
+      {isLoading && (
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-28 rounded-xl" />
+          ))}
+        </div>
+      )}
+
+      {isError && (
+        <div className="text-center py-12 border rounded-xl">
+          <p className="text-destructive font-medium mb-2">Failed to load orders</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            {(error as any)?.response?.data?.message || 'Please try refreshing'}
+          </p>
+          <Button onClick={() => refetch()}>Try Again</Button>
+        </div>
+      )}
+
+      {!isLoading && !isError && !data?.data?.length && (
         <div className="text-center py-24 text-muted-foreground">
           <p className="text-lg">{t.orders.empty}</p>
-          <Link href="/products"><Button className="mt-4">{t.orders.start_shopping}</Button></Link>
+          <Link href="/products">
+            <Button className="mt-4">{t.orders.start_shopping}</Button>
+          </Link>
         </div>
-      ) : (
+      )}
+
+      {!isLoading && !isError && data?.data?.length > 0 && (
         <div className="space-y-4">
           {data.data.map((order: any) => (
             <Link key={order.id} href={`/profile/orders/${order.id}`}>
@@ -38,15 +72,17 @@ export default function OrdersPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div>
                     <p className="font-semibold">#{order.id.slice(0, 8).toUpperCase()}</p>
-                    <p className="text-sm text-muted-foreground">{formatDate(order.createdAt)} · {order.items.length} {t.orders.items}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {formatDate(order.createdAt)} · {order.items.length} {t.orders.items}
+                    </p>
                   </div>
                   <div className="flex items-center gap-3">
                     <Badge variant={STATUS_COLOR[order.status] || 'outline'}>{order.status}</Badge>
                     <span className="font-bold">{formatPrice(order.totalAmount)}</span>
                   </div>
                 </div>
-                <div className="mt-3 flex gap-2 text-sm text-muted-foreground">
-                  {order.items.slice(0, 3).map((item: any) => item.product?.name).join(', ')}
+                <div className="mt-3 text-sm text-muted-foreground">
+                  {order.items.slice(0, 3).map((item: any) => item.productName || item.product?.name).join(', ')}
                   {order.items.length > 3 && ` +${order.items.length - 3} more`}
                 </div>
               </div>

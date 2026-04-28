@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/badge'
 import { formatPrice } from '@/lib/utils'
 import { useCart } from '@/hooks/useCart'
 import { useAuthStore } from '@/store/auth.store'
-import { useT } from '@/store/language.store'
+import { useLanguageStore, useT } from '@/store/language.store'
+import { localiseProduct } from '@/lib/localise'
 import { toast } from 'sonner'
 import type { Product } from '@/types'
 
@@ -19,6 +20,8 @@ export default function ProductCard({ product }: Props) {
   const { user } = useAuthStore()
   const router = useRouter()
   const t = useT()
+  const { locale } = useLanguageStore()
+  const { name, description } = localiseProduct(product, locale)
   const mainImage = product.images.find((i) => i.isMain) ?? product.images[0]
   const price = Number(product.price)
   const discount = product.discountPrice ? Number(product.discountPrice) : null
@@ -49,7 +52,7 @@ export default function ProductCard({ product }: Props) {
       <div className="flex flex-col gap-1 p-3 flex-1">
         <p className="text-xs text-muted-foreground">{product.category?.name}</p>
         <Link href={`/products/${product.slug}`}>
-          <h3 className="font-medium text-sm line-clamp-2 hover:text-primary">{product.name}</h3>
+          <h3 className="font-medium text-sm line-clamp-2 hover:text-primary">{name}</h3>
         </Link>
 
         {product.avgRating && (
