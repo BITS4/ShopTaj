@@ -1,15 +1,17 @@
 'use client'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Minus, Plus, X, ShoppingBag } from 'lucide-react'
+import { X, ShoppingBag } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useCart } from '@/hooks/useCart'
+import { useT } from '@/store/language.store'
 import { formatPrice } from '@/lib/utils'
 
 export default function CartPage() {
   const { cart, isLoading, updateItem, removeItem, applyCoupon } = useCart()
+  const t = useT()
   const [couponCode, setCouponCode] = useState('')
   const [couponData, setCouponData] = useState<any>(null)
 
@@ -26,19 +28,17 @@ export default function CartPage() {
 
   const finalTotal = (cart?.total ?? 0) - discount
 
-  if (isLoading) return <div className="container mx-auto px-4 py-8 text-center">Loading cart…</div>
+  if (isLoading) return <div className="container mx-auto px-4 py-8 text-center">{t.common.loading}</div>
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Shopping Cart</h1>
+      <h1 className="text-3xl font-bold mb-8">{t.cart.title}</h1>
 
       {!cart?.items.length ? (
         <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
           <ShoppingBag className="h-24 w-24 mb-4" />
-          <h2 className="text-xl font-semibold">Your cart is empty</h2>
-          <Link href="/products" className="mt-4">
-            <Button>Browse Products</Button>
-          </Link>
+          <h2 className="text-xl font-semibold">{t.cart.empty}</h2>
+          <Link href="/products" className="mt-4"><Button>{t.cart.browse}</Button></Link>
         </div>
       ) : (
         <div className="grid lg:grid-cols-3 gap-8">
@@ -84,31 +84,30 @@ export default function CartPage() {
           {/* Summary */}
           <div className="space-y-4">
             <div className="border rounded-xl p-6 space-y-4">
-              <h2 className="text-lg font-bold">Order Summary</h2>
-              <div className="flex justify-between text-sm"><span>Subtotal</span><span>{formatPrice(cart.total)}</span></div>
+              <h2 className="text-lg font-bold">{t.cart.title}</h2>
+              <div className="flex justify-between text-sm"><span>{t.cart.subtotal}</span><span>{formatPrice(cart.total)}</span></div>
               {discount > 0 && (
-                <div className="flex justify-between text-sm text-green-600"><span>Discount</span><span>-{formatPrice(discount)}</span></div>
+                <div className="flex justify-between text-sm text-green-600"><span>{t.cart.discount}</span><span>-{formatPrice(discount)}</span></div>
               )}
               <div className="border-t pt-3 flex justify-between font-bold">
-                <span>Total</span><span>{formatPrice(finalTotal)}</span>
+                <span>{t.cart.total}</span><span>{formatPrice(finalTotal)}</span>
               </div>
-
-              {/* Coupon */}
               <div className="flex gap-2">
                 <Input
-                  placeholder="Coupon code"
+                  placeholder={t.cart.coupon_placeholder}
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                   className="text-sm"
                 />
-                <Button variant="outline" size="sm" onClick={handleCoupon} disabled={applyCoupon.isPending}>Apply</Button>
+                <Button variant="outline" size="sm" onClick={handleCoupon} disabled={applyCoupon.isPending}>
+                  {t.cart.apply_coupon}
+                </Button>
               </div>
-
               <Link href={couponData ? `/checkout?coupon=${couponCode}` : '/checkout'}>
-                <Button className="w-full" size="lg">Proceed to Checkout</Button>
+                <Button className="w-full" size="lg">{t.cart.checkout}</Button>
               </Link>
               <Link href="/products">
-                <Button variant="ghost" className="w-full">Continue Shopping</Button>
+                <Button variant="ghost" className="w-full">{t.cart.continue}</Button>
               </Link>
             </div>
           </div>

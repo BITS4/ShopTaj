@@ -1,17 +1,24 @@
 'use client'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Heart, ShoppingCart, Star } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { ShoppingCart, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatPrice } from '@/lib/utils'
 import { useCart } from '@/hooks/useCart'
+import { useAuthStore } from '@/store/auth.store'
+import { useT } from '@/store/language.store'
+import { toast } from 'sonner'
 import type { Product } from '@/types'
 
 interface Props { product: Product }
 
 export default function ProductCard({ product }: Props) {
   const { addItem } = useCart()
+  const { user } = useAuthStore()
+  const router = useRouter()
+  const t = useT()
   const mainImage = product.images.find((i) => i.isMain) ?? product.images[0]
   const price = Number(product.price)
   const discount = product.discountPrice ? Number(product.discountPrice) : null
@@ -19,7 +26,6 @@ export default function ProductCard({ product }: Props) {
 
   return (
     <div className="group relative flex flex-col rounded-xl border bg-card overflow-hidden hover:shadow-md transition-shadow">
-      {/* Image */}
       <Link href={`/products/${product.slug}`} className="relative aspect-square overflow-hidden bg-muted">
         {mainImage ? (
           <Image
@@ -30,19 +36,16 @@ export default function ProductCard({ product }: Props) {
             sizes="(max-width: 768px) 50vw, 25vw"
           />
         ) : (
-          <div className="h-full w-full flex items-center justify-center text-muted-foreground">No image</div>
+          <div className="h-full w-full flex items-center justify-center text-muted-foreground text-sm">No image</div>
         )}
-        {discountPct && (
-          <Badge className="absolute top-2 left-2">{discountPct}% OFF</Badge>
-        )}
+        {discountPct && <Badge className="absolute top-2 left-2">{discountPct}% OFF</Badge>}
         {product.stock === 0 && (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <Badge variant="secondary">Out of Stock</Badge>
+            <Badge variant="secondary">{t.products.out_of_stock}</Badge>
           </div>
         )}
       </Link>
 
-      {/* Info */}
       <div className="flex flex-col gap-1 p-3 flex-1">
         <p className="text-xs text-muted-foreground">{product.category?.name}</p>
         <Link href={`/products/${product.slug}`}>
@@ -71,11 +74,18 @@ export default function ProductCard({ product }: Props) {
         <Button
           size="sm"
           className="w-full mt-2"
-          disabled={product.stock === 0}
-          onClick={() => addItem.mutate({ productId: product.id, quantity: 1 })}
+          disabled={product.stock === 0 || addItem.isPending}
+          onClick={() => {
+            if (!user) {
+              toast.error(t.product.login_to_add)
+              router.push('/login')
+              return
+            }
+            addItem.mutate({ productId: product.id, quantity: 1 })
+          }}
         >
           <ShoppingCart className="h-4 w-4 mr-2" />
-          Add to Cart
+          {addItem.isPending ? t.products.adding : t.products.add_to_cart}
         </Button>
       </div>
     </div>

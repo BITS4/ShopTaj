@@ -7,6 +7,7 @@ import { Elements, CardElement, useStripe, useElements } from '@stripe/react-str
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatPrice } from '@/lib/utils'
+import { useT } from '@/store/language.store'
 import api from '@/lib/api'
 import { toast } from 'sonner'
 
@@ -16,6 +17,7 @@ function CheckoutForm({ clientSecret, total }: { clientSecret: string; total: nu
   const stripe = useStripe()
   const elements = useElements()
   const router = useRouter()
+  const t = useT()
   const [paying, setPaying] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,11 +43,9 @@ function CheckoutForm({ clientSecret, total }: { clientSecret: string; total: nu
         <CardElement options={{ style: { base: { fontSize: '16px' } } }} />
       </div>
       <Button type="submit" className="w-full" size="lg" disabled={paying}>
-        {paying ? 'Processing…' : `Pay ${formatPrice(total)}`}
+        {paying ? t.checkout.processing : `${t.checkout.pay} ${formatPrice(total)}`}
       </Button>
-      <p className="text-xs text-center text-muted-foreground">
-        Powered by Stripe · Test card: 4242 4242 4242 4242
-      </p>
+      <p className="text-xs text-center text-muted-foreground">{t.checkout.test_card}</p>
     </form>
   )
 }
@@ -53,6 +53,7 @@ function CheckoutForm({ clientSecret, total }: { clientSecret: string; total: nu
 export default function CheckoutPage() {
   const searchParams = useSearchParams()
   const couponCode = searchParams.get('coupon') ?? ''
+  const t = useT()
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null)
   const [shippingMethod, setShippingMethod] = useState('standard')
   const [paymentData, setPaymentData] = useState<any>(null)
@@ -69,7 +70,7 @@ export default function CheckoutPage() {
   })
 
   const createIntent = async () => {
-    if (!selectedAddress) { toast.error('Please select a delivery address'); return }
+    if (!selectedAddress) { toast.error(t.checkout.delivery_address); return }
     setLoading(true)
     try {
       const { data } = await api.post('/payments/create-intent', {
@@ -79,22 +80,23 @@ export default function CheckoutPage() {
       })
       setPaymentData(data)
     } catch {
-      toast.error('Failed to initialise payment')
+      toast.error(t.common.error)
     }
     setLoading(false)
   }
 
   return (
     <div className="container mx-auto max-w-3xl px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Checkout</h1>
-
+      <h1 className="text-3xl font-bold mb-8">{t.checkout.title}</h1>
       <div className="space-y-6">
         {/* Address */}
         <Card>
-          <CardHeader><CardTitle>Delivery Address</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{t.checkout.delivery_address}</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             {!addresses?.length ? (
-              <p className="text-sm text-muted-foreground">No saved addresses. <a href="/profile" className="text-primary underline">Add one in your profile</a>.</p>
+              <p className="text-sm text-muted-foreground">
+                {t.checkout.no_address} <a href="/profile" className="text-primary underline">{t.checkout.add_in_profile}</a>.
+              </p>
             ) : (
               addresses.map((addr: any) => (
                 <label key={addr.id} className={`flex gap-3 border rounded-lg p-3 cursor-pointer transition ${selectedAddress === addr.id ? 'border-primary bg-primary/5' : 'hover:border-muted-foreground'}`}>
@@ -111,10 +113,12 @@ export default function CheckoutPage() {
 
         {/* Shipping */}
         <Card>
-          <CardHeader><CardTitle>Shipping Method</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{t.checkout.shipping_method}</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            {[{ id: 'standard', label: 'Standard Shipping', price: '$5.00', days: '5–7 days' },
-              { id: 'express', label: 'Express Shipping', price: '$15.00', days: '1–2 days' }].map((m) => (
+            {[
+              { id: 'standard', label: t.checkout.standard, price: '$5.00', days: t.checkout.standard_days },
+              { id: 'express', label: t.checkout.express, price: '$15.00', days: t.checkout.express_days },
+            ].map((m) => (
               <label key={m.id} className={`flex items-center gap-3 border rounded-lg p-3 cursor-pointer transition ${shippingMethod === m.id ? 'border-primary bg-primary/5' : 'hover:border-muted-foreground'}`}>
                 <input type="radio" name="shipping" value={m.id} checked={shippingMethod === m.id} onChange={() => setShippingMethod(m.id)} />
                 <div className="flex-1 text-sm"><p className="font-semibold">{m.label}</p><p className="text-muted-foreground">{m.days}</p></div>
@@ -124,10 +128,10 @@ export default function CheckoutPage() {
           </CardContent>
         </Card>
 
-        {/* Order summary */}
+        {/* Summary */}
         {cart && (
           <Card>
-            <CardHeader><CardTitle>Order Summary</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t.checkout.order_summary}</CardTitle></CardHeader>
             <CardContent className="space-y-2 text-sm">
               {cart.items.map((item: any) => (
                 <div key={item.id} className="flex justify-between">
@@ -136,7 +140,7 @@ export default function CheckoutPage() {
                 </div>
               ))}
               <div className="border-t pt-2 flex justify-between font-bold">
-                <span>Subtotal</span><span>{formatPrice(cart.total)}</span>
+                <span>{t.cart.subtotal}</span><span>{formatPrice(cart.total)}</span>
               </div>
             </CardContent>
           </Card>
@@ -145,17 +149,17 @@ export default function CheckoutPage() {
         {/* Payment */}
         {!paymentData ? (
           <Button className="w-full" size="lg" onClick={createIntent} disabled={loading}>
-            {loading ? 'Loading…' : 'Continue to Payment'}
+            {loading ? t.checkout.loading : t.checkout.continue_payment}
           </Button>
         ) : (
           <Card>
-            <CardHeader><CardTitle>Payment Details</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t.checkout.payment_details}</CardTitle></CardHeader>
             <CardContent>
               <div className="text-sm space-y-1 mb-4 bg-muted rounded-md p-3">
-                <div className="flex justify-between"><span>Subtotal</span><span>{formatPrice(paymentData.subtotal)}</span></div>
-                {paymentData.discountAmount > 0 && <div className="flex justify-between text-green-600"><span>Discount</span><span>-{formatPrice(paymentData.discountAmount)}</span></div>}
-                <div className="flex justify-between"><span>Shipping</span><span>{formatPrice(paymentData.shippingAmount)}</span></div>
-                <div className="flex justify-between font-bold pt-1 border-t"><span>Total</span><span>{formatPrice(paymentData.totalAmount)}</span></div>
+                <div className="flex justify-between"><span>{t.cart.subtotal}</span><span>{formatPrice(paymentData.subtotal)}</span></div>
+                {paymentData.discountAmount > 0 && <div className="flex justify-between text-green-600"><span>{t.cart.discount}</span><span>-{formatPrice(paymentData.discountAmount)}</span></div>}
+                <div className="flex justify-between"><span>{t.checkout.shipping}</span><span>{formatPrice(paymentData.shippingAmount)}</span></div>
+                <div className="flex justify-between font-bold pt-1 border-t"><span>{t.cart.total}</span><span>{formatPrice(paymentData.totalAmount)}</span></div>
               </div>
               <Elements stripe={stripePromise} options={{ clientSecret: paymentData.clientSecret }}>
                 <CheckoutForm clientSecret={paymentData.clientSecret} total={paymentData.totalAmount} />
