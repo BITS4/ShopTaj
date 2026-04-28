@@ -15,7 +15,7 @@ export class ProductsService {
     } = query;
     const skip = (page - 1) * limit;
 
-    const where: any = { isActive: true };
+    const where: any = (query as any).isActive === 'all' ? {} : { isActive: true };
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },

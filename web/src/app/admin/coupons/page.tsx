@@ -25,6 +25,10 @@ export default function AdminCouponsPage() {
   const create = useMutation({
     mutationFn: (body: any) => api.post('/admin/coupons', body),
     onSuccess: () => { toast.success('Coupon created'); qc.invalidateQueries({ queryKey: ['admin-coupons'] }); setShowForm(false); reset() },
+    onError: (err: any) => {
+      const msg = err?.response?.data?.message
+      toast.error(Array.isArray(msg) ? msg.join(', ') : msg || 'Failed to create coupon')
+    },
   })
 
   const toggle = useMutation({

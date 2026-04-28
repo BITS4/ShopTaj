@@ -109,6 +109,16 @@ export class AdminService {
     return this.prisma.user.update({ where: { id: userId }, data: { isBanned: ban } });
   }
 
+  async getAllProducts() {
+    return this.prisma.product.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        category: { select: { id: true, name: true } },
+        images: { where: { isMain: true }, take: 1 },
+      },
+    });
+  }
+
   createProduct(dto: CreateProductDto) { return this.productsService.create(dto); }
   updateProduct(id: string, dto: any) { return this.productsService.update(id, dto); }
   deleteProduct(id: string) { return this.productsService.delete(id); }

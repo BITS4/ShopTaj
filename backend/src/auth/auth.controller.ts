@@ -9,17 +9,28 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
+import { IsEmail as ValidEmail, IsString as ValidString, Length } from 'class-validator';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
+
+class VerifyCodeDto {
+  @ValidEmail() email: string;
+  @ValidString() @Length(6, 6) code: string;
+}
+
+class ResendCodeDto {
+  @ValidEmail() email: string;
+}
 
 @ApiTags('auth')
 @Controller('auth')
@@ -39,11 +50,25 @@ export class AuthController {
     return this.authService.login(dto, res);
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60000 * 15 } })
+  @Post('verify-code')
+  @HttpCode(HttpStatus.OK)
+  verifyCode(@Body() dto: VerifyCodeDto, @Res({ passthrough: true }) res: Response) {
+    return this.authService.verifyCode(dto.email, dto.code, res);
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60000 * 15 } })
+  @Post('resend-code')
+  @HttpCode(HttpStatus.OK)
+  resendCode(@Body() dto: ResendCodeDto) {
+    return this.authService.resendCode(dto.email);
+  }
+
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const token = req.cookies?.refresh_token;
-    if (!token) throw new Error('No refresh token');
+    if (!token) throw new UnauthorizedException('No refresh token');
     return this.authService.refresh(token, res);
   }
 

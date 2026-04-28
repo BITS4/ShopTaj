@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength, MaxLength, IsOptional } from 'class-validator';
+import { IsEmail, IsString, MinLength, MaxLength, Matches } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class RegisterDto {
@@ -12,14 +12,16 @@ export class RegisterDto {
   @IsEmail()
   email: string;
 
+  @ApiProperty({ example: '+992901234567' })
+  @IsString()
+  @MinLength(7)
+  @MaxLength(20)
+  @Matches(/^[+\d\s\-()]+$/, { message: 'Phone number must contain only digits, +, -, spaces, or parentheses' })
+  phone: string;
+
   @ApiProperty({ example: 'StrongPass123!' })
   @IsString()
   @MinLength(8)
   @MaxLength(64)
   password: string;
-
-  @ApiProperty({ example: '+1234567890', required: false })
-  @IsOptional()
-  @IsString()
-  phone?: string;
 }

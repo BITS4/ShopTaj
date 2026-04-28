@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
-import { ShoppingBag, Users, DollarSign, TrendingUp, Package, Tag } from 'lucide-react'
+import { ShoppingBag, Users, DollarSign, TrendingUp, Package, Tag, LayoutGrid } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatPrice } from '@/lib/utils'
@@ -9,6 +9,7 @@ import api from '@/lib/api'
 
 const NAV = [
   { href: '/admin/products', label: 'Products', icon: Package },
+  { href: '/admin/categories', label: 'Categories', icon: LayoutGrid },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/coupons', label: 'Coupons', icon: Tag },

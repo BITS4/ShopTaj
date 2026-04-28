@@ -43,6 +43,8 @@ model User {
   role             Role      @default(USER)
   isEmailVerified  Boolean   @default(false) @map("is_email_verified")
   emailVerifyToken String?   @map("email_verify_token")
+  verifyCode       String?   @map("verify_code")
+  verifyCodeExpiry DateTime? @map("verify_code_expiry")
   resetToken       String?   @map("reset_token")
   resetTokenExpiry DateTime? @map("reset_token_expiry")
   isBanned         Boolean   @default(false) @map("is_banned")
@@ -62,15 +64,17 @@ model User {
 }
 
 model Address {
-  id        String  @id @default(uuid())
-  userId    String  @map("user_id")
-  label     String  @default("Home")
-  street    String
-  city      String
-  state     String?
-  country   String
-  zip       String
-  isDefault Boolean @default(false) @map("is_default")
+  id          String  @id @default(uuid())
+  userId      String  @map("user_id")
+  label       String  @default("Home")
+  street      String
+  houseNumber String? @map("house_number")
+  apartment   String?
+  city        String
+  state       String?
+  country     String
+  zip         String
+  isDefault   Boolean @default(false) @map("is_default")
 
   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   orders Order[]

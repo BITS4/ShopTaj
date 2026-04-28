@@ -34,6 +34,11 @@ export class AdminController {
   }
 
   // ── Products ──────────────────────────────────────────────────────────────
+  @Get('products-list')
+  getAllProducts() {
+    return this.adminService.getAllProducts();
+  }
+
   @Post('products')
   createProduct(@Body() dto: CreateProductDto) {
     return this.adminService.createProduct(dto);

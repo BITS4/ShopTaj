@@ -30,11 +30,42 @@ async function main() {
   })
   console.log('✅ Test user: user@shoptaj.com')
 
+  // ── Top-level categories ──────────────────────────────────────────────────
   const electronics = await prisma.category.upsert({ where: { slug: 'electronics' }, update: {}, create: { name: 'Electronics', slug: 'electronics' } })
   const clothing    = await prisma.category.upsert({ where: { slug: 'clothing' }, update: {}, create: { name: 'Clothing', slug: 'clothing' } })
   const homeGarden  = await prisma.category.upsert({ where: { slug: 'home-garden' }, update: {}, create: { name: 'Home & Garden', slug: 'home-garden' } })
   const books       = await prisma.category.upsert({ where: { slug: 'books' }, update: {}, create: { name: 'Books', slug: 'books' } })
-  console.log('✅ Categories created')
+  const cosmetics   = await prisma.category.upsert({ where: { slug: 'cosmetics' }, update: {}, create: { name: 'Beauty & Cosmetics', slug: 'cosmetics' } })
+  const sports      = await prisma.category.upsert({ where: { slug: 'sports' }, update: {}, create: { name: 'Sports & Fitness', slug: 'sports' } })
+  const food        = await prisma.category.upsert({ where: { slug: 'food' }, update: {}, create: { name: 'Food & Groceries', slug: 'food' } })
+  const toys        = await prisma.category.upsert({ where: { slug: 'toys' }, update: {}, create: { name: 'Toys & Kids', slug: 'toys' } })
+  const decoration  = await prisma.category.upsert({ where: { slug: 'decoration' }, update: {}, create: { name: 'Decoration & Art', slug: 'decoration' } })
+  const automotive  = await prisma.category.upsert({ where: { slug: 'automotive' }, update: {}, create: { name: 'Automotive', slug: 'automotive' } })
+  const health      = await prisma.category.upsert({ where: { slug: 'health' }, update: {}, create: { name: 'Health & Pharmacy', slug: 'health' } })
+  const stationery  = await prisma.category.upsert({ where: { slug: 'stationery' }, update: {}, create: { name: 'Stationery & Office', slug: 'stationery' } })
+  const pets        = await prisma.category.upsert({ where: { slug: 'pets' }, update: {}, create: { name: 'Pets & Animals', slug: 'pets' } })
+  const furniture   = await prisma.category.upsert({ where: { slug: 'furniture' }, update: {}, create: { name: 'Furniture', slug: 'furniture' } })
+
+  // ── Sub-categories ────────────────────────────────────────────────────────
+  await prisma.category.upsert({ where: { slug: 'phones' }, update: {}, create: { name: 'Phones', slug: 'phones', parentId: electronics.id } })
+  await prisma.category.upsert({ where: { slug: 'laptops' }, update: {}, create: { name: 'Laptops & Computers', slug: 'laptops', parentId: electronics.id } })
+  await prisma.category.upsert({ where: { slug: 'audio' }, update: {}, create: { name: 'Audio & Headphones', slug: 'audio', parentId: electronics.id } })
+  await prisma.category.upsert({ where: { slug: 'wearables' }, update: {}, create: { name: 'Wearables', slug: 'wearables', parentId: electronics.id } })
+  await prisma.category.upsert({ where: { slug: 'cameras' }, update: {}, create: { name: 'Cameras', slug: 'cameras', parentId: electronics.id } })
+  await prisma.category.upsert({ where: { slug: 'mens-clothing' }, update: {}, create: { name: "Men's Clothing", slug: 'mens-clothing', parentId: clothing.id } })
+  await prisma.category.upsert({ where: { slug: 'womens-clothing' }, update: {}, create: { name: "Women's Clothing", slug: 'womens-clothing', parentId: clothing.id } })
+  await prisma.category.upsert({ where: { slug: 'shoes' }, update: {}, create: { name: 'Shoes & Footwear', slug: 'shoes', parentId: clothing.id } })
+  await prisma.category.upsert({ where: { slug: 'kids-clothing' }, update: {}, create: { name: "Kids' Clothing", slug: 'kids-clothing', parentId: clothing.id } })
+  await prisma.category.upsert({ where: { slug: 'skincare' }, update: {}, create: { name: 'Skincare', slug: 'skincare', parentId: cosmetics.id } })
+  await prisma.category.upsert({ where: { slug: 'makeup' }, update: {}, create: { name: 'Makeup', slug: 'makeup', parentId: cosmetics.id } })
+  await prisma.category.upsert({ where: { slug: 'perfumes' }, update: {}, create: { name: 'Perfumes', slug: 'perfumes', parentId: cosmetics.id } })
+  await prisma.category.upsert({ where: { slug: 'gym' }, update: {}, create: { name: 'Gym Equipment', slug: 'gym', parentId: sports.id } })
+  await prisma.category.upsert({ where: { slug: 'outdoor' }, update: {}, create: { name: 'Outdoor & Hiking', slug: 'outdoor', parentId: sports.id } })
+  await prisma.category.upsert({ where: { slug: 'kitchen' }, update: {}, create: { name: 'Kitchen & Dining', slug: 'kitchen', parentId: homeGarden.id } })
+  await prisma.category.upsert({ where: { slug: 'lighting' }, update: {}, create: { name: 'Lighting', slug: 'lighting', parentId: decoration.id } })
+  await prisma.category.upsert({ where: { slug: 'wall-art' }, update: {}, create: { name: 'Wall Art & Frames', slug: 'wall-art', parentId: decoration.id } })
+
+  console.log('✅ Categories created (14 top-level + 17 sub-categories)')
 
   const products = [
     {

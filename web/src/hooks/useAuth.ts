@@ -17,17 +17,30 @@ export function useAuth() {
       toast.success(`Welcome back, ${data.user.fullName}!`)
       router.push('/')
     },
-    onError: () => toast.error('Invalid email or password'),
+    onError: (err: any) => {
+      const msg: string = err?.response?.data?.message || ''
+      if (msg.startsWith('EMAIL_NOT_VERIFIED:')) {
+        const parts = msg.split(':')
+        const email = parts[1] || ''
+        toast.info('Please verify your email first — a new code has been sent.')
+        router.push(`/verify-email-notice?email=${encodeURIComponent(email)}`)
+      } else {
+        toast.error('Invalid email or password')
+      }
+    },
   })
 
   const register = useMutation({
-    mutationFn: (body: { fullName: string; email: string; password: string; phone?: string }) =>
+    mutationFn: (body: { fullName: string; email: string; password: string; phone: string }) =>
       api.post('/auth/register', body),
-    onSuccess: () => {
-      toast.success('Account created! Please verify your email.')
-      router.push('/login')
+    onSuccess: (_data, variables) => {
+      toast.success('Account created! Enter the 6-digit code sent to your email.')
+      router.push(`/verify-email-notice?email=${encodeURIComponent(variables.email)}`)
     },
-    onError: (err: any) => toast.error(err.response?.data?.message || 'Registration failed'),
+    onError: (err: any) => {
+      const msg = err?.response?.data?.message
+      toast.error(Array.isArray(msg) ? msg[0] : msg || 'Registration failed')
+    },
   })
 
   const logout = useMutation({

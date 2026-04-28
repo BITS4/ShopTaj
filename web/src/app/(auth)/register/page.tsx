@@ -10,11 +10,11 @@ import { useAuth } from '@/hooks/useAuth'
 import { useT } from '@/store/language.store'
 
 const schema = z.object({
-  fullName: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(8),
+  fullName: z.string().min(2, 'At least 2 characters'),
+  email: z.string().email('Invalid email'),
+  phone: z.string().min(7, 'Enter a valid phone number').regex(/^[+\d\s\-()]+$/, 'Invalid phone format'),
+  password: z.string().min(8, 'At least 8 characters'),
   confirmPassword: z.string(),
-  phone: z.string().optional(),
 }).refine((d) => d.password === d.confirmPassword, {
   message: "Passwords don't match",
   path: ['confirmPassword'],
@@ -48,8 +48,11 @@ export default function RegisterPage() {
               {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium">{t.auth.phone}</label>
-              <Input placeholder="+1234567890" {...register('phone')} />
+              <label className="text-sm font-medium">
+                {t.auth.phone} <span className="text-destructive">*</span>
+              </label>
+              <Input placeholder="+992 XX XXX XXXX" {...register('phone')} />
+              {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium">{t.auth.password}</label>

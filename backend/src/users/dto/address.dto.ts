@@ -11,6 +11,16 @@ export class CreateAddressDto {
   @IsString()
   street: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  houseNumber?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  apartment?: string;
+
   @ApiProperty()
   @IsString()
   city: string;

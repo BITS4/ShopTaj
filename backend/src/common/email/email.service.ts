@@ -1,83 +1,170 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
+import { Resend } from 'resend';
+
+type Provider = 'gmail' | 'resend' | 'none';
 
 @Injectable()
 export class EmailService {
-  private transporter: nodemailer.Transporter;
+  private provider: Provider = 'none';
+  private transporter: nodemailer.Transporter | null = null;
+  private resend: Resend | null = null;
   private readonly logger = new Logger(EmailService.name);
 
   constructor(private config: ConfigService) {
-    this.transporter = nodemailer.createTransport({
-      host: 'smtp.sendgrid.net',
-      port: 587,
-      auth: {
-        user: 'apikey',
-        pass: this.config.get('SENDGRID_API_KEY'),
-      },
-    });
+    this.init();
   }
 
-  async sendVerificationEmail(to: string, name: string, token: string) {
-    const url = `${this.config.get('FRONTEND_URL')}/verify-email?token=${token}`;
-    await this.send(to, 'Verify your ShopTaj email', this.verificationTemplate(name, url));
+  private init() {
+    const gmailUser = this.config.get<string>('GMAIL_USER') || '';
+    const gmailPass = this.config.get<string>('GMAIL_APP_PASSWORD') || '';
+    const resendKey = this.config.get<string>('RESEND_API_KEY') || '';
+
+    const isReal = (v: string) => v && !v.startsWith('your_') && v.length > 6;
+
+    if (isReal(gmailUser) && isReal(gmailPass)) {
+      // ── Gmail (App Password) ────────────────────────────────────────────
+      this.provider = 'gmail';
+      this.transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user: gmailUser, pass: gmailPass },
+      });
+      this.logger.log(`✅ Email: using Gmail (${gmailUser})`);
+
+    } else if (isReal(resendKey)) {
+      // ── Resend ──────────────────────────────────────────────────────────
+      this.provider = 'resend';
+      this.resend = new Resend(resendKey);
+      this.logger.log('✅ Email: using Resend (only sends to your registered email in test mode)');
+
+    } else {
+      this.provider = 'none';
+      this.logger.warn('⚠️  Email: not configured — codes will only appear in this terminal');
+    }
   }
 
-  async sendPasswordResetEmail(to: string, name: string, token: string) {
-    const url = `${this.config.get('FRONTEND_URL')}/reset-password?token=${token}`;
-    await this.send(to, 'Reset your ShopTaj password', this.resetTemplate(name, url));
+  async sendVerificationCode(to: string, name: string, code: string) {
+    this.logCode(to, code);
+    await this.send(
+      to,
+      `${code} is your ShopTaj verification code`,
+      this.codeTemplate(name, code, 'Verify your email', 10),
+    );
+  }
+
+  async sendPasswordResetCode(to: string, name: string, code: string) {
+    this.logCode(to, code);
+    await this.send(
+      to,
+      `${code} is your ShopTaj password reset code`,
+      this.codeTemplate(name, code, 'Reset your password', 60),
+    );
   }
 
   async sendOrderConfirmationEmail(to: string, name: string, orderId: string) {
     const url = `${this.config.get('FRONTEND_URL')}/profile/orders/${orderId}`;
-    await this.send(to, 'Your ShopTaj order confirmed!', this.orderTemplate(name, orderId, url));
+    await this.send(to, 'Your ShopTaj order is confirmed! 🎉', this.orderTemplate(name, orderId, url));
+  }
+
+  private logCode(to: string, code: string) {
+    this.logger.log('━'.repeat(52));
+    this.logger.log(`📧  To: ${to}`);
+    this.logger.log(`🔑  CODE: ${code}`);
+    this.logger.log('━'.repeat(52));
   }
 
   private async send(to: string, subject: string, html: string) {
-    try {
-      await this.transporter.sendMail({
-        from: this.config.get('EMAIL_FROM') || 'noreply@shoptaj.com',
-        to,
-        subject,
-        html,
-      });
-    } catch (err) {
-      this.logger.error(`Failed to send email to ${to}: ${err.message}`);
+    if (this.provider === 'gmail' && this.transporter) {
+      try {
+        await this.transporter.sendMail({
+          from: `"ShopTaj" <${this.config.get('GMAIL_USER')}>`,
+          to, subject, html,
+        });
+        this.logger.log(`✅ Email sent via Gmail to ${to}`);
+      } catch (err: any) {
+        this.logger.error(`❌ Gmail error: ${err.message}`);
+        this.logger.error('Tip: Make sure you used an App Password, not your regular Gmail password.');
+        this.logger.error('Get one at: https://myaccount.google.com/apppasswords');
+      }
+
+    } else if (this.provider === 'resend' && this.resend) {
+      try {
+        const result = await this.resend.emails.send({
+          from: 'ShopTaj <onboarding@resend.dev>',
+          to, subject, html,
+        });
+        if ((result as any).error) {
+          this.logger.error(`❌ Resend error: ${JSON.stringify((result as any).error)}`);
+          this.logger.warn('Resend test domain only sends to your own email. Use Gmail App Password instead.');
+        } else {
+          this.logger.log(`✅ Email sent via Resend to ${to}`);
+        }
+      } catch (err: any) {
+        this.logger.error(`❌ Resend error: ${err?.message}`);
+      }
+
+    } else {
+      // No provider — code is already printed in terminal by logCode()
     }
   }
 
-  private verificationTemplate(name: string, url: string) {
+  private codeTemplate(name: string, code: string, title: string, expiryMinutes: number) {
     return `
-      <div style="font-family:sans-serif;max-width:600px;margin:auto">
-        <h2>Welcome to ShopTaj, ${name}!</h2>
-        <p>Please verify your email address by clicking the button below:</p>
-        <a href="${url}" style="background:#6366f1;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block">
-          Verify Email
-        </a>
-        <p style="color:#888;font-size:12px;margin-top:20px">Link expires in 24 hours.</p>
-      </div>`;
-  }
-
-  private resetTemplate(name: string, url: string) {
-    return `
-      <div style="font-family:sans-serif;max-width:600px;margin:auto">
-        <h2>Password Reset - ShopTaj</h2>
-        <p>Hi ${name}, click below to reset your password:</p>
-        <a href="${url}" style="background:#6366f1;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block">
-          Reset Password
-        </a>
-        <p style="color:#888;font-size:12px;margin-top:20px">Link expires in 1 hour. If you didn't request this, ignore this email.</p>
-      </div>`;
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px">
+    <tr><td align="center">
+      <table width="480" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
+        <tr>
+          <td style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:32px;text-align:center">
+            <h1 style="margin:0;color:#fff;font-size:28px;font-weight:800">ShopTaj</h1>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:40px;text-align:center">
+            <h2 style="margin:0 0 8px;color:#111;font-size:22px">${title}</h2>
+            <p style="margin:0 0 32px;color:#666;font-size:15px">Hi <b>${name}</b>, your verification code is:</p>
+            <div style="background:#f0f0ff;border:2px dashed #6366f1;border-radius:16px;padding:28px 40px;display:inline-block;margin-bottom:28px">
+              <span style="font-size:48px;font-weight:900;letter-spacing:14px;color:#6366f1;font-family:monospace">${code}</span>
+            </div>
+            <p style="color:#999;font-size:13px;margin:0">Expires in <b>${expiryMinutes} minutes</b></p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f8f8fc;padding:20px 40px;text-align:center;border-top:1px solid #eee">
+            <p style="margin:0;color:#bbb;font-size:12px">If you didn't request this, ignore this email.<br>© ${new Date().getFullYear()} ShopTaj</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
   }
 
   private orderTemplate(name: string, orderId: string, url: string) {
     return `
-      <div style="font-family:sans-serif;max-width:600px;margin:auto">
-        <h2>Order Confirmed! 🎉</h2>
-        <p>Hi ${name}, your order <strong>#${orderId.slice(0, 8).toUpperCase()}</strong> has been placed successfully.</p>
-        <a href="${url}" style="background:#6366f1;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block">
-          View Order
-        </a>
-      </div>`;
+<!DOCTYPE html>
+<html>
+<body style="font-family:sans-serif;background:#f4f4f8;margin:0;padding:40px 20px">
+  <div style="max-width:520px;margin:auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
+    <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:28px;text-align:center">
+      <h1 style="margin:0;color:#fff;font-size:24px">ShopTaj</h1>
+    </div>
+    <div style="padding:36px;text-align:center">
+      <div style="font-size:48px;margin-bottom:16px">🎉</div>
+      <h2 style="margin:0 0 12px;color:#111">Order Confirmed!</h2>
+      <p style="color:#666;margin:0 0 24px">Hi <b>${name}</b>, your order <strong>#${orderId.slice(0, 8).toUpperCase()}</strong> has been placed.</p>
+      <a href="${url}" style="background:#6366f1;color:#fff;padding:14px 32px;text-decoration:none;border-radius:10px;font-weight:600;display:inline-block">Track My Order</a>
+    </div>
+    <div style="background:#f8f8fc;padding:16px;text-align:center;border-top:1px solid #eee">
+      <p style="margin:0;color:#bbb;font-size:12px">© ${new Date().getFullYear()} ShopTaj</p>
+    </div>
+  </div>
+</body>
+</html>`;
   }
 }
