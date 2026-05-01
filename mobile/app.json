@@ -4,28 +4,14 @@
     "slug": "shoptaj",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#6366f1"
-    },
     "ios": { "supportsTablet": true, "bundleIdentifier": "com.shoptaj.app" },
-    "android": {
-      "adaptiveIcon": { "foregroundImage": "./assets/adaptive-icon.png", "backgroundColor": "#6366f1" },
-      "package": "com.shoptaj.app"
-    },
-    "web": { "bundler": "metro", "output": "static", "favicon": "./assets/favicon.png" },
-    "plugins": [
-      "expo-router",
-      "expo-notifications",
-      ["expo-splash-screen", { "image": "./assets/splash.png", "backgroundColor": "#6366f1" }]
-    ],
+    "android": { "package": "com.shoptaj.app" },
+    "plugins": ["expo-router"],
     "scheme": "shoptaj",
     "extra": {
-      "apiUrl": "http://localhost:3001/api",
-      "stripePk": "pk_test_your_key"
+      "apiUrl": "http://192.168.1.9:3001/api",
+      "router": {}
     }
   }
 }

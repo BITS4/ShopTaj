@@ -1,14 +1,16 @@
 import axios from 'axios'
 import * as SecureStore from 'expo-secure-store'
-import Constants from 'expo-constants'
 
-const BASE_URL = Constants.expoConfig?.extra?.apiUrl ?? 'http://localhost:3001/api'
+// Use your computer's IP address so the phone can reach the backend
+const BASE_URL = 'http://192.168.1.9:3001/api'
 
 const api = axios.create({ baseURL: BASE_URL })
 
 api.interceptors.request.use(async (config) => {
-  const token = await SecureStore.getItemAsync('access_token')
-  if (token) config.headers.Authorization = `Bearer ${token}`
+  try {
+    const token = await SecureStore.getItemAsync('access_token')
+    if (token) config.headers.Authorization = `Bearer ${token}`
+  } catch {}
   return config
 })
 
