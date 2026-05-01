@@ -11,11 +11,13 @@ export function useAuth() {
   const qc = useQueryClient()
 
   const login = useMutation({
-    mutationFn: (body: { email: string; password: string }) => api.post('/auth/login', body),
-    onSuccess: ({ data }) => {
+    mutationFn: ({ next: _next, ...body }: { email: string; password: string; next?: string }) =>
+      api.post('/auth/login', body),
+    onSuccess: ({ data }, variables) => {
       setAuth(data.user, data.accessToken)
       toast.success(`Welcome back, ${data.user.fullName}!`)
-      router.push('/')
+      const next = (variables as any).next || '/'
+      router.push(data.user.role === 'ADMIN' && next === '/' ? '/admin' : next)
     },
     onError: (err: any) => {
       const msg: string = err?.response?.data?.message || ''

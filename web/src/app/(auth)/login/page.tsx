@@ -1,6 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
+import { useSearchParams } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
@@ -18,6 +19,8 @@ type FormData = z.infer<typeof schema>
 export default function LoginPage() {
   const { login } = useAuth()
   const t = useT()
+  const searchParams = useSearchParams()
+  const next = searchParams.get('next') || '/'
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) })
 
   return (
@@ -29,7 +32,7 @@ export default function LoginPage() {
           <p className="text-muted-foreground text-sm">{t.auth.sign_in_sub}</p>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit((d) => login.mutate(d))} className="space-y-4">
+          <form onSubmit={handleSubmit((d) => login.mutate({ ...d, next }))} className="space-y-4">
             <div className="space-y-1">
               <label className="text-sm font-medium">{t.auth.email}</label>
               <Input type="email" placeholder="you@example.com" {...register('email')} />

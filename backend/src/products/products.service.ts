@@ -162,6 +162,21 @@ export class ProductsService {
   async delete(id: string) {
     const product = await this.prisma.product.findUnique({ where: { id } });
     if (!product) throw new NotFoundException('Product not found');
+
+    // Check if product is referenced in any orders (cannot delete order history)
+    const inOrders = await this.prisma.orderItem.count({ where: { productId: id } });
+    if (inOrders > 0) {
+      // Soft-delete: hide from store without breaking order history
+      await this.prisma.product.update({ where: { id }, data: { isActive: false } });
+      return { message: 'Product hidden (it exists in order history and cannot be fully deleted)' };
+    }
+
+    // Clear cart items first to avoid FK violation
+    await this.prisma.cartItem.deleteMany({ where: { productId: id } });
+    await this.prisma.wishlist.deleteMany({ where: { productId: id } });
+    await this.prisma.review.deleteMany({ where: { productId: id } });
+    await this.prisma.productImage.deleteMany({ where: { productId: id } });
+    await this.prisma.productVariant.deleteMany({ where: { productId: id } });
     await this.prisma.product.delete({ where: { id } });
     return { message: 'Product deleted' };
   }

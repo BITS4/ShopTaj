@@ -65,16 +65,18 @@ export class AdminService {
     };
   }
 
-  async getOrders(page = 1, limit = 20, status?: string) {
+  async getOrders(page?: any, limit?: any, status?: string) {
+    const p = Math.max(1, parseInt(page) || 1);
+    const l = Math.min(100, parseInt(limit) || 20);
+    const skip = (p - 1) * l;
     const where: any = {};
     if (status) where.status = status;
-    const skip = (page - 1) * limit;
     const [orders, total] = await Promise.all([
       this.prisma.order.findMany({
         where,
         orderBy: { createdAt: 'desc' },
         skip,
-        take: limit,
+        take: l,
         include: {
           user: { select: { id: true, email: true, fullName: true } },
           items: true,
@@ -82,7 +84,7 @@ export class AdminService {
       }),
       this.prisma.order.count({ where }),
     ]);
-    return { data: orders, meta: { total, page, limit } };
+    return { data: orders, meta: { total, page: p, limit: l } };
   }
 
   async updateOrderStatus(orderId: string, dto: UpdateOrderStatusDto) {
@@ -91,18 +93,20 @@ export class AdminService {
     return this.prisma.order.update({ where: { id: orderId }, data: { status: dto.status as any } });
   }
 
-  async getUsers(page = 1, limit = 20) {
-    const skip = (page - 1) * limit;
+  async getUsers(page?: any, limit?: any) {
+    const p = Math.max(1, parseInt(page) || 1);
+    const l = Math.min(100, parseInt(limit) || 20);
+    const skip = (p - 1) * l;
     const [users, total] = await Promise.all([
       this.prisma.user.findMany({
         skip,
-        take: limit,
+        take: l,
         orderBy: { createdAt: 'desc' },
         select: { id: true, email: true, fullName: true, role: true, isBanned: true, createdAt: true },
       }),
       this.prisma.user.count(),
     ]);
-    return { data: users, meta: { total, page, limit } };
+    return { data: users, meta: { total, page: p, limit: l } };
   }
 
   async banUser(userId: string, ban: boolean) {

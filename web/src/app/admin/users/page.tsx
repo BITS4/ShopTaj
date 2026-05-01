@@ -10,9 +10,10 @@ import { toast } from 'sonner'
 export default function AdminUsersPage() {
   const qc = useQueryClient()
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => { const { data } = await api.get('/admin/users'); return data },
+    retry: 1,
   })
 
   const toggleBan = useMutation({
@@ -27,6 +28,13 @@ export default function AdminUsersPage() {
 
       {isLoading ? (
         <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-14 rounded-lg" />)}</div>
+      ) : isError ? (
+        <div className="text-center py-16 border rounded-xl text-muted-foreground">
+          <p className="font-medium text-destructive">Failed to load users</p>
+          <p className="text-sm mt-1">Make sure you are logged in as admin@shoptaj.com</p>
+        </div>
+      ) : !data?.data?.length ? (
+        <div className="text-center py-16 border rounded-xl text-muted-foreground">No users found</div>
       ) : (
         <div className="border rounded-xl overflow-hidden">
           <table className="w-full text-sm">

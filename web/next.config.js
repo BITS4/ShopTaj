@@ -4,6 +4,7 @@ const nextConfig = {
     remotePatterns: [
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      { protocol: 'http', hostname: 'localhost' },
     ],
   },
   experimental: { serverActions: { allowedOrigins: ['localhost:3000'] } },

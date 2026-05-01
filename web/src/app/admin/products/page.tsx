@@ -21,10 +21,9 @@ export default function AdminProductsPage() {
     defaultValues: { isActive: true, isFeatured: false },
   })
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ['admin-products'],
     queryFn: async () => {
-      // Use admin endpoint which bypasses isActive filter
       const { data } = await api.get('/admin/products-list')
       return data
     },
@@ -38,14 +37,7 @@ export default function AdminProductsPage() {
   const create = useMutation({
     mutationFn: async (body: any) => {
       const { data: product } = await api.post('/admin/products', body)
-      // Upload images if selected
-      if (imageFiles && imageFiles.length > 0) {
-        const formData = new FormData()
-        Array.from(imageFiles).forEach((f) => formData.append('files', f))
-        await api.post(`/admin/products/${product.id}/images`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        })
-      }
+      await uploadImages(product.id)
       return product
     },
     onSuccess: () => {
@@ -57,17 +49,27 @@ export default function AdminProductsPage() {
       reset({ isActive: true, isFeatured: false })
     },
     onError: (err: any) => {
+      const status = err?.response?.status
       const msg = err?.response?.data?.message
-      toast.error(Array.isArray(msg) ? msg.join(', ') : msg || 'Failed to create product')
+      if (status === 403) {
+        toast.error('Access denied. You must be logged in as Admin.')
+      } else {
+        toast.error(Array.isArray(msg) ? msg.join(', ') : msg || 'Failed to create product')
+      }
     },
   })
 
   const update = useMutation({
-    mutationFn: ({ id, ...body }: any) => api.patch(`/admin/products/${id}`, body),
+    mutationFn: async ({ id, ...body }: any) => {
+      await api.patch(`/admin/products/${id}`, body)
+      await uploadImages(id)
+    },
     onSuccess: () => {
       toast.success('Product updated')
       qc.invalidateQueries({ queryKey: ['admin-products'] })
+      qc.invalidateQueries({ queryKey: ['products'] })
       setEditId(null)
+      setImageFiles(null)
       reset({ isActive: true, isFeatured: false })
     },
     onError: (err: any) => toast.error(err?.response?.data?.message || 'Failed to update'),
@@ -75,9 +77,27 @@ export default function AdminProductsPage() {
 
   const remove = useMutation({
     mutationFn: (id: string) => api.delete(`/admin/products/${id}`),
-    onSuccess: () => { toast.success('Product deleted'); qc.invalidateQueries({ queryKey: ['admin-products'] }) },
-    onError: () => toast.error('Failed to delete product'),
+    onSuccess: ({ data }) => {
+      toast.success(data?.message || 'Product deleted')
+      qc.invalidateQueries({ queryKey: ['admin-products'] })
+      qc.invalidateQueries({ queryKey: ['products'] })
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message || 'Failed to delete product'),
   })
+
+  const uploadImages = async (productId: string) => {
+    if (!imageFiles || imageFiles.length === 0) return
+    try {
+      const formData = new FormData()
+      Array.from(imageFiles).forEach((f) => formData.append('files', f))
+      await api.post(`/admin/products/${productId}/images`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      toast.success('Images uploaded!')
+    } catch (err: any) {
+      toast.warning('Product saved, but image upload failed: ' + (err?.response?.data?.message || 'unknown error'))
+    }
+  }
 
   const onSubmit = (formData: any) => {
     // Convert types properly
@@ -198,19 +218,23 @@ export default function AdminProductsPage() {
                   <Input {...register('tags')} placeholder="electronics, wireless, bluetooth" />
                 </div>
 
-                {/* Images — only on create */}
-                {!editId && (
-                  <div>
-                    <label className="text-xs font-medium">Images <span className="text-muted-foreground">(optional, max 5MB each)</span></label>
-                    <Input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      multiple
-                      onChange={(e) => setImageFiles(e.target.files)}
-                      className="h-10 text-sm pt-1.5"
-                    />
-                  </div>
-                )}
+                {/* Images — available on both create and edit */}
+                <div>
+                  <label className="text-xs font-medium">
+                    {editId ? 'Add / Replace Images' : 'Images'}
+                    <span className="text-muted-foreground font-normal ml-1">(optional, max 5MB each)</span>
+                  </label>
+                  <Input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple
+                    onChange={(e) => setImageFiles(e.target.files)}
+                    className="h-10 text-sm pt-1.5"
+                  />
+                  {editId && (
+                    <p className="text-xs text-muted-foreground mt-1">New images will be added alongside existing ones.</p>
+                  )}
+                </div>
 
                 <div className="flex items-center gap-6 sm:col-span-2">
                   <label className="flex items-center gap-2 cursor-pointer">
@@ -246,6 +270,15 @@ export default function AdminProductsPage() {
       {/* Products table */}
       {isLoading ? (
         <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-lg" />)}</div>
+      ) : isError ? (
+        <div className="text-center py-16 border rounded-xl text-destructive">
+          <p className="font-medium">Failed to load products</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {(error as any)?.response?.status === 403
+              ? 'You are not logged in as Admin. Use admin@shoptaj.com'
+              : 'Check that the backend is running'}
+          </p>
+        </div>
       ) : !data?.length ? (
         <div className="text-center py-16 text-muted-foreground border rounded-xl">
           <p className="text-lg mb-2">No products yet</p>

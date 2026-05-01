@@ -14,13 +14,14 @@ export default function AdminOrdersPage() {
   const qc = useQueryClient()
   const [filter, setFilter] = useState('')
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['admin-orders', filter],
     queryFn: async () => {
       const params = filter ? `?status=${filter}` : ''
       const { data } = await api.get(`/admin/orders${params}`)
       return data
     },
+    retry: 1,
   })
 
   const updateStatus = useMutation({
@@ -45,6 +46,13 @@ export default function AdminOrdersPage() {
 
       {isLoading ? (
         <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-lg" />)}</div>
+      ) : isError ? (
+        <div className="text-center py-16 border rounded-xl text-muted-foreground">
+          <p className="font-medium text-destructive">Failed to load orders</p>
+          <p className="text-sm mt-1">Make sure you are logged in as admin@shoptaj.com</p>
+        </div>
+      ) : !data?.data?.length ? (
+        <div className="text-center py-16 border rounded-xl text-muted-foreground">No orders found</div>
       ) : (
         <div className="border rounded-xl overflow-hidden">
           <table className="w-full text-sm">
