@@ -42,23 +42,6 @@ export default function ProfileTab() {
         <TouchableOpacity style={styles.btnOutline} onPress={() => router.push('/(auth)/register')}>
           <Text style={styles.btnOutlineText}>{L.createBtn}</Text>
         </TouchableOpacity>
-
-        {/* Language switcher for guests too */}
-        <View style={styles.langSection}>
-          <Text style={styles.langLabel}>{L.language}</Text>
-          <View style={styles.langRow}>
-            {LOCALES.map((l) => (
-              <TouchableOpacity
-                key={l.key}
-                style={[styles.langBtn, locale === l.key && styles.langBtnActive]}
-                onPress={() => setLocale(l.key)}
-              >
-                <Text style={styles.langFlag}>{l.flag}</Text>
-                <Text style={[styles.langText, locale === l.key && styles.langTextActive]}>{l.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
       </ScrollView>
     )
   }
@@ -80,7 +63,7 @@ export default function ProfileTab() {
         <MenuItem label={L.editProfile} onPress={() => router.push('/edit-profile')} />
       </View>
 
-      {/* Language switcher */}
+      {/* Language switcher — only shown when logged in */}
       <View style={styles.langSection}>
         <Text style={styles.langLabel}>{L.language}</Text>
         <View style={styles.langRow}>
