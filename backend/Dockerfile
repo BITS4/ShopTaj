@@ -10,7 +10,7 @@ COPY prisma ./prisma/
 RUN npx prisma generate
 
 COPY . .
-RUN ./node_modules/.bin/nest build
+RUN ./node_modules/.bin/nest build && ls -la dist/
 
 # ── Stage 2: Runtime ─────────────────────────────────────────────────────────
 FROM node:20-slim AS runner
