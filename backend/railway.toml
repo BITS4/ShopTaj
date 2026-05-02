@@ -1,8 +1,7 @@
 [build]
-builder = "NIXPACKS"
-buildCommand = "npm install --include=dev && npx prisma generate && ./node_modules/.bin/nest build"
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "npx prisma migrate deploy && node dist/main"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
