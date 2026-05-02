@@ -9,5 +9,5 @@ build/
 .env.production
 .DS_Store
 coverage/
-prisma/migrations/
+# migrations must be tracked for Railway/Render deployment — do NOT ignore
 *.tsbuildinfo

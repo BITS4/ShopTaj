@@ -1,15 +1,22 @@
 import axios from 'axios'
 import * as SecureStore from 'expo-secure-store'
+import Constants from 'expo-constants'
 
-// Use your computer's IP address so the phone can reach the backend
-const SERVER_HOST = '192.168.1.9'
-const BASE_URL = `http://${SERVER_HOST}:3001/api`
+// In development: use your local IP so the phone can reach the dev server
+// In production:  reads from app.json extra.apiUrl (set to your Railway backend)
+const DEV_HOST = '192.168.1.9'
+const BASE_URL: string =
+  Constants.expoConfig?.extra?.apiUrl ??
+  `http://${DEV_HOST}:3001/api`
 
-// Images are served by Next.js (port 3000). Replace localhost so the phone can reach them.
+// Images in dev are served by Next.js on port 3000.
+// In production they'll come from Cloudinary or the Railway backend — no fix needed.
 export function fixImageUrl(url: string | null | undefined): string | undefined {
   if (!url) return undefined
-  return url.replace('http://localhost:3000', `http://${SERVER_HOST}:3000`)
-             .replace('https://localhost:3000', `http://${SERVER_HOST}:3000`)
+  if (url.startsWith('http://localhost:3000')) {
+    return url.replace('http://localhost:3000', `http://${DEV_HOST}:3000`)
+  }
+  return url
 }
 
 const api = axios.create({ baseURL: BASE_URL })
