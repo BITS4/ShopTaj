@@ -104,14 +104,14 @@ export default function DeliveryMap({ onSelect, selected, disabled = false }: Pr
     setLoading(true)
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&zoom=18`,
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&namedetails=1&zoom=19`,
         { headers: { 'Accept-Language': 'ru,tg;q=0.9,en;q=0.8' } },
       )
       const data = await res.json()
       const a = data.address || {}
 
       // Extract all available components
-      const houseNumber = a.house_number || ''
+      const houseNumber = a.house_number || a['addr:housenumber'] || a.house || ''
       const road = a.road || a.pedestrian || a.path || a.footway || a.residential || a.hamlet || ''
       const neighborhood = a.neighbourhood || a.suburb || a.quarter || a.allotments || ''
       const district = a.city_district || a.district || a.state_district || ''

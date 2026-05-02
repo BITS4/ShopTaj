@@ -95,6 +95,11 @@ export class AdminController {
     return this.adminService.updateOrderStatus(id, dto);
   }
 
+  @Patch('orders/:id/payment')
+  confirmPayment(@Param('id') id: string, @Body() body: { paymentStatus: string }) {
+    return this.adminService.confirmPayment(id, body.paymentStatus);
+  }
+
   // ── Users ─────────────────────────────────────────────────────────────────
   @Get('users')
   getUsers(@Query('page') page: number, @Query('limit') limit: number) {

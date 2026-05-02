@@ -5,6 +5,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import Stripe from 'stripe';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../common/email/email.service';
+import { SmsService } from '../common/sms/sms.service';
+import { BePaidService } from '../common/bepaid/bepaid.service';
 
 export class CreatePaymentIntentDto {
   @ApiProperty() @IsUUID() addressId: string;
@@ -20,6 +22,20 @@ export class ConfirmOrderDto {
   @ApiPropertyOptional() @IsOptional() @IsNumber() totalAmount?: number;
 }
 
+export class BankTransferOrderDto {
+  @ApiProperty() @IsString() addressId: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() shippingMethod?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() couponCode?: string;
+}
+
+export class BePaidCreateDto {
+  @ApiProperty() @IsString() addressId: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() shippingMethod?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() couponCode?: string;
+  @ApiProperty() @IsString() successUrl: string;
+  @ApiProperty() @IsString() failUrl: string;
+}
+
 @Injectable()
 export class PaymentsService {
   private stripe: Stripe;
@@ -29,6 +45,8 @@ export class PaymentsService {
     private config: ConfigService,
     private prisma: PrismaService,
     private email: EmailService,
+    private sms: SmsService,
+    private bepaid: BePaidService,
   ) {
     this.stripe = new Stripe(this.config.get('STRIPE_SECRET_KEY'), { apiVersion: '2023-10-16' });
   }
@@ -157,12 +175,188 @@ export class PaymentsService {
     // Clear cart
     await this.prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
 
-    // Send confirmation email (non-blocking)
+    // Send confirmation email + SMS (non-blocking)
     this.prisma.user.findUnique({ where: { id: userId } }).then((user) => {
-      if (user) this.email.sendOrderConfirmationEmail(user.email, user.fullName, order.id).catch(() => {});
+      if (!user) return;
+      this.email.sendOrderConfirmationEmail(user.email, user.fullName, order.id).catch(() => {});
+      this.sms.sendOrderConfirmation(user.phone, order.id, `$${Number(order.totalAmount).toFixed(2)}`).catch(() => {});
     });
 
     return order;
+  }
+
+  async createBankTransferOrder(userId: string, dto: BankTransferOrderDto) {
+    const cart = await this.prisma.cart.findUnique({
+      where: { userId },
+      include: { items: { include: { product: true, variant: true } } },
+    });
+    if (!cart || cart.items.length === 0) throw new BadRequestException('Cart is empty');
+
+    let subtotal = cart.items.reduce((sum, item) => {
+      const price = Number(item.variant?.price ?? item.product.discountPrice ?? item.product.price);
+      return sum + price * item.quantity;
+    }, 0);
+
+    let discountAmount = 0;
+    if (dto.couponCode) {
+      const coupon = await this.prisma.coupon.findUnique({ where: { code: dto.couponCode } });
+      if (coupon && coupon.isActive) {
+        discountAmount = coupon.discountType === 'PERCENTAGE'
+          ? (subtotal * Number(coupon.discountValue)) / 100
+          : Number(coupon.discountValue);
+      }
+    }
+
+    const shippingAmount = dto.shippingMethod === 'express' ? 15 : 5;
+    const totalAmount = Math.max(0, subtotal - discountAmount) + shippingAmount;
+
+    const order = await this.prisma.order.create({
+      data: {
+        userId,
+        shippingAddressId: dto.addressId,
+        totalAmount,
+        shippingAmount,
+        discountAmount,
+        paymentStatus: 'UNPAID',
+        status: 'PENDING',
+        items: {
+          create: cart.items.map((item) => ({
+            productId: item.productId,
+            variantId: item.variantId,
+            quantity: item.quantity,
+            priceAtPurchase: item.variant?.price ?? item.product.discountPrice ?? item.product.price,
+            productName: item.product.name,
+            productImage: null,
+          })),
+        },
+      },
+    });
+
+    await this.prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
+
+    this.prisma.user.findUnique({ where: { id: userId } }).then((user) => {
+      if (!user) return;
+      this.email.sendOrderConfirmationEmail(user.email, user.fullName, order.id).catch(() => {});
+      this.sms.sendOrderConfirmation(user.phone, order.id, `$${Number(order.totalAmount).toFixed(2)}`).catch(() => {});
+    });
+
+    return { orderId: order.id, totalAmount, status: 'PENDING', paymentStatus: 'UNPAID' };
+  }
+
+  async createBePaidOrder(userId: string, dto: BePaidCreateDto) {
+    if (!this.bepaid.isConfigured) {
+      throw new BadRequestException('bePaid is not configured yet. Please contact the store admin.');
+    }
+
+    const cart = await this.prisma.cart.findUnique({
+      where: { userId },
+      include: { items: { include: { product: true, variant: true } } },
+    });
+    if (!cart || cart.items.length === 0) throw new BadRequestException('Cart is empty');
+
+    let subtotal = cart.items.reduce((sum, item) => {
+      const price = Number(item.variant?.price ?? item.product.discountPrice ?? item.product.price);
+      return sum + price * item.quantity;
+    }, 0);
+
+    let discountAmount = 0;
+    if (dto.couponCode) {
+      const coupon = await this.prisma.coupon.findUnique({ where: { code: dto.couponCode } });
+      if (coupon && coupon.isActive) {
+        discountAmount = coupon.discountType === 'PERCENTAGE'
+          ? (subtotal * Number(coupon.discountValue)) / 100
+          : Number(coupon.discountValue);
+      }
+    }
+
+    const shippingAmount = dto.shippingMethod === 'express' ? 15 : 5;
+    const totalAmount = Math.max(0, subtotal - discountAmount) + shippingAmount;
+
+    // Create order as PENDING/UNPAID — confirmed when bepaid webhook fires
+    const order = await this.prisma.order.create({
+      data: {
+        userId,
+        shippingAddressId: dto.addressId,
+        totalAmount,
+        shippingAmount,
+        discountAmount,
+        paymentStatus: 'UNPAID',
+        status: 'PENDING',
+        items: {
+          create: cart.items.map((item) => ({
+            productId: item.productId,
+            variantId: item.variantId,
+            quantity: item.quantity,
+            priceAtPurchase: item.variant?.price ?? item.product.discountPrice ?? item.product.price,
+            productName: item.product.name,
+            productImage: null,
+          })),
+        },
+      },
+    });
+
+    // Clear cart immediately
+    await this.prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
+
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const notificationUrl = `${this.config.get('BACKEND_URL') || 'http://localhost:3001'}/api/payments/bepaid-webhook`;
+
+    const checkout = await this.bepaid.createCheckout({
+      orderId: order.id,
+      amount: totalAmount,
+      currency: this.config.get('BEPAID_CURRENCY') || 'USD',
+      description: `ShopTaj Order #${order.id.slice(0, 8).toUpperCase()}`,
+      customerEmail: user?.email || '',
+      successUrl: `${dto.successUrl}?orderId=${order.id}`,
+      failUrl: `${dto.failUrl}?orderId=${order.id}&failed=1`,
+      notificationUrl,
+    });
+
+    return { orderId: order.id, redirectUrl: checkout.redirectUrl };
+  }
+
+  async handleBePaidWebhook(body: any) {
+    const tx = body?.transaction;
+    if (!tx) return { received: true };
+
+    const orderId = tx.tracking_id;
+    if (!orderId) return { received: true };
+
+    if (tx.status === 'successful' && tx.payment?.status === 'successful') {
+      const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+      if (!order || order.paymentStatus === 'PAID') return { received: true };
+
+      await this.prisma.order.update({
+        where: { id: orderId },
+        data: { paymentStatus: 'PAID', status: 'PROCESSING' },
+      });
+
+      // Decrement stock
+      const items = await this.prisma.orderItem.findMany({ where: { orderId } });
+      for (const item of items) {
+        if (item.variantId) {
+          await this.prisma.productVariant.update({ where: { id: item.variantId }, data: { stock: { decrement: item.quantity } } }).catch(() => {});
+        } else {
+          await this.prisma.product.update({ where: { id: item.productId }, data: { stock: { decrement: item.quantity } } }).catch(() => {});
+        }
+      }
+
+      const user = await this.prisma.user.findUnique({ where: { id: order.userId } });
+      if (user) {
+        this.email.sendOrderConfirmationEmail(user.email, user.fullName, orderId).catch(() => {});
+        this.sms.sendOrderConfirmation(user.phone, orderId, `$${Number(order.totalAmount).toFixed(2)}`).catch(() => {});
+      }
+
+      this.logger.log(`bePaid payment confirmed for order ${orderId}`);
+    } else if (['failed', 'expired'].includes(tx.status)) {
+      await this.prisma.order.update({
+        where: { id: orderId },
+        data: { paymentStatus: 'FAILED', status: 'CANCELLED' },
+      }).catch(() => {});
+      this.logger.warn(`bePaid payment ${tx.status} for order ${orderId}`);
+    }
+
+    return { received: true };
   }
 
   async handleWebhook(rawBody: Buffer, signature: string) {

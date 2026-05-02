@@ -11,6 +11,7 @@ const tg: Translations = {
     search: 'Ҷустуҷӯи молҳо...',
     cart: 'Сабад',
     wishlist: 'Дӯстдоштаҳо',
+    orders: 'Фармоишҳо',
   },
   home: {
     hero_title: 'Молҳои беҳтаринро кашф кунед',

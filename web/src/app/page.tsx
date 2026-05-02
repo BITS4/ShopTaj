@@ -12,7 +12,7 @@ export default function HomePage() {
 
   const { data: featured, isLoading: loadingFeatured } = useQuery({
     queryKey: ['featured'],
-    queryFn: async () => { const { data } = await api.get('/products/featured'); return data },
+    queryFn: async () => { const { data } = await api.get('/products?limit=12&sortBy=newest'); return data.data },
   })
 
   const { data: categories } = useQuery({
@@ -57,7 +57,7 @@ export default function HomePage() {
       <section className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-3xl font-bold">{t.home.featured_products}</h2>
-          <Link href="/products?featured=true">
+          <Link href="/products">
             <Button variant="ghost">{t.home.view_all} →</Button>
           </Link>
         </div>
@@ -72,12 +72,6 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* CTA Banner */}
-      <section className="mx-4 my-16 rounded-2xl bg-primary text-primary-foreground p-12 text-center">
-        <h2 className="text-3xl font-bold mb-4">{t.home.cta_title}</h2>
-        <p className="mb-6 opacity-90">{t.home.cta_sub}</p>
-        <Link href="/register"><Button variant="secondary" size="lg">{t.home.create_account}</Button></Link>
-      </section>
     </div>
   )
 }

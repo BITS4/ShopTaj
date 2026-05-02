@@ -1,7 +1,7 @@
 import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, Alert } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import api from '../../lib/api'
+import api, { fixImageUrl } from '../../lib/api'
 
 export default function CartTab() {
   const router = useRouter()
@@ -45,7 +45,7 @@ export default function CartTab() {
         renderItem={({ item }) => (
           <View style={styles.item}>
             {item.product.images?.[0] ? (
-              <Image source={{ uri: item.product.images[0].url }} style={styles.img} resizeMode="cover" />
+              <Image source={{ uri: fixImageUrl(item.product.images[0].url) }} style={styles.img} resizeMode="cover" />
             ) : (
               <View style={[styles.img, { backgroundColor: '#f3f4f6' }]} />
             )}

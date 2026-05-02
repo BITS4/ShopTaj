@@ -95,7 +95,11 @@ function CheckoutForm({
       <Button type="submit" className="w-full" size="lg" disabled={paying || !isReady}>
         {!isReady ? 'Loading…' : btnLabel}
       </Button>
-      <p className="text-xs text-center text-muted-foreground">{t.checkout.test_card}</p>
+      <p className="text-xs text-center text-muted-foreground">
+        {process.env.NODE_ENV === 'production'
+          ? '🔒 Secured by Stripe'
+          : t.checkout.test_card}
+      </p>
     </form>
   )
 }
@@ -103,6 +107,7 @@ function CheckoutForm({
 // ─── Main checkout page ───────────────────────────────────────────────────────
 export default function CheckoutPage() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const couponCode = searchParams.get('coupon') ?? ''
   const t = useT()
 
@@ -110,7 +115,7 @@ export default function CheckoutPage() {
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null)
   const [mapLocation, setMapLocation] = useState<MapLocation | null>(null)
   const [showMap, setShowMap] = useState(false)
-  const [newAddrForm, setNewAddrForm] = useState({ label: 'Home', street: '', city: '', country: 'Tajikistan', zip: '' })
+  const [newAddrForm, setNewAddrForm] = useState({ label: 'Home', street: '', city: '', country: 'Tajikistan', zip: '', houseNumber: '' })
   const [savingAddr, setSavingAddr] = useState(false)
 
   // Shipping state
@@ -119,6 +124,7 @@ export default function CheckoutPage() {
   // Payment state — once set, address & shipping are LOCKED
   const [paymentData, setPaymentData] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+  const [payMethod, setPayMethod] = useState<'card' | 'korti_milli' | 'dc_bank'>('card')
 
   const locked = !!paymentData // true after "Continue to Payment" is clicked
 
@@ -127,23 +133,22 @@ export default function CheckoutPage() {
     queryFn: async () => { const { data } = await api.get('/users/me/addresses'); return data },
   })
 
-  const { data: cart } = useQuery({
+  const { data: cart, isLoading: cartLoading } = useQuery({
     queryKey: ['cart'],
     queryFn: async () => { const { data } = await api.get('/cart'); return data },
+    staleTime: 0,
+    refetchOnMount: true,
   })
 
   // When map location is picked, auto-fill address form with all fields
   const handleMapSelect = (loc: MapLocation) => {
     setMapLocation(loc)
-    // Build a detailed street line: "ул. Rudaki, д. 25" or just street name
-    const streetLine = loc.street
-      ? `${loc.street}${loc.houseNumber ? `, д. ${loc.houseNumber}` : ''}`
-      : loc.address
     setNewAddrForm((prev) => ({
       ...prev,
-      street: streetLine,
+      street: loc.street || loc.address || '',
       city: loc.city || 'Dushanbe',
       country: 'Tajikistan',
+      houseNumber: loc.houseNumber || prev.houseNumber,
     }))
   }
 
@@ -151,12 +156,12 @@ export default function CheckoutPage() {
     if (!mapLocation) { toast.error('Please select a location on the map'); return }
     setSavingAddr(true)
     try {
-      const streetLine = mapLocation.street
-        ? `${mapLocation.street}${mapLocation.houseNumber ? `, д. ${mapLocation.houseNumber}` : ''}`
-        : mapLocation.address
+      const fullStreet = newAddrForm.houseNumber
+        ? `${newAddrForm.street}, д. ${newAddrForm.houseNumber}`
+        : newAddrForm.street || mapLocation.address
       const { data: newAddr } = await api.post('/users/me/addresses', {
         label: newAddrForm.label,
-        street: newAddrForm.street || streetLine,
+        street: fullStreet,
         city: newAddrForm.city || mapLocation.city,
         state: mapLocation.district || mapLocation.neighborhood || undefined,
         country: 'Tajikistan',
@@ -170,6 +175,39 @@ export default function CheckoutPage() {
       toast.error('Failed to save address')
     }
     setSavingAddr(false)
+  }
+
+  const handleKortiMilli = async () => {
+    if (!cartLoading && cart && !cart.items?.length) {
+      toast.error('Your cart is empty. Please add items before checking out.')
+      return
+    }
+    if (!selectedAddress && !mapLocation) { toast.error('Please select a delivery address'); return }
+    let addrId = selectedAddress
+    if (!addrId && mapLocation) {
+      setSavingAddr(true)
+      try {
+        const { data: newAddr } = await api.post('/users/me/addresses', {
+          label: 'Delivery Point', street: mapLocation.address, city: mapLocation.city, country: 'Tajikistan', zip: '000000',
+        })
+        addrId = newAddr.id
+        await refetchAddresses()
+      } catch { toast.error('Failed to save address'); setSavingAddr(false); return }
+      setSavingAddr(false)
+    }
+    setLoading(true)
+    try {
+      const { data } = await api.post('/payments/bank-transfer-order', {
+        addressId: addrId,
+        shippingMethod,
+        couponCode: couponCode || undefined,
+      })
+      router.push(`/checkout/success?orderId=${data.orderId}&method=${payMethod}`)
+    } catch (err: any) {
+      const msg = err?.response?.data?.message
+      toast.error(Array.isArray(msg) ? msg.join(', ') : msg || 'Failed to place order')
+      setLoading(false)
+    }
   }
 
   const createIntent = async () => {
@@ -201,6 +239,11 @@ export default function CheckoutPage() {
       setSavingAddr(false)
     }
 
+    if (!cartLoading && cart && !cart.items?.length) {
+      toast.error('Your cart is empty. Please add items before checking out.')
+      return
+    }
+
     setLoading(true)
     try {
       const { data } = await api.post('/payments/create-intent', {
@@ -209,13 +252,25 @@ export default function CheckoutPage() {
         shippingMethod,
       })
       setPaymentData(data)
-    } catch {
-      toast.error(t.common.error)
+    } catch (err: any) {
+      const msg = err?.response?.data?.message
+      toast.error(Array.isArray(msg) ? msg.join(', ') : msg || t.common.error)
     }
     setLoading(false)
   }
 
   const selectedAddrData = addresses?.find((a: any) => a.id === selectedAddress)
+
+  if (!cartLoading && cart && cart.items?.length === 0) {
+    return (
+      <div className="container mx-auto max-w-3xl px-4 py-16 text-center">
+        <p className="text-2xl mb-4">🛒</p>
+        <h1 className="text-2xl font-bold mb-2">Your cart is empty</h1>
+        <p className="text-muted-foreground mb-6">Add some products before checking out.</p>
+        <Button onClick={() => router.push('/products')}>Browse Products</Button>
+      </div>
+    )
+  }
 
   return (
     <div className="container mx-auto max-w-3xl px-4 py-8">
@@ -327,15 +382,24 @@ export default function CheckoutPage() {
                         />
                       </div>
 
-                      <div className="col-span-2">
-                        <label className="text-xs font-medium">
-                          Street & House Number
-                          <span className="text-muted-foreground font-normal ml-1">(auto-filled, edit if needed)</span>
-                        </label>
+                      <div>
+                        <label className="text-xs font-medium">Street</label>
                         <Input
                           value={newAddrForm.street}
                           onChange={(e) => setNewAddrForm({ ...newAddrForm, street: e.target.value })}
-                          placeholder="ул. Рудаки, д. 25"
+                          placeholder="ул. Рудаки"
+                          className="h-9 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium">
+                          House / Apt №
+                          <span className="text-muted-foreground font-normal ml-1 text-red-500">*</span>
+                        </label>
+                        <Input
+                          value={newAddrForm.houseNumber}
+                          onChange={(e) => setNewAddrForm({ ...newAddrForm, houseNumber: e.target.value })}
+                          placeholder="25 / кв. 3"
                           className="h-9 text-sm"
                         />
                       </div>
@@ -452,16 +516,47 @@ export default function CheckoutPage() {
         )}
 
         {/* ── Continue to Payment / Payment form ── */}
+        {/* Payment method selector */}
+        {!locked && (
+          <Card>
+            <CardHeader><CardTitle>Payment Method</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              {[
+                { id: 'card', label: 'Credit / Debit Card', sub: 'Visa, Mastercard — online card payment', icon: '💳' },
+                { id: 'korti_milli', label: 'Корти Миллӣ — Alif Bank', sub: 'Pay via Alif Mobi app or Alif Bank transfer', icon: '🟢' },
+                { id: 'dc_bank', label: 'Корти Миллӣ — DC Bank (Dushanbe City)', sub: 'Pay via DC Next app or DC Bank transfer — 1.2% commission', icon: '🔵' },
+              ].map((m) => (
+                <label key={m.id} className={`flex items-center gap-3 border rounded-lg p-3 cursor-pointer transition ${payMethod === m.id ? 'border-primary bg-primary/5' : 'hover:border-muted-foreground'}`}>
+                  <input type="radio" name="payMethod" value={m.id} checked={payMethod === m.id} onChange={() => setPayMethod(m.id as any)} />
+                  <span className="text-xl">{m.icon}</span>
+                  <div className="text-sm flex-1">
+                    <p className="font-semibold">{m.label}</p>
+                    <p className="text-muted-foreground text-xs">{m.sub}</p>
+                  </div>
+                </label>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
         {!paymentData ? (
           <Button
             className="w-full"
             size="lg"
-            onClick={createIntent}
-            disabled={loading || savingAddr || (!selectedAddress && !mapLocation)}
+            onClick={payMethod === 'korti_milli' || payMethod === 'dc_bank' ? handleKortiMilli : createIntent}
+            disabled={loading || savingAddr || cartLoading || (!selectedAddress && !mapLocation)}
           >
-            {loading || savingAddr ? t.checkout.loading : t.checkout.continue_payment}
+            {cartLoading
+              ? 'Loading cart…'
+              : loading || savingAddr
+              ? t.checkout.loading
+              : payMethod === 'korti_milli'
+              ? 'Place Order — Alif Bank'
+              : payMethod === 'dc_bank'
+              ? 'Place Order — DC Bank'
+              : t.checkout.continue_payment}
           </Button>
-        ) : (
+        ) : payMethod === 'korti_milli' ? null : (
           <Card>
             <CardHeader><CardTitle>{t.checkout.payment_details}</CardTitle></CardHeader>
             <CardContent>

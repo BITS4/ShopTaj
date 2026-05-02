@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ShoppingBag, Search, User, Menu, X, Heart } from 'lucide-react'
+import { ShoppingBag, Search, User, Menu, X, Heart, Package } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -56,8 +56,11 @@ export default function Navbar() {
 
           {user ? (
             <>
+              <Link href="/profile/orders">
+                <Button variant="ghost" size="icon" title={t.nav.orders}><Package className="h-5 w-5" /></Button>
+              </Link>
               <Link href="/profile/wishlist">
-                <Button variant="ghost" size="icon"><Heart className="h-5 w-5" /></Button>
+                <Button variant="ghost" size="icon" title={t.nav.wishlist}><Heart className="h-5 w-5" /></Button>
               </Link>
               <Button variant="ghost" size="icon" onClick={toggleCart} className="relative">
                 <ShoppingBag className="h-5 w-5" />
@@ -114,6 +117,9 @@ export default function Navbar() {
               <Button variant="ghost" className="w-full justify-start" onClick={() => { toggleCart(); setMenuOpen(false) }}>
                 {t.nav.cart} ({itemCount()})
               </Button>
+              <Link href="/profile/orders" onClick={() => setMenuOpen(false)}>
+                <Button variant="ghost" className="w-full justify-start">{t.nav.orders}</Button>
+              </Link>
               <Link href="/profile" onClick={() => setMenuOpen(false)}>
                 <Button variant="ghost" className="w-full justify-start">{t.nav.profile}</Button>
               </Link>

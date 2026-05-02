@@ -17,8 +17,8 @@ export default function AdminProductsPage() {
   const [showForm, setShowForm] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
   const [imageFiles, setImageFiles] = useState<FileList | null>(null)
-  const { register, handleSubmit, reset, setValue, watch } = useForm({
-    defaultValues: { isActive: true, isFeatured: false },
+  const { register, handleSubmit, reset, setValue, watch } = useForm<any>({
+    defaultValues: { isActive: true, isFeatured: true },
   })
 
   const { data, isLoading, isError, error } = useQuery({
@@ -46,7 +46,7 @@ export default function AdminProductsPage() {
       qc.invalidateQueries({ queryKey: ['products'] })
       setShowForm(false)
       setImageFiles(null)
-      reset({ isActive: true, isFeatured: false })
+      reset({ isActive: true, isFeatured: true })
     },
     onError: (err: any) => {
       const status = err?.response?.status
@@ -70,7 +70,7 @@ export default function AdminProductsPage() {
       qc.invalidateQueries({ queryKey: ['products'] })
       setEditId(null)
       setImageFiles(null)
-      reset({ isActive: true, isFeatured: false })
+      reset({ isActive: true, isFeatured: true })
     },
     onError: (err: any) => toast.error(err?.response?.data?.message || 'Failed to update'),
   })
@@ -147,7 +147,7 @@ export default function AdminProductsPage() {
     setShowForm(false)
     setEditId(null)
     setImageFiles(null)
-    reset({ isActive: true, isFeatured: false })
+    reset({ isActive: true, isFeatured: true })
   }
 
   return (

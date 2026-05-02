@@ -10,6 +10,7 @@ const en = {
     search: 'Search products...',
     cart: 'Cart',
     wishlist: 'Wishlist',
+    orders: 'Orders',
   },
   // Home
   home: {

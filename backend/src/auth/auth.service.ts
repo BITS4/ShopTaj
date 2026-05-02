@@ -31,8 +31,24 @@ export class AuthService {
 
   // ─── Register ─────────────────────────────────────────────────────────────
   async register(dto: RegisterDto) {
+    // Purge stale unverified accounts (older than 24 h) in the background
+    this.prisma.user.deleteMany({
+      where: { isEmailVerified: false, createdAt: { lt: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
+    }).catch(() => {});
+
     const exists = await this.prisma.user.findUnique({ where: { email: dto.email } });
-    if (exists) throw new ConflictException('Email already in use');
+
+    if (exists) {
+      if (exists.isEmailVerified) throw new ConflictException('Email already in use');
+      // Unverified account still within the 24 h window — refresh code and resend
+      const code = generateCode();
+      await this.prisma.user.update({
+        where: { id: exists.id },
+        data: { verifyCode: code, verifyCodeExpiry: new Date(Date.now() + CODE_EXPIRY_MS) },
+      });
+      this.email.sendVerificationCode(exists.email, exists.fullName, code).catch((e) => console.error('[Email error]', e?.message || e));
+      return { message: 'A new verification code has been sent to your email.' };
+    }
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
     const code = generateCode();
@@ -51,7 +67,7 @@ export class AuthService {
     });
 
     // Fire-and-forget — never block the response waiting for email
-    this.email.sendVerificationCode(user.email, user.fullName, code).catch((e) => console.error("[Email error]", e?.message || e));
+    this.email.sendVerificationCode(user.email, user.fullName, code).catch((e) => console.error('[Email error]', e?.message || e));
     return { message: 'Registration successful. Enter the 6-digit code to verify your account.' };
   }
 

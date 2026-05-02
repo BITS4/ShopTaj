@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatPrice, formatDate } from '@/lib/utils'
 import { useT } from '@/store/language.store'
+import OrderTracker from '@/components/order/OrderTracker'
 import api from '@/lib/api'
 import { toast } from 'sonner'
 
@@ -42,6 +43,8 @@ export default function OrderDetailPage() {
         <Badge variant={STATUS_COLOR[order.status] || 'outline'}>{order.status}</Badge>
       </div>
       <p className="text-sm text-muted-foreground">{formatDate(order.createdAt)}</p>
+
+      <OrderTracker status={order.status} />
 
       <div className="border rounded-xl overflow-hidden">
         <h2 className="font-semibold px-4 py-3 border-b bg-muted/30">{t.orders.items}</h2>

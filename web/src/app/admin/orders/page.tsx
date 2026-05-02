@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatPrice, formatDate } from '@/lib/utils'
+import { formatPrice, formatDateTime } from '@/lib/utils'
 import api from '@/lib/api'
 import { toast } from 'sonner'
 
@@ -28,6 +28,12 @@ export default function AdminOrdersPage() {
     mutationFn: ({ id, status }: { id: string; status: string }) =>
       api.patch(`/admin/orders/${id}/status`, { status }),
     onSuccess: () => { toast.success('Status updated'); qc.invalidateQueries({ queryKey: ['admin-orders'] }) },
+  })
+
+  const confirmPayment = useMutation({
+    mutationFn: (id: string) => api.patch(`/admin/orders/${id}/payment`, { paymentStatus: 'PAID' }),
+    onSuccess: () => { toast.success('Payment confirmed!'); qc.invalidateQueries({ queryKey: ['admin-orders'] }) },
+    onError: (err: any) => toast.error(err?.response?.data?.message || 'Failed'),
   })
 
   return (
@@ -72,7 +78,7 @@ export default function AdminOrdersPage() {
                   <td className="px-4 py-3 font-mono text-xs">{order.id.slice(0, 8).toUpperCase()}</td>
                   <td className="px-4 py-3 hidden md:table-cell">{order.user?.fullName}<br /><span className="text-muted-foreground text-xs">{order.user?.email}</span></td>
                   <td className="px-4 py-3 font-semibold">{formatPrice(order.totalAmount)}</td>
-                  <td className="px-4 py-3 hidden sm:table-cell text-muted-foreground">{formatDate(order.createdAt)}</td>
+                  <td className="px-4 py-3 hidden sm:table-cell text-muted-foreground whitespace-nowrap">{formatDateTime(order.createdAt)}</td>
                   <td className="px-4 py-3">
                     <select
                       value={order.status}
@@ -82,7 +88,20 @@ export default function AdminOrdersPage() {
                       {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">{order.items?.length} items</td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                    <div>{order.items?.length} items</div>
+                    {order.paymentStatus === 'UNPAID' && (
+                      <button
+                        className="mt-1 text-xs bg-green-600 text-white px-2 py-0.5 rounded hover:bg-green-700"
+                        onClick={() => confirmPayment.mutate(order.id)}
+                      >
+                        ✓ Mark Paid
+                      </button>
+                    )}
+                    {order.paymentStatus === 'PAID' && (
+                      <span className="text-green-600 font-medium">✓ Paid</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

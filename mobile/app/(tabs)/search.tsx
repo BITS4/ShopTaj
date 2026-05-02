@@ -2,7 +2,7 @@ import { View, Text, TextInput, FlatList, TouchableOpacity, Image, StyleSheet, A
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
-import api from '../../lib/api'
+import api, { fixImageUrl } from '../../lib/api'
 
 export default function SearchTab() {
   const [query, setQuery] = useState('')
@@ -55,9 +55,9 @@ export default function SearchTab() {
           contentContainerStyle={{ gap: 12, paddingBottom: 80 }}
           ListHeaderComponent={<Text style={styles.resultCount}>{data.meta.total} results</Text>}
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.card} onPress={() => router.push(`/product/${item.id}`)}>
+            <TouchableOpacity style={styles.card} onPress={() => router.push(`/product/${item.slug ?? item.id}`)}>
               {item.images?.[0] ? (
-                <Image source={{ uri: item.images[0].url }} style={styles.img} resizeMode="cover" />
+                <Image source={{ uri: fixImageUrl(item.images[0].url) }} style={styles.img} resizeMode="cover" />
               ) : (
                 <View style={[styles.img, styles.placeholder]} />
               )}

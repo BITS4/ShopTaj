@@ -11,6 +11,7 @@ const ru: Translations = {
     search: 'Поиск товаров...',
     cart: 'Корзина',
     wishlist: 'Избранное',
+    orders: 'Заказы',
   },
   home: {
     hero_title: 'Откройте для себя лучшие товары',

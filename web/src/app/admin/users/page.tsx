@@ -24,7 +24,10 @@ export default function AdminUsersPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Users</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Users</h1>
+        {data && <span className="text-sm text-muted-foreground">{data.meta.total} verified account(s)</span>}
+      </div>
 
       {isLoading ? (
         <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-14 rounded-lg" />)}</div>
@@ -43,6 +46,7 @@ export default function AdminUsersPage() {
                 <th className="text-left px-4 py-3">User</th>
                 <th className="text-left px-4 py-3 hidden md:table-cell">Joined</th>
                 <th className="text-left px-4 py-3">Role</th>
+                <th className="text-left px-4 py-3 hidden sm:table-cell">Email</th>
                 <th className="text-left px-4 py-3">Status</th>
                 <th className="px-4 py-3" />
               </tr>
@@ -57,6 +61,9 @@ export default function AdminUsersPage() {
                   <td className="px-4 py-3 hidden md:table-cell text-muted-foreground">{formatDate(user.createdAt)}</td>
                   <td className="px-4 py-3">
                     <Badge variant={user.role === 'ADMIN' ? 'default' : 'secondary'}>{user.role}</Badge>
+                  </td>
+                  <td className="px-4 py-3 hidden sm:table-cell">
+                    <Badge variant="outline" className="text-green-700 border-green-300 bg-green-50">✓ Verified</Badge>
                   </td>
                   <td className="px-4 py-3">
                     <Badge variant={user.isBanned ? 'destructive' : 'outline'}>{user.isBanned ? 'Banned' : 'Active'}</Badge>

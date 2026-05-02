@@ -1,15 +1,22 @@
 import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet, FlatList, ActivityIndicator } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
-import api from '../../lib/api'
+import api, { fixImageUrl } from '../../lib/api'
+import { useLanguageStore, LOCALES } from '../../store/language.store'
+
+const LABELS = {
+  en: { categories: 'Categories', products: 'All Products', subtitle: 'Discover amazing products' },
+  ru: { categories: 'Категории', products: 'Все товары', subtitle: 'Открывайте новые товары' },
+  tg: { categories: 'Категорияҳо', products: 'Ҳамаи молҳо', subtitle: 'Молҳои нав кашф кунед' },
+}
 
 function ProductCard({ product }: { product: any }) {
   const router = useRouter()
   const price = Number(product.discountPrice ?? product.price)
-  const mainImage = product.images?.[0]?.url
+  const mainImage = fixImageUrl(product.images?.[0]?.url)
 
   return (
-    <TouchableOpacity style={styles.card} onPress={() => router.push(`/product/${product.id}`)}>
+    <TouchableOpacity style={styles.card} onPress={() => router.push(`/product/${product.slug ?? product.id}`)}>
       {mainImage ? (
         <Image source={{ uri: mainImage }} style={styles.cardImage} resizeMode="cover" />
       ) : (
@@ -27,9 +34,12 @@ function ProductCard({ product }: { product: any }) {
 }
 
 export default function HomeTab() {
+  const { locale, setLocale } = useLanguageStore()
+  const L = LABELS[locale]
+
   const { data: featured, isLoading } = useQuery({
     queryKey: ['featured'],
-    queryFn: async () => { const { data } = await api.get('/products/featured'); return data },
+    queryFn: async () => { const { data } = await api.get('/products?limit=12&sortBy=newest'); return data.data },
   })
 
   const { data: categories } = useQuery({
@@ -43,23 +53,27 @@ export default function HomeTab() {
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.logo}>ShopTaj</Text>
-        <Text style={styles.subtitle}>Discover amazing products</Text>
-      </View>
-
-      {/* Hero */}
-      <View style={styles.hero}>
-        <Text style={styles.heroTitle}>New Season Arrivals</Text>
-        <Text style={styles.heroSub}>Up to 40% off selected items</Text>
-        <TouchableOpacity style={styles.heroBtn} onPress={() => router.push('/(tabs)/search')}>
-          <Text style={styles.heroBtnText}>Shop Now</Text>
-        </TouchableOpacity>
+        <View style={styles.headerTop}>
+          <Text style={styles.logo}>ShopTaj</Text>
+          <View style={styles.langRow}>
+            {LOCALES.map((l) => (
+              <TouchableOpacity
+                key={l.key}
+                style={[styles.langBtn, locale === l.key && styles.langBtnActive]}
+                onPress={() => setLocale(l.key)}
+              >
+                <Text style={styles.langFlag}>{l.flag}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+        <Text style={styles.subtitle}>{L.subtitle}</Text>
       </View>
 
       {/* Categories */}
       {categories?.length > 0 && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Categories</Text>
+          <Text style={styles.sectionTitle}>{L.categories}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 10 }}>
             {categories.map((cat: any) => (
               <TouchableOpacity key={cat.id} style={styles.catChip} onPress={() => router.push({ pathname: '/(tabs)/search', params: { categoryId: cat.id } })}>
@@ -70,9 +84,9 @@ export default function HomeTab() {
         </View>
       )}
 
-      {/* Featured */}
+      {/* Products */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Featured Products</Text>
+        <Text style={styles.sectionTitle}>{L.products}</Text>
         {isLoading ? (
           <ActivityIndicator style={{ marginTop: 20 }} color="#6366f1" />
         ) : (
@@ -94,14 +108,14 @@ export default function HomeTab() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   header: { padding: 16, paddingTop: 56, backgroundColor: '#6366f1' },
+  headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   logo: { fontSize: 24, fontWeight: 'bold', color: '#fff' },
-  subtitle: { color: '#e0e7ff', marginTop: 2 },
-  hero: { margin: 16, padding: 20, backgroundColor: '#f0f0ff', borderRadius: 16 },
-  heroTitle: { fontSize: 22, fontWeight: 'bold', color: '#1e1b4b' },
-  heroSub: { color: '#6366f1', marginTop: 4, marginBottom: 16 },
-  heroBtn: { backgroundColor: '#6366f1', padding: 12, borderRadius: 8, alignSelf: 'flex-start' },
-  heroBtnText: { color: '#fff', fontWeight: '600' },
-  section: { marginBottom: 24 },
+  subtitle: { color: '#e0e7ff', marginTop: 4 },
+  langRow: { flexDirection: 'row', gap: 6 },
+  langBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
+  langBtnActive: { backgroundColor: 'rgba(255,255,255,0.35)', borderWidth: 1.5, borderColor: '#fff' },
+  langFlag: { fontSize: 16 },
+  section: { marginBottom: 24, marginTop: 16 },
   sectionTitle: { fontSize: 18, fontWeight: 'bold', marginHorizontal: 16, marginBottom: 12 },
   catChip: { backgroundColor: '#f3f4f6', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
   catChipText: { fontSize: 13, color: '#374151' },

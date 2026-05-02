@@ -93,18 +93,28 @@ export class AdminService {
     return this.prisma.order.update({ where: { id: orderId }, data: { status: dto.status as any } });
   }
 
+  async confirmPayment(orderId: string, paymentStatus: string) {
+    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) throw new NotFoundException('Order not found');
+    const data: any = { paymentStatus: paymentStatus as any };
+    if (paymentStatus === 'PAID' && order.status === 'PENDING') data.status = 'PROCESSING';
+    return this.prisma.order.update({ where: { id: orderId }, data });
+  }
+
   async getUsers(page?: any, limit?: any) {
     const p = Math.max(1, parseInt(page) || 1);
     const l = Math.min(100, parseInt(limit) || 20);
     const skip = (p - 1) * l;
+    const where = { isEmailVerified: true };
     const [users, total] = await Promise.all([
       this.prisma.user.findMany({
+        where,
         skip,
         take: l,
         orderBy: { createdAt: 'desc' },
-        select: { id: true, email: true, fullName: true, role: true, isBanned: true, createdAt: true },
+        select: { id: true, email: true, fullName: true, role: true, isBanned: true, isEmailVerified: true, createdAt: true },
       }),
-      this.prisma.user.count(),
+      this.prisma.user.count({ where }),
     ]);
     return { data: users, meta: { total, page: p, limit: l } };
   }
