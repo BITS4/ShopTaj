@@ -1,6 +1,6 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "npm install --include=dev && ./node_modules/.bin/nest build && npx prisma generate"
+buildCommand = "npm install --include=dev && npx prisma generate && ./node_modules/.bin/nest build"
 
 [deploy]
 startCommand = "npx prisma migrate deploy && node dist/main"
