@@ -226,7 +226,7 @@ export default function AdminProductsPage() {
                   </label>
                   <Input
                     type="file"
-                    accept="image/jpeg,image/png,image/webp"
+                    accept="image/*"
                     multiple
                     onChange={(e) => setImageFiles(e.target.files)}
                     className="h-10 text-sm pt-1.5"

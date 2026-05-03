@@ -4,6 +4,8 @@ import * as bcrypt from 'bcrypt'
 const prisma = new PrismaClient()
 
 async function main() {
+  const existing = await prisma.user.findUnique({ where: { email: 'admin@shoptaj.com' } });
+  if (existing) { console.log('✅ Already seeded — skipping'); return; }
   console.log('🌱 Seeding database...')
 
   const adminHash = await bcrypt.hash('Admin123!', 12)
