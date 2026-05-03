@@ -66,8 +66,10 @@ export default function ProductDetailPage() {
                 src={product.images[activeImage].url}
                 alt={product.name}
                 fill
+                quality={95}
                 className="object-cover"
                 priority
+                sizes="(max-width: 768px) 100vw, 50vw"
               />
             )}
           </div>

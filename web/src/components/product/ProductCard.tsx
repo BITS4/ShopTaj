@@ -35,8 +35,9 @@ export default function ProductCard({ product }: Props) {
             src={mainImage.url}
             alt={product.name}
             fill
+            quality={90}
             className="object-cover transition-transform duration-300 group-hover:scale-105"
-            sizes="(max-width: 768px) 50vw, 25vw"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
         ) : (
           <div className="h-full w-full flex items-center justify-center text-muted-foreground text-sm">No image</div>
