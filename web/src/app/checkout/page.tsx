@@ -1,7 +1,7 @@
 'use client'
 export const dynamic = 'force-dynamic'
 import { useState } from 'react'
-import dynamic from 'next/dynamic'
+import dynamicImport from 'next/dynamic'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { loadStripe } from '@stripe/stripe-js'
@@ -18,7 +18,7 @@ import { toast } from 'sonner'
 import type { MapLocation } from '@/components/map/DeliveryMap'
 
 // Dynamic import — Leaflet cannot run on server
-const DeliveryMap = dynamic(() => import('@/components/map/DeliveryMap'), {
+const DeliveryMap = dynamicImport(() => import('@/components/map/DeliveryMap'), {
   ssr: false,
   loading: () => <div className="h-[340px] rounded-xl bg-muted flex items-center justify-center text-sm text-muted-foreground">Loading map…</div>,
 })
