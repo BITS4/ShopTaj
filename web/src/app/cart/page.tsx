@@ -44,7 +44,7 @@ export default function CartPage() {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Items */}
           <div className="lg:col-span-2 space-y-4">
-            {cart.items.map((item) => (
+            {cart.items.map((item: any) => (
               <div key={item.id} className="flex gap-4 p-4 border rounded-xl">
                 <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-muted">
                   {item.product.images[0] && (
