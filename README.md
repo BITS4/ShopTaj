@@ -110,3 +110,4 @@ ShopTaj/
 - Role-based access control (USER / ADMIN)
 - Stripe PCI-compliant payment handling (card data never touches server)
 - File upload MIME validation + 5MB size limit + Cloudinary storage
+# ShopTaj
