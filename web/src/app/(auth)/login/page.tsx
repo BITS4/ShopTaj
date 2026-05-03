@@ -1,4 +1,5 @@
 'use client'
+import { Suspense } from 'react'
 export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
@@ -17,7 +18,7 @@ const schema = z.object({
 })
 type FormData = z.infer<typeof schema>
 
-export default function LoginPage() {
+function LoginPage() {
   const { login } = useAuth()
   const t = useT()
   const searchParams = useSearchParams()
@@ -58,4 +59,8 @@ export default function LoginPage() {
       </Card>
     </div>
   )
+}
+
+export default function LoginPageWithSuspense() {
+  return <Suspense fallback={null}><LoginPage /></Suspense>
 }

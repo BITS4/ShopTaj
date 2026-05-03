@@ -1,4 +1,5 @@
 'use client'
+import { Suspense } from 'react'
 export const dynamic = 'force-dynamic'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
@@ -43,7 +44,7 @@ const LABELS = {
   },
 }
 
-export default function BePaidReturnPage() {
+function BePaidReturnPage() {
   const searchParams = useSearchParams()
   const qc = useQueryClient()
   const { setCart } = useCartStore()
@@ -134,4 +135,8 @@ export default function BePaidReturnPage() {
       </div>
     </div>
   )
+}
+
+export default function BePaidReturnPageWithSuspense() {
+  return <Suspense fallback={null}><BePaidReturnPage /></Suspense>
 }

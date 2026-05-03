@@ -1,4 +1,5 @@
 'use client'
+import { Suspense } from 'react'
 export const dynamic = 'force-dynamic'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
@@ -8,7 +9,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import api from '@/lib/api'
 import { toast } from 'sonner'
 
-export default function ResetPasswordPage() {
+function ResetPasswordPage() {
   const token = useSearchParams().get('token') ?? ''
   const router = useRouter()
   const { register, handleSubmit, watch } = useForm<{ password: string; confirm: string }>()
@@ -39,4 +40,8 @@ export default function ResetPasswordPage() {
       </Card>
     </div>
   )
+}
+
+export default function ResetPasswordPageWithSuspense() {
+  return <Suspense fallback={null}><ResetPasswordPage /></Suspense>
 }

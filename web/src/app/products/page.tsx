@@ -1,4 +1,5 @@
 'use client'
+import { Suspense } from 'react'
 export const dynamic = 'force-dynamic'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -11,7 +12,7 @@ import ProductCard from '@/components/product/ProductCard'
 import { useT } from '@/store/language.store'
 import api from '@/lib/api'
 
-export default function ProductsPage() {
+function ProductsPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const t = useT()
@@ -158,4 +159,8 @@ export default function ProductsPage() {
       </div>
     </div>
   )
+}
+
+export default function ProductsPageWithSuspense() {
+  return <Suspense fallback={null}><ProductsPage /></Suspense>
 }

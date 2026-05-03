@@ -1,4 +1,5 @@
 'use client'
+import { Suspense } from 'react'
 export const dynamic = 'force-dynamic'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
@@ -9,7 +10,7 @@ import api from '@/lib/api'
 import { useAuthStore } from '@/store/auth.store'
 import { toast } from 'sonner'
 
-export default function VerifyEmailNoticePage() {
+function VerifyEmailNoticePage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const emailFromQuery = searchParams.get('email') || ''
@@ -183,4 +184,8 @@ export default function VerifyEmailNoticePage() {
       </Card>
     </div>
   )
+}
+
+export default function VerifyEmailNoticePageWithSuspense() {
+  return <Suspense fallback={null}><VerifyEmailNoticePage /></Suspense>
 }

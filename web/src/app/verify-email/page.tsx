@@ -1,4 +1,5 @@
 'use client'
+import { Suspense } from 'react'
 export const dynamic = 'force-dynamic'
 import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
@@ -6,7 +7,7 @@ import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import api from '@/lib/api'
 
-export default function VerifyEmailPage() {
+function VerifyEmailPage() {
   const token = useSearchParams().get('token') ?? ''
   const router = useRouter()
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
@@ -48,4 +49,8 @@ export default function VerifyEmailPage() {
       </div>
     </div>
   )
+}
+
+export default function VerifyEmailPageWithSuspense() {
+  return <Suspense fallback={null}><VerifyEmailPage /></Suspense>
 }

@@ -1,6 +1,6 @@
 'use client'
 export const dynamic = 'force-dynamic'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import dynamicImport from 'next/dynamic'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -106,7 +106,7 @@ function CheckoutForm({
 }
 
 // ─── Main checkout page ───────────────────────────────────────────────────────
-export default function CheckoutPage() {
+function CheckoutPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const couponCode = searchParams.get('coupon') ?? ''
@@ -592,4 +592,8 @@ export default function CheckoutPage() {
       </div>
     </div>
   )
+}
+
+export default function CheckoutPageWithSuspense() {
+  return <Suspense fallback={null}><CheckoutPage /></Suspense>
 }

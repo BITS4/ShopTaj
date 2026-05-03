@@ -1,4 +1,5 @@
 'use client'
+import { Suspense } from 'react'
 export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import { useEffect } from 'react'
@@ -124,7 +125,7 @@ function BankSuccessPage({ info, orderId, t }: { info: BankInfo; orderId: string
   )
 }
 
-export default function CheckoutSuccessPage() {
+function CheckoutSuccessPage() {
   const t = useT()
   const { locale } = useLanguageStore()
   const qc = useQueryClient()
@@ -160,4 +161,8 @@ export default function CheckoutSuccessPage() {
       </div>
     </div>
   )
+}
+
+export default function CheckoutSuccessPageWithSuspense() {
+  return <Suspense fallback={null}><CheckoutSuccessPage /></Suspense>
 }
