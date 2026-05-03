@@ -27,7 +27,9 @@ export class EmailService {
       // ── Gmail (App Password) ────────────────────────────────────────────
       this.provider = 'gmail';
       this.transporter = nodemailer.createTransport({
-        service: 'gmail',
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
         auth: { user: gmailUser, pass: gmailPass },
       });
       this.logger.log(`✅ Email: using Gmail (${gmailUser})`);
