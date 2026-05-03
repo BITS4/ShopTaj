@@ -225,7 +225,8 @@ export class AuthService {
     res.cookie('refresh_token', rawRefresh, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+      // 'none' required for cross-origin (frontend on shop-taj.com, backend on railway.app)
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       expires: expiresAt,
       path: '/',
     });
