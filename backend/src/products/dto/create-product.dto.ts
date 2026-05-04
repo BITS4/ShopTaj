@@ -83,6 +83,26 @@ export class CreateProductDto {
   @IsBoolean()
   isFeatured?: boolean;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  nameRu?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  nameTg?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  descriptionRu?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  descriptionTg?: string;
+
   @ApiPropertyOptional({ type: [CreateVariantDto] })
   @IsOptional()
   @IsArray()
