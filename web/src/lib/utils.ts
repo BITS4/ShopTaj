@@ -6,7 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatPrice(amount: number | string) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(amount))
+  return new Intl.NumberFormat('tg-TJ', { style: 'currency', currency: 'TJS', maximumFractionDigits: 2 }).format(Number(amount))
 }
 
 export function formatDate(date: string | Date) {

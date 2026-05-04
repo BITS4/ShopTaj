@@ -196,7 +196,7 @@ export default function AdminProductsPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-medium">Price (USD) *</label>
+                  <label className="text-xs font-medium">Price (TJS) *</label>
                   <Input type="number" step="0.01" min="0" {...register('price', { required: 'Price is required' })} placeholder="0.00" />
                 </div>
                 <div>

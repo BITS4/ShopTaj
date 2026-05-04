@@ -2,9 +2,11 @@
 import Link from 'next/link'
 import { Sparkles, Mail, Phone, MapPin, Instagram, Send } from 'lucide-react'
 import { useT } from '@/store/language.store'
+import { useAuthStore } from '@/store/auth.store'
 
 export default function Footer() {
   const t = useT()
+  const { user } = useAuthStore()
   return (
     <footer className="bg-gray-950 text-gray-300 mt-0">
       {/* Main footer */}
@@ -62,8 +64,10 @@ export default function Footer() {
                 { href: '/profile', label: t.footer.my_profile },
                 { href: '/profile/orders', label: t.footer.my_orders },
                 { href: '/profile/wishlist', label: t.footer.wishlist },
-                { href: '/login', label: t.nav.login },
-                { href: '/register', label: t.nav.signup },
+                ...(!user ? [
+                  { href: '/login', label: t.nav.login },
+                  { href: '/register', label: t.nav.signup },
+                ] : []),
               ].map(({ href, label }) => (
                 <li key={label}>
                   <Link href={href} className="text-gray-400 hover:text-primary transition-colors duration-200">

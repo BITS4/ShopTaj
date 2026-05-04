@@ -12,6 +12,8 @@ import { useLanguageStore, useT } from '@/store/language.store'
 import { localiseProduct } from '@/lib/localise'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import api from '@/lib/api'
 import type { Product } from '@/types'
 
 interface Props { product: Product }
@@ -28,6 +30,31 @@ export default function ProductCard({ product }: Props) {
   const discount = product.discountPrice ? Number(product.discountPrice) : null
   const discountPct = discount ? Math.round((1 - discount / price) * 100) : null
   const isOutOfStock = product.stock === 0
+  const qc = useQueryClient()
+
+  const { data: wishlistIds } = useQuery<string[]>({
+    queryKey: ['wishlist-ids'],
+    queryFn: async () => {
+      const { data } = await api.get('/wishlist')
+      return data.map((item: any) => item.productId)
+    },
+    enabled: !!user,
+    staleTime: 30_000,
+  })
+
+  const isWishlisted = wishlistIds?.includes(product.id) ?? false
+
+  const toggleWishlist = useMutation({
+    mutationFn: () =>
+      isWishlisted
+        ? api.delete(`/wishlist/${product.id}`)
+        : api.post(`/wishlist/${product.id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['wishlist-ids'] })
+      qc.invalidateQueries({ queryKey: ['wishlist'] })
+    },
+    onError: () => toast.error(t.product.login_to_add),
+  })
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -38,6 +65,16 @@ export default function ProductCard({ product }: Props) {
       return
     }
     addItem.mutate({ productId: product.id, quantity: 1 })
+  }
+
+  const handleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!user) {
+      router.push('/login')
+      return
+    }
+    toggleWishlist.mutate()
   }
 
   return (
@@ -80,8 +117,14 @@ export default function ProductCard({ product }: Props) {
         </div>
 
         {/* Wishlist button */}
-        <button className="absolute top-2.5 right-2.5 h-8 w-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white hover:scale-110 shadow-md">
-          <Heart className="h-4 w-4 text-muted-foreground hover:text-rose-500 transition-colors" />
+        <button
+          onClick={handleWishlist}
+          className={cn(
+            'absolute top-2.5 right-2.5 h-8 w-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center transition-all duration-300 hover:bg-white hover:scale-110 shadow-md',
+            isWishlisted ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+          )}
+        >
+          <Heart className={cn('h-4 w-4 transition-colors', isWishlisted ? 'fill-rose-500 text-rose-500' : 'text-muted-foreground')} />
         </button>
       </Link>
 
