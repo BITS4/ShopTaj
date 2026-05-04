@@ -27,6 +27,10 @@ const en = {
     returns: 'Easy returns',
     trusted: '10k+ happy customers',
     create_account: 'Create Account',
+    banner_title: 'Ready to start shopping?',
+    banner_sub: 'Join thousands of happy customers and discover amazing products.',
+    browse_label: 'Browse',
+    handpicked_label: 'Handpicked',
   },
   // Products
   products: {

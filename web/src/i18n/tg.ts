@@ -27,6 +27,10 @@ const tg: Translations = {
     returns: 'Баргардонидани осон',
     trusted: 'Зиёда аз 10 000 харидор',
     create_account: 'Аккаунт сохтан',
+    banner_title: 'Барои харид омодаед?',
+    banner_sub: 'Ба ҳазорон харидорони хушнуд ҳамроҳ шавед ва молҳои нав кашф кунед.',
+    browse_label: 'Дидан',
+    handpicked_label: 'Махсус барои шумо',
   },
   products: {
     title: 'Ҳамаи молҳо',

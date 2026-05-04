@@ -91,7 +91,7 @@ export default function HomePage() {
         <section className="container mx-auto px-4 py-16">
           <div className="flex items-end justify-between mb-8">
             <div>
-              <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-1">Browse</p>
+              <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-1">{t.home.browse_label}</p>
               <h2 className="text-3xl font-bold">{t.home.shop_by_category}</h2>
             </div>
           </div>
@@ -116,7 +116,7 @@ export default function HomePage() {
       <section className="container mx-auto px-4 py-8 pb-20">
         <div className="flex items-end justify-between mb-8">
           <div>
-            <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-1">Handpicked</p>
+            <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-1">{t.home.handpicked_label}</p>
             <h2 className="text-3xl font-bold">{t.home.featured_products}</h2>
           </div>
           <Link href="/products">
@@ -155,8 +155,8 @@ export default function HomePage() {
       {/* ── Bottom banner — only for guests ─────────────────────────────── */}
       {!user && <section className="gradient-primary py-16 px-4">
         <div className="container mx-auto max-w-4xl text-center text-white">
-          <h2 className="text-3xl sm:text-4xl font-black mb-4">Ready to start shopping?</h2>
-          <p className="text-white/80 mb-8 text-lg">Join thousands of happy customers and discover amazing products.</p>
+          <h2 className="text-3xl sm:text-4xl font-black mb-4">{t.home.banner_title}</h2>
+          <p className="text-white/80 mb-8 text-lg">{t.home.banner_sub}</p>
           <Link href="/register">
             <Button size="lg" variant="secondary" className="rounded-full px-10 h-12 font-bold text-primary hover:scale-105 transition-transform shadow-xl">
               {t.home.create_account} →

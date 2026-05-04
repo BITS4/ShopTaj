@@ -27,6 +27,10 @@ const ru: Translations = {
     returns: 'Лёгкий возврат',
     trusted: 'Более 10 000 клиентов',
     create_account: 'Создать аккаунт',
+    banner_title: 'Готовы начать покупки?',
+    banner_sub: 'Присоединяйтесь к тысячам довольных покупателей и открывайте новые товары.',
+    browse_label: 'Просмотр',
+    handpicked_label: 'Специально для вас',
   },
   products: {
     title: 'Все товары',
