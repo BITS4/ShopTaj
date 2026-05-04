@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import ProductCard from '@/components/product/ProductCard'
 import { useT } from '@/store/language.store'
 import { ShoppingBag, Truck, Shield, RefreshCw, Star, ArrowRight, Zap } from 'lucide-react'
+import { useAuthStore } from '@/store/auth.store'
 import api from '@/lib/api'
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -17,6 +18,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 
 export default function HomePage() {
   const t = useT()
+  const { user } = useAuthStore()
 
   const { data: products, isLoading } = useQuery({
     queryKey: ['featured'],
@@ -150,8 +152,8 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* ── Bottom banner ─────────────────────────────────────────────────── */}
-      <section className="gradient-primary py-16 px-4">
+      {/* ── Bottom banner — only for guests ─────────────────────────────── */}
+      {!user && <section className="gradient-primary py-16 px-4">
         <div className="container mx-auto max-w-4xl text-center text-white">
           <h2 className="text-3xl sm:text-4xl font-black mb-4">Ready to start shopping?</h2>
           <p className="text-white/80 mb-8 text-lg">Join thousands of happy customers and discover amazing products.</p>
@@ -161,7 +163,7 @@ export default function HomePage() {
             </Button>
           </Link>
         </div>
-      </section>
+      </section>}
     </div>
   )
 }

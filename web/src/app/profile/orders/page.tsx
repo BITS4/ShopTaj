@@ -33,7 +33,7 @@ export default function OrdersPage() {
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold">{t.orders.title}</h1>
         <Button variant="outline" size="sm" onClick={() => refetch()}>
-          Refresh
+          {t.orders.refresh}
         </Button>
       </div>
 

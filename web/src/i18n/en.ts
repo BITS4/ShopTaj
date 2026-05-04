@@ -96,6 +96,13 @@ const en = {
     processing: 'Processing…',
     test_card: 'Powered by Stripe · Test card: 4242 4242 4242 4242',
     loading: 'Loading…',
+    pick_on_map: 'Pick on Map',
+    hide_map: 'Hide Map',
+    no_address_hint: 'No saved addresses. Click Pick on Map to set your location.',
+    confirm_address: 'Confirm Address Details',
+    detected_address: 'Detected address',
+    save_address: 'Save & Use This Address',
+    saving: 'Saving…',
   },
   // Auth
   auth: {
@@ -156,6 +163,8 @@ const en = {
     cancel_order: 'Cancel Order',
     cancelling: 'Cancelling…',
     shipping_address: 'Shipping Address',
+    refresh: 'Refresh',
+    try_again: 'Try Again',
   },
   // Wishlist
   wishlist: {

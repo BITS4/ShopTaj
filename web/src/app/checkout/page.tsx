@@ -289,7 +289,7 @@ function CheckoutPage() {
               {!locked && (
                 <Button size="sm" variant="outline" onClick={() => setShowMap(!showMap)}>
                   <MapPin className="h-4 w-4 mr-2" />
-                  {showMap ? 'Hide Map' : 'Pick on Map'}
+                  {showMap ? t.checkout.hide_map : t.checkout.pick_on_map}
                 </Button>
               )}
             </div>
@@ -444,9 +444,7 @@ function CheckoutPage() {
             )}
 
             {!addresses?.length && !showMap && !locked && (
-              <p className="text-sm text-muted-foreground">
-                No saved addresses. Click <strong>Pick on Map</strong> to set your location.
-              </p>
+              <p className="text-sm text-muted-foreground">{t.checkout.no_address_hint}</p>
             )}
           </CardContent>
         </Card>

@@ -92,6 +92,13 @@ const tg: Translations = {
     processing: 'Коркард…',
     test_card: 'Тавассути Stripe · Корти санҷишӣ: 4242 4242 4242 4242',
     loading: 'Боргирӣ…',
+    pick_on_map: 'Дар харита интихоб кунед',
+    hide_map: 'Хартаро пинҳон кунед',
+    no_address_hint: 'Суроғаи захирашуда нест. «Дар харита интихоб кунед»-ро пахш кунед.',
+    confirm_address: 'Суроғаро тасдиқ кунед',
+    detected_address: 'Суроғаи муайяншуда',
+    save_address: 'Захира ва истифода',
+    saving: 'Захира мешавад…',
   },
   auth: {
     welcome_back: 'Хуш омадед',
@@ -149,6 +156,8 @@ const tg: Translations = {
     cancel_order: 'Бекор кардани фармоиш',
     cancelling: 'Бекор карда мешавад…',
     shipping_address: 'Суроғаи расондан',
+    refresh: 'Навсозӣ',
+    try_again: 'Боз кӯшиш кунед',
   },
   wishlist: {
     title: 'Дӯстдоштаҳои ман',

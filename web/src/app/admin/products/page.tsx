@@ -16,6 +16,7 @@ export default function AdminProductsPage() {
   const qc = useQueryClient()
   const [showForm, setShowForm] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
+  const [mainImageFile, setMainImageFile] = useState<FileList | null>(null)
   const [imageFiles, setImageFiles] = useState<FileList | null>(null)
   const { register, handleSubmit, reset, setValue, watch } = useForm<any>({
     defaultValues: { isActive: true, isFeatured: true },
@@ -45,6 +46,7 @@ export default function AdminProductsPage() {
       qc.invalidateQueries({ queryKey: ['admin-products'] })
       qc.invalidateQueries({ queryKey: ['products'] })
       setShowForm(false)
+      setMainImageFile(null)
       setImageFiles(null)
       reset({ isActive: true, isFeatured: true })
     },
@@ -69,6 +71,7 @@ export default function AdminProductsPage() {
       qc.invalidateQueries({ queryKey: ['admin-products'] })
       qc.invalidateQueries({ queryKey: ['products'] })
       setEditId(null)
+      setMainImageFile(null)
       setImageFiles(null)
       reset({ isActive: true, isFeatured: true })
     },
@@ -86,21 +89,23 @@ export default function AdminProductsPage() {
   })
 
   const uploadImages = async (productId: string) => {
-    if (!imageFiles || imageFiles.length === 0) return
+    const allFiles: File[] = []
+    if (mainImageFile?.[0]) allFiles.push(mainImageFile[0])
+    if (imageFiles) allFiles.push(...Array.from(imageFiles))
+    if (allFiles.length === 0) return
     try {
       const formData = new FormData()
-      Array.from(imageFiles).forEach((f) => formData.append('files', f))
+      allFiles.forEach((f) => formData.append('files', f))
       await api.post(`/admin/products/${productId}/images`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
-      toast.success('Images uploaded!')
+      toast.success(`${allFiles.length} image(s) uploaded!`)
     } catch (err: any) {
       toast.warning('Product saved, but image upload failed: ' + (err?.response?.data?.message || 'unknown error'))
     }
   }
 
   const onSubmit = (formData: any) => {
-    // Convert types properly
     const payload: any = {
       name: formData.name,
       description: formData.description || undefined,
@@ -110,20 +115,19 @@ export default function AdminProductsPage() {
       categoryId: formData.categoryId,
       isActive: Boolean(formData.isActive),
       isFeatured: Boolean(formData.isFeatured),
+      nameRu: formData.nameRu || undefined,
+      nameTg: formData.nameTg || undefined,
+      descriptionRu: formData.descriptionRu || undefined,
+      descriptionTg: formData.descriptionTg || undefined,
     }
-
-    // Discount price — only include if filled
     if (formData.discountPrice && parseFloat(formData.discountPrice) > 0) {
       payload.discountPrice = parseFloat(formData.discountPrice)
     }
-
-    // Tags — convert "tag1, tag2" string to array
     if (formData.tags && formData.tags.trim()) {
       payload.tags = formData.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
     } else {
       payload.tags = []
     }
-
     if (editId) update.mutate({ id: editId, ...payload })
     else create.mutate(payload)
   }
@@ -141,11 +145,16 @@ export default function AdminProductsPage() {
     setValue('tags', (product.tags || []).join(', '))
     setValue('isFeatured', product.isFeatured)
     setValue('isActive', product.isActive)
+    setValue('nameRu', product.nameRu || '')
+    setValue('nameTg', product.nameTg || '')
+    setValue('descriptionRu', product.descriptionRu || '')
+    setValue('descriptionTg', product.descriptionTg || '')
   }
 
   const cancelForm = () => {
     setShowForm(false)
     setEditId(null)
+    setMainImageFile(null)
     setImageFiles(null)
     reset({ isActive: true, isFeatured: true })
   }
@@ -218,11 +227,51 @@ export default function AdminProductsPage() {
                   <Input {...register('tags')} placeholder="electronics, wireless, bluetooth" />
                 </div>
 
-                {/* Images — available on both create and edit */}
+                {/* Translations */}
+                <div className="sm:col-span-2 border rounded-lg p-3 bg-muted/20 space-y-3">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Translations (optional)</p>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium">Name (Russian)</label>
+                      <Input {...register('nameRu')} placeholder="Название на русском" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium">Name (Tajik)</label>
+                      <Input {...register('nameTg')} placeholder="Ном ба тоҷикӣ" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium">Description (Russian)</label>
+                      <textarea className="w-full border rounded-md p-2 text-sm min-h-[60px] bg-background resize-none" placeholder="Описание на русском..." {...register('descriptionRu')} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium">Description (Tajik)</label>
+                      <textarea className="w-full border rounded-md p-2 text-sm min-h-[60px] bg-background resize-none" placeholder="Тавсиф ба тоҷикӣ..." {...register('descriptionTg')} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Main image (1 only) */}
                 <div>
                   <label className="text-xs font-medium">
-                    {editId ? 'Add / Replace Images' : 'Images'}
-                    <span className="text-muted-foreground font-normal ml-1">(optional, max 5MB each)</span>
+                    Main Image <span className="text-destructive">*</span>
+                    <span className="text-muted-foreground font-normal ml-1">(1 image, shown in product cards)</span>
+                  </label>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setMainImageFile(e.target.files)}
+                    className="h-10 text-sm pt-1.5"
+                  />
+                  {mainImageFile?.[0] && (
+                    <p className="text-xs text-green-600 mt-1">✓ {mainImageFile[0].name}</p>
+                  )}
+                </div>
+
+                {/* Additional images (multiple) */}
+                <div>
+                  <label className="text-xs font-medium">
+                    Additional Images
+                    <span className="text-muted-foreground font-normal ml-1">(multiple, for product detail page)</span>
                   </label>
                   <Input
                     type="file"
@@ -231,9 +280,14 @@ export default function AdminProductsPage() {
                     onChange={(e) => setImageFiles(e.target.files)}
                     className="h-10 text-sm pt-1.5"
                   />
-                  {editId && (
-                    <p className="text-xs text-muted-foreground mt-1">New images will be added alongside existing ones.</p>
+                  {imageFiles && imageFiles.length > 0 && (
+                    <div className="mt-1 space-y-0.5">
+                      {Array.from(imageFiles).map((f, i) => (
+                        <p key={i} className="text-xs text-green-600">✓ {f.name}</p>
+                      ))}
+                    </div>
                   )}
+                  {editId && <p className="text-xs text-muted-foreground mt-1">New images will be added alongside existing ones.</p>}
                 </div>
 
                 <div className="flex items-center gap-6 sm:col-span-2">

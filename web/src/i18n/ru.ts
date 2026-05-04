@@ -92,6 +92,13 @@ const ru: Translations = {
     processing: 'Обработка…',
     test_card: 'Платёж через Stripe · Тестовая карта: 4242 4242 4242 4242',
     loading: 'Загрузка…',
+    pick_on_map: 'Выбрать на карте',
+    hide_map: 'Скрыть карту',
+    no_address_hint: 'Нет сохранённых адресов. Нажмите «Выбрать на карте».',
+    confirm_address: 'Подтвердите адрес',
+    detected_address: 'Определённый адрес',
+    save_address: 'Сохранить и использовать',
+    saving: 'Сохранение…',
   },
   auth: {
     welcome_back: 'С возвращением',
@@ -149,6 +156,8 @@ const ru: Translations = {
     cancel_order: 'Отменить заказ',
     cancelling: 'Отмена…',
     shipping_address: 'Адрес доставки',
+    refresh: 'Обновить',
+    try_again: 'Попробовать снова',
   },
   wishlist: {
     title: 'Избранное',
