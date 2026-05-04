@@ -27,11 +27,11 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="h-3.5 w-3.5 text-primary shrink-0" />
-                <span>+992 900 000 000</span>
+                <span>+992 975 012 882</span>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="h-3.5 w-3.5 text-primary shrink-0" />
-                <span>hello@shop-taj.com</span>
+                <span>shoptaj@gmail.com</span>
               </div>
             </div>
           </div>
@@ -79,8 +79,8 @@ export default function Footer() {
             <h4 className="font-bold text-white mb-4 text-sm uppercase tracking-wide">Follow Us</h4>
             <div className="flex gap-3 mb-8">
               {[
-                { icon: Instagram, href: '#', label: 'Instagram' },
-                { icon: Send, href: '#', label: 'Telegram' },
+                { icon: Instagram, href: 'https://www.instagram.com/asilabeauty.tj?igsh=MWZsZjJ1N2JnYjBicQ==', label: 'Instagram' },
+                { icon: Send, href: 'https://t.me/vip_2601', label: 'Telegram' },
               ].map(({ icon: Icon, href, label }) => (
                 <a
                   key={label}

@@ -5,6 +5,8 @@ import slugify from 'slugify';
 
 export class CreateCategoryDto {
   @IsString() name: string;
+  @IsOptional() @IsString() nameRu?: string;
+  @IsOptional() @IsString() nameTg?: string;
   @IsOptional() @IsString() parentId?: string;
   @IsOptional() @IsString() imageUrl?: string;
 }

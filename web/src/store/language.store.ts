@@ -11,9 +11,9 @@ interface LanguageState {
 export const useLanguageStore = create<LanguageState>()(
   persist(
     (set, get) => ({
-      locale: 'en',
+      locale: 'ru',
       setLocale: (locale) => set({ locale, t: locales[locale].translations }),
-      t: locales.en.translations,
+      t: locales.ru.translations,
     }),
     {
       name: 'shoptaj-lang',

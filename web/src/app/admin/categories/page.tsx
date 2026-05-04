@@ -43,7 +43,13 @@ export default function AdminCategoriesPage() {
   })
 
   const onSubmit = (data: any) => {
-    const payload = { name: data.name, parentId: data.parentId || undefined, imageUrl: data.imageUrl || undefined }
+    const payload = {
+      name: data.name,
+      nameRu: data.nameRu || undefined,
+      nameTg: data.nameTg || undefined,
+      parentId: data.parentId || undefined,
+      imageUrl: data.imageUrl || undefined,
+    }
     if (editId) update.mutate({ id: editId, ...payload })
     else create.mutate(payload)
   }
@@ -52,6 +58,8 @@ export default function AdminCategoriesPage() {
     setEditId(cat.id)
     setShowForm(false)
     setValue('name', cat.name)
+    setValue('nameRu', cat.nameRu || '')
+    setValue('nameTg', cat.nameTg || '')
     setValue('parentId', cat.parentId || '')
   }
 
@@ -75,8 +83,16 @@ export default function AdminCategoriesPage() {
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="grid sm:grid-cols-3 gap-4">
               <div>
-                <label className="text-xs font-medium">Name *</label>
+                <label className="text-xs font-medium">Name (EN) *</label>
                 <Input {...register('name', { required: true })} placeholder="Electronics" />
+              </div>
+              <div>
+                <label className="text-xs font-medium">Name (RU)</label>
+                <Input {...register('nameRu')} placeholder="Электроника" />
+              </div>
+              <div>
+                <label className="text-xs font-medium">Name (TG)</label>
+                <Input {...register('nameTg')} placeholder="Электроника" />
               </div>
               <div>
                 <label className="text-xs font-medium">Parent Category <span className="text-muted-foreground">(for sub-categories)</span></label>

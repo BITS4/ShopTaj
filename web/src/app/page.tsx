@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import ProductCard from '@/components/product/ProductCard'
-import { useT } from '@/store/language.store'
+import { useT, useLanguageStore } from '@/store/language.store'
 import { ShoppingBag, Truck, Shield, RefreshCw, Star, ArrowRight, Zap } from 'lucide-react'
 import { useAuthStore } from '@/store/auth.store'
 import api from '@/lib/api'
@@ -18,7 +18,13 @@ const CATEGORY_ICONS: Record<string, string> = {
 
 export default function HomePage() {
   const t = useT()
+  const locale = useLanguageStore((s) => s.locale)
   const { user } = useAuthStore()
+
+  const catName = (cat: any) =>
+    (locale === 'ru' && cat.nameRu) ? cat.nameRu :
+    (locale === 'tg' && cat.nameTg) ? cat.nameTg :
+    cat.name
 
   const { data: products, isLoading } = useQuery({
     queryKey: ['featured'],
@@ -105,7 +111,7 @@ export default function HomePage() {
                 <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform duration-300">
                   {CATEGORY_ICONS[cat.slug] ?? '🛍️'}
                 </div>
-                <span className="text-xs font-semibold text-center leading-tight">{cat.name}</span>
+                <span className="text-xs font-semibold text-center leading-tight">{catName(cat)}</span>
               </Link>
             ))}
           </div>

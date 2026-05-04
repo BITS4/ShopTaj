@@ -9,14 +9,20 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import ProductCard from '@/components/product/ProductCard'
-import { useT } from '@/store/language.store'
+import { useT, useLanguageStore } from '@/store/language.store'
 import api from '@/lib/api'
 
 function ProductsPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const t = useT()
+  const locale = useLanguageStore((s) => s.locale)
   const [showFilters, setShowFilters] = useState(false)
+
+  const catName = (cat: any) =>
+    (locale === 'ru' && cat.nameRu) ? cat.nameRu :
+    (locale === 'tg' && cat.nameTg) ? cat.nameTg :
+    cat.name
 
   const search = searchParams.get('search') ?? ''
   const categoryId = searchParams.get('categoryId') ?? ''
@@ -109,7 +115,7 @@ function ProductsPage() {
                     key={cat.id}
                     onClick={() => setParam('categoryId', cat.id)}
                     className={`block text-sm w-full text-left px-2 py-1 rounded hover:bg-muted ${categoryId === cat.id ? 'font-semibold text-primary' : ''}`}
-                  >{cat.name}</button>
+                  >{catName(cat)}</button>
                 ))}
               </div>
             </div>
