@@ -14,15 +14,18 @@ const en = {
   },
   // Home
   home: {
+    hero_badge: 'New arrivals every week',
     hero_title: 'Discover Amazing Products',
     hero_sub: 'Shop the latest trends with fast delivery, easy returns, and secure checkout.',
     shop_now: 'Shop Now',
-    view_featured: 'View Featured',
+    view_featured: 'Browse All',
     shop_by_category: 'Shop by Category',
     featured_products: 'Featured Products',
     view_all: 'View all',
-    cta_title: 'Get 10% Off Your First Order',
-    cta_sub: 'Sign up today and use code WELCOME10 at checkout.',
+    free_shipping: 'Free shipping over $50',
+    secure: 'Secure checkout',
+    returns: 'Easy returns',
+    trusted: '10k+ happy customers',
     create_account: 'Create Account',
   },
   // Products
