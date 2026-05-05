@@ -179,7 +179,7 @@ export class PaymentsService {
     this.prisma.user.findUnique({ where: { id: userId } }).then((user) => {
       if (!user) return;
       this.email.sendOrderConfirmationEmail(user.email, user.fullName, order.id).catch(() => {});
-      this.sms.sendOrderConfirmation(user.phone, order.id, `$${Number(order.totalAmount).toFixed(2)}`).catch(() => {});
+      this.sms.sendOrderConfirmation(user.phone, order.id, `${Number(order.totalAmount).toFixed(2)} сом`).catch(() => {});
     });
 
     return order;
@@ -237,7 +237,7 @@ export class PaymentsService {
     this.prisma.user.findUnique({ where: { id: userId } }).then((user) => {
       if (!user) return;
       this.email.sendOrderConfirmationEmail(user.email, user.fullName, order.id).catch(() => {});
-      this.sms.sendOrderConfirmation(user.phone, order.id, `$${Number(order.totalAmount).toFixed(2)}`).catch(() => {});
+      this.sms.sendOrderConfirmation(user.phone, order.id, `${Number(order.totalAmount).toFixed(2)} сом`).catch(() => {});
     });
 
     return { orderId: order.id, totalAmount, status: 'PENDING', paymentStatus: 'UNPAID' };
@@ -344,7 +344,7 @@ export class PaymentsService {
       const user = await this.prisma.user.findUnique({ where: { id: order.userId } });
       if (user) {
         this.email.sendOrderConfirmationEmail(user.email, user.fullName, orderId).catch(() => {});
-        this.sms.sendOrderConfirmation(user.phone, orderId, `$${Number(order.totalAmount).toFixed(2)}`).catch(() => {});
+        this.sms.sendOrderConfirmation(user.phone, orderId, `${Number(order.totalAmount).toFixed(2)} сом`).catch(() => {});
       }
 
       this.logger.log(`bePaid payment confirmed for order ${orderId}`);

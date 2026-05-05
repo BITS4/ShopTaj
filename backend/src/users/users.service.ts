@@ -12,7 +12,7 @@ export class UsersService {
       where: { id: userId },
       select: {
         id: true, email: true, fullName: true, phone: true,
-        avatarUrl: true, role: true, isEmailVerified: true, createdAt: true,
+        avatarUrl: true, role: true, isEmailVerified: true, isPhoneVerified: true, createdAt: true,
       },
     });
     if (!user) throw new NotFoundException('User not found');

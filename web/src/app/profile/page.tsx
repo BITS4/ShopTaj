@@ -5,6 +5,8 @@ import { useForm } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { CheckCircle2, XCircle, Phone } from 'lucide-react'
 import { useT } from '@/store/language.store'
 import { toast } from 'sonner'
 import api from '@/lib/api'
@@ -13,6 +15,8 @@ export default function ProfilePage() {
   const qc = useQueryClient()
   const t = useT()
   const [addingAddress, setAddingAddress] = useState(false)
+  const [otpSent, setOtpSent] = useState(false)
+  const [otpCode, setOtpCode] = useState('')
 
   const { data: profile } = useQuery({
     queryKey: ['profile'],
@@ -42,6 +46,23 @@ export default function ProfilePage() {
     onSuccess: () => { toast.success('Address removed'); qc.invalidateQueries({ queryKey: ['addresses'] }) },
   })
 
+  const sendOtp = useMutation({
+    mutationFn: (phone: string) => api.post('/auth/send-phone-otp', { phone }),
+    onSuccess: () => { toast.success(t.profile.otp_sent); setOtpSent(true) },
+    onError: (err: any) => toast.error(err?.response?.data?.message || 'Failed to send OTP'),
+  })
+
+  const verifyOtp = useMutation({
+    mutationFn: (otp: string) => api.post('/auth/verify-phone-otp', { otp }),
+    onSuccess: () => {
+      toast.success(t.profile.phone_verified_toast)
+      setOtpSent(false)
+      setOtpCode('')
+      qc.invalidateQueries({ queryKey: ['profile'] })
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message || 'Invalid code'),
+  })
+
   return (
     <div className="container mx-auto max-w-2xl px-4 py-8 space-y-8">
       <h1 className="text-3xl font-bold">{t.profile.title}</h1>
@@ -69,6 +90,78 @@ export default function ProfilePage() {
               {updateProfile.isPending ? t.profile.saving : t.profile.save}
             </Button>
           </form>
+        </CardContent>
+      </Card>
+
+      {/* Phone Verification */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Phone className="h-4 w-4" />
+              {t.profile.phone_verification}
+            </CardTitle>
+            {profile?.isPhoneVerified ? (
+              <Badge className="bg-green-500/10 text-green-600 border-green-200 gap-1">
+                <CheckCircle2 className="h-3.5 w-3.5" />{t.profile.phone_verified}
+              </Badge>
+            ) : (
+              <Badge variant="secondary" className="gap-1">
+                <XCircle className="h-3.5 w-3.5" />{t.profile.phone_not_verified}
+              </Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {profile?.isPhoneVerified ? (
+            <p className="text-sm text-muted-foreground">
+              {profile.phone} — {t.profile.phone_verified.toLowerCase()}
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {!otpSent ? (
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="+992 XXX XXX XXX"
+                    defaultValue={profile?.phone ?? ''}
+                    id="phone-input"
+                    className="max-w-xs"
+                  />
+                  <Button
+                    onClick={() => {
+                      const val = (document.getElementById('phone-input') as HTMLInputElement)?.value
+                      if (val) sendOtp.mutate(val)
+                    }}
+                    disabled={sendOtp.isPending}
+                  >
+                    {sendOtp.isPending ? t.profile.sending_otp : t.profile.send_otp}
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">{t.profile.enter_otp}</p>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="000000"
+                      maxLength={6}
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                      className="max-w-[140px] tracking-widest text-center font-mono text-lg"
+                    />
+                    <Button
+                      onClick={() => verifyOtp.mutate(otpCode)}
+                      disabled={verifyOtp.isPending || otpCode.length !== 6}
+                    >
+                      {verifyOtp.isPending ? t.profile.verifying_otp : t.profile.verify_otp}
+                    </Button>
+                    <Button variant="ghost" onClick={() => { setOtpSent(false); setOtpCode('') }}>
+                      {t.profile.resend_otp}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -15,7 +15,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
-import { IsEmail as ValidEmail, IsString as ValidString, Length } from 'class-validator';
+import { IsEmail as ValidEmail, IsString as ValidString, Length, IsPhoneNumber } from 'class-validator';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -26,6 +26,14 @@ import { CurrentUser } from './decorators/current-user.decorator';
 class VerifyCodeDto {
   @ValidEmail() email: string;
   @ValidString() @Length(6, 6) code: string;
+}
+
+class SendPhoneOtpDto {
+  @ValidString() phone: string;
+}
+
+class VerifyPhoneOtpDto {
+  @ValidString() @Length(6, 6) otp: string;
 }
 
 class ResendCodeDto {
@@ -106,5 +114,21 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   googleCallback(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     return this.authService.googleLogin(req.user, res);
+  }
+
+  @Post('send-phone-otp')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  sendPhoneOtp(@CurrentUser() user: any, @Body() dto: SendPhoneOtpDto) {
+    return this.authService.sendPhoneOtp(user.id, dto.phone);
+  }
+
+  @Post('verify-phone-otp')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  verifyPhoneOtp(@CurrentUser() user: any, @Body() dto: VerifyPhoneOtpDto) {
+    return this.authService.verifyPhoneOtp(user.id, dto.otp);
   }
 }

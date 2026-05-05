@@ -6,6 +6,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from '../products/dto/create-product.dto';
 import { ProductsService } from '../products/products.service';
 import { CategoriesService, CreateCategoryDto } from '../categories/categories.service';
+import { SmsService } from '../common/sms/sms.service';
 
 export class UpdateOrderStatusDto {
   @ApiProperty() @IsString() status: string;
@@ -26,6 +27,7 @@ export class AdminService {
     private prisma: PrismaService,
     private productsService: ProductsService,
     private categoriesService: CategoriesService,
+    private sms: SmsService,
   ) {}
 
   async getAnalytics() {
@@ -88,9 +90,17 @@ export class AdminService {
   }
 
   async updateOrderStatus(orderId: string, dto: UpdateOrderStatusDto) {
-    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { user: { select: { phone: true, isPhoneVerified: true } } },
+    });
     if (!order) throw new NotFoundException('Order not found');
-    return this.prisma.order.update({ where: { id: orderId }, data: { status: dto.status as any } });
+    const updated = await this.prisma.order.update({ where: { id: orderId }, data: { status: dto.status as any } });
+
+    if (order.user?.phone && order.user.isPhoneVerified) {
+      this.sms.sendOrderStatusUpdate(order.user.phone, orderId, dto.status).catch(() => {});
+    }
+    return updated;
   }
 
   async confirmPayment(orderId: string, paymentStatus: string) {

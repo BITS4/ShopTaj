@@ -13,6 +13,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/reset-password.dto';
 import { EmailService } from '../common/email/email.service';
+import { SmsService } from '../common/sms/sms.service';
 
 const CODE_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
 
@@ -27,6 +28,7 @@ export class AuthService {
     private jwt: JwtService,
     private config: ConfigService,
     private email: EmailService,
+    private sms: SmsService,
   ) {}
 
   // ─── Register ─────────────────────────────────────────────────────────────
@@ -242,5 +244,36 @@ export class AuthService {
         isEmailVerified: user.isEmailVerified,
       },
     };
+  }
+
+  // ─── Phone verification ────────────────────────────────────────────────────
+  async sendPhoneOtp(userId: string, phone: string) {
+    const normalized = phone.startsWith('+') ? phone : `+${phone}`;
+    const otp = generateCode();
+    const expiry = new Date(Date.now() + CODE_EXPIRY_MS);
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { phone: normalized, phoneOtp: otp, phoneOtpExpiry: expiry },
+    });
+
+    await this.sms.sendOtp(normalized, otp);
+    return { message: 'OTP sent' };
+  }
+
+  async verifyPhoneOtp(userId: string, otp: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user?.phoneOtp || !user.phoneOtpExpiry)
+      throw new BadRequestException('No OTP requested');
+    if (user.phoneOtpExpiry < new Date())
+      throw new BadRequestException('OTP expired');
+    if (user.phoneOtp !== otp)
+      throw new BadRequestException('Invalid OTP');
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { isPhoneVerified: true, phoneOtp: null, phoneOtpExpiry: null },
+    });
+    return { message: 'Phone verified' };
   }
 }

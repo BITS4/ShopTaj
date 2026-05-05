@@ -1,6 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
+const STATUS_LABELS: Record<string, string> = {
+  PENDING: 'ожидает подтверждения',
+  PROCESSING: 'принят в обработку',
+  SHIPPED: 'отправлен',
+  DELIVERED: 'доставлен',
+  CANCELLED: 'отменён',
+  REFUNDED: 'возвращён',
+};
+
 @Injectable()
 export class SmsService {
   private readonly logger = new Logger(SmsService.name);
@@ -29,21 +38,38 @@ export class SmsService {
     }
   }
 
+  private async send(to: string, body: string): Promise<void> {
+    if (!this.client || !this.from) return;
+    try {
+      await this.client.messages.create({ body, from: this.from, to });
+      this.logger.log(`SMS sent to ${to}`);
+    } catch (err: any) {
+      this.logger.error(`SMS failed to ${to}: ${err?.message}`);
+    }
+  }
+
+  async sendOtp(phone: string, otp: string): Promise<void> {
+    if (!phone) return;
+    await this.send(phone, `ShopTaj: Ваш код подтверждения — ${otp}. Действителен 10 минут.`);
+  }
+
   async sendOrderConfirmation(phone: string | null | undefined, orderId: string, total: string): Promise<void> {
-    if (!phone || !this.client || !this.from) {
-      this.logger.log(`SMS skipped (orderId=${orderId}, phone=${phone || 'none'})`);
+    if (!phone) {
+      this.logger.log(`SMS skipped (orderId=${orderId}, phone=none)`);
       return;
     }
+    await this.send(
+      phone,
+      `ShopTaj: Ваш заказ #${orderId.slice(0, 8).toUpperCase()} принят и обрабатывается. Сумма: ${total}. Спасибо за покупку!`,
+    );
+  }
 
-    const body =
-      `ShopTaj: Ваш заказ #${orderId.slice(0, 8).toUpperCase()} принят и обрабатывается. ` +
-      `Сумма: ${total}. Спасибо за покупку!`;
-
-    try {
-      await this.client.messages.create({ body, from: this.from, to: phone });
-      this.logger.log(`SMS sent to ${phone}`);
-    } catch (err: any) {
-      this.logger.error(`SMS failed: ${err?.message}`);
-    }
+  async sendOrderStatusUpdate(phone: string | null | undefined, orderId: string, status: string): Promise<void> {
+    if (!phone) return;
+    const label = STATUS_LABELS[status] ?? status.toLowerCase();
+    await this.send(
+      phone,
+      `ShopTaj: Статус вашего заказа #${orderId.slice(0, 8).toUpperCase()} обновлён — ${label}.`,
+    );
   }
 }

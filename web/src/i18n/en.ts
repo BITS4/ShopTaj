@@ -156,6 +156,17 @@ const en = {
     country: 'Country',
     zip: 'ZIP',
     add_btn: 'Add Address',
+    phone_verification: 'Phone Verification',
+    phone_verified: 'Verified',
+    phone_not_verified: 'Not verified',
+    send_otp: 'Send Code',
+    sending_otp: 'Sending…',
+    enter_otp: 'Enter the 6-digit code sent to your number',
+    verify_otp: 'Verify',
+    verifying_otp: 'Verifying…',
+    otp_sent: 'Code sent! Check your messages.',
+    phone_verified_toast: 'Phone number verified!',
+    resend_otp: 'Resend',
   },
   // Orders
   orders: {

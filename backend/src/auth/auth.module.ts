@@ -7,6 +7,7 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { EmailModule } from '../common/email/email.module';
+import { SmsModule } from '../common/sms/sms.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { EmailModule } from '../common/email/email.module';
       }),
     }),
     EmailModule,
+    SmsModule,
   ],
   providers: [AuthService, JwtStrategy, GoogleStrategy],
   controllers: [AuthController],
