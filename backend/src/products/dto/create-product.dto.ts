@@ -1,6 +1,6 @@
 import {
   IsString, IsNumber, IsOptional, IsBoolean, IsArray,
-  Min, IsUUID, ValidateNested, IsPositive,
+  Min, IsUUID, ValidateNested, IsPositive, ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -48,10 +48,11 @@ export class CreateProductDto {
   price: number;
 
   @ApiPropertyOptional()
+  @ValidateIf((o) => o.discountPrice !== null)
   @IsOptional()
   @IsNumber()
   @Min(0)
-  discountPrice?: number;
+  discountPrice?: number | null;
 
   @ApiProperty()
   @IsNumber()

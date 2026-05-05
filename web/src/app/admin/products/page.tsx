@@ -122,6 +122,8 @@ export default function AdminProductsPage() {
     }
     if (formData.discountPrice && parseFloat(formData.discountPrice) > 0) {
       payload.discountPrice = parseFloat(formData.discountPrice)
+    } else {
+      payload.discountPrice = null
     }
     if (formData.tags && formData.tags.trim()) {
       payload.tags = formData.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
