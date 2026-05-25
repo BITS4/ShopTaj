@@ -6,7 +6,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from '../products/dto/create-product.dto';
 import { ProductsService } from '../products/products.service';
 import { CategoriesService, CreateCategoryDto } from '../categories/categories.service';
-import { SmsService } from '../common/sms/sms.service';
+import { WhatsAppService } from '../common/whatsapp/whatsapp.service';
 
 export class UpdateOrderStatusDto {
   @ApiProperty() @IsString() status: string;
@@ -27,7 +27,7 @@ export class AdminService {
     private prisma: PrismaService,
     private productsService: ProductsService,
     private categoriesService: CategoriesService,
-    private sms: SmsService,
+    private whatsapp: WhatsAppService,
   ) {}
 
   async getAnalytics() {
@@ -98,7 +98,7 @@ export class AdminService {
     const updated = await this.prisma.order.update({ where: { id: orderId }, data: { status: dto.status as any } });
 
     if (order.user?.phone && order.user.isPhoneVerified) {
-      this.sms.sendOrderStatusUpdate(order.user.phone, orderId, dto.status).catch(() => {});
+      this.whatsapp.sendOrderStatusUpdate(order.user.phone, orderId, dto.status).catch(() => {});
     }
     return updated;
   }

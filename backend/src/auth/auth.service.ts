@@ -13,7 +13,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/reset-password.dto';
 import { EmailService } from '../common/email/email.service';
-import { SmsService } from '../common/sms/sms.service';
+import { WhatsAppService } from '../common/whatsapp/whatsapp.service';
 
 const CODE_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
 
@@ -28,7 +28,7 @@ export class AuthService {
     private jwt: JwtService,
     private config: ConfigService,
     private email: EmailService,
-    private sms: SmsService,
+    private whatsapp: WhatsAppService,
   ) {}
 
   // ─── Register ─────────────────────────────────────────────────────────────
@@ -257,7 +257,7 @@ export class AuthService {
       data: { phone: normalized, phoneOtp: otp, phoneOtpExpiry: expiry },
     });
 
-    await this.sms.sendOtp(normalized, otp);
+    await this.whatsapp.sendOtp(normalized, otp);
     return { message: 'OTP sent' };
   }
 

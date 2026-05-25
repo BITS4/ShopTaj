@@ -5,7 +5,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import Stripe from 'stripe';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../common/email/email.service';
-import { SmsService } from '../common/sms/sms.service';
+import { WhatsAppService } from '../common/whatsapp/whatsapp.service';
 import { BePaidService } from '../common/bepaid/bepaid.service';
 
 export class CreatePaymentIntentDto {
@@ -45,7 +45,7 @@ export class PaymentsService {
     private config: ConfigService,
     private prisma: PrismaService,
     private email: EmailService,
-    private sms: SmsService,
+    private whatsapp: WhatsAppService,
     private bepaid: BePaidService,
   ) {
     this.stripe = new Stripe(this.config.get('STRIPE_SECRET_KEY'), { apiVersion: '2023-10-16' });
@@ -179,7 +179,7 @@ export class PaymentsService {
     this.prisma.user.findUnique({ where: { id: userId } }).then((user) => {
       if (!user) return;
       this.email.sendOrderConfirmationEmail(user.email, user.fullName, order.id).catch(() => {});
-      this.sms.sendOrderConfirmation(user.phone, order.id, `${Number(order.totalAmount).toFixed(2)} сом`).catch(() => {});
+      this.whatsapp.sendOrderConfirmation(user.phone, order.id, `${Number(order.totalAmount).toFixed(2)} сом`).catch(() => {});
     });
 
     return order;
@@ -237,7 +237,7 @@ export class PaymentsService {
     this.prisma.user.findUnique({ where: { id: userId } }).then((user) => {
       if (!user) return;
       this.email.sendOrderConfirmationEmail(user.email, user.fullName, order.id).catch(() => {});
-      this.sms.sendOrderConfirmation(user.phone, order.id, `${Number(order.totalAmount).toFixed(2)} сом`).catch(() => {});
+      this.whatsapp.sendOrderConfirmation(user.phone, order.id, `${Number(order.totalAmount).toFixed(2)} сом`).catch(() => {});
     });
 
     return { orderId: order.id, totalAmount, status: 'PENDING', paymentStatus: 'UNPAID' };
@@ -344,7 +344,7 @@ export class PaymentsService {
       const user = await this.prisma.user.findUnique({ where: { id: order.userId } });
       if (user) {
         this.email.sendOrderConfirmationEmail(user.email, user.fullName, orderId).catch(() => {});
-        this.sms.sendOrderConfirmation(user.phone, orderId, `${Number(order.totalAmount).toFixed(2)} сом`).catch(() => {});
+        this.whatsapp.sendOrderConfirmation(user.phone, orderId, `${Number(order.totalAmount).toFixed(2)} сом`).catch(() => {});
       }
 
       this.logger.log(`bePaid payment confirmed for order ${orderId}`);

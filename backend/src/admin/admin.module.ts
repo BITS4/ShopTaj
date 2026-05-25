@@ -6,7 +6,7 @@ import { AdminController } from './admin.controller';
 import { ProductsModule } from '../products/products.module';
 import { CategoriesModule } from '../categories/categories.module';
 import { CloudinaryModule } from '../common/cloudinary/cloudinary.module';
-import { SmsModule } from '../common/sms/sms.module';
+import { WhatsAppModule } from '../common/whatsapp/whatsapp.module';
 
 @Module({
   imports: [
@@ -14,7 +14,7 @@ import { SmsModule } from '../common/sms/sms.module';
     ProductsModule,
     CategoriesModule,
     CloudinaryModule,
-    SmsModule,
+    WhatsAppModule,
   ],
   providers: [AdminService],
   controllers: [AdminController],
