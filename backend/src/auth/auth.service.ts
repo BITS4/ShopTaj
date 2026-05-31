@@ -62,6 +62,7 @@ export class AuthService {
         email: dto.email,
         phone: dto.phone,
         passwordHash,
+        role: dto.accountType === 'SELLER' ? 'SELLER' : 'USER',
         verifyCode: code,
         verifyCodeExpiry: codeExpiry,
         cart: { create: {} },
@@ -160,7 +161,7 @@ export class AuthService {
     if (!stored || stored.expiresAt < new Date()) {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
-    await this.prisma.refreshToken.delete({ where: { token: refreshToken } });
+    await this.prisma.refreshToken.deleteMany({ where: { token: refreshToken } });
     return this.generateTokens(stored.user, res);
   }
 
@@ -242,6 +243,7 @@ export class AuthService {
         role: user.role,
         avatarUrl: user.avatarUrl,
         isEmailVerified: user.isEmailVerified,
+        sellerStatus: (user as any).sellerProfile?.status ?? null,
       },
     };
   }

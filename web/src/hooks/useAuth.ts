@@ -33,7 +33,7 @@ export function useAuth() {
   })
 
   const register = useMutation({
-    mutationFn: (body: { fullName: string; email: string; password: string; phone: string }) =>
+    mutationFn: (body: { fullName: string; email: string; password: string; phone: string; accountType?: 'USER' | 'SELLER' }) =>
       api.post('/auth/register', body),
     onSuccess: (_data, variables) => {
       toast.success('Account created! Enter the 6-digit code sent to your email.')

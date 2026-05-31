@@ -1,5 +1,6 @@
 'use client'
 import Link from 'next/link'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -8,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { useAuth } from '@/hooks/useAuth'
 import { useT } from '@/store/language.store'
+import { ShoppingBag, Store } from 'lucide-react'
 
 const schema = z.object({
   fullName: z.string().min(2, 'At least 2 characters'),
@@ -24,8 +26,10 @@ type FormData = z.infer<typeof schema>
 export default function RegisterPage() {
   const { register: registerUser } = useAuth()
   const t = useT()
+  const [accountType, setAccountType] = useState<'USER' | 'SELLER'>('USER')
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) })
-  const onSubmit = ({ confirmPassword, ...data }: FormData) => registerUser.mutate(data)
+  const onSubmit = ({ confirmPassword, ...data }: FormData) =>
+    registerUser.mutate({ ...data, accountType })
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-muted/30 py-8">
@@ -36,6 +40,36 @@ export default function RegisterPage() {
           <p className="text-muted-foreground text-sm">{t.auth.join_sub}</p>
         </CardHeader>
         <CardContent>
+          {/* Account type selector */}
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <button
+              type="button"
+              onClick={() => setAccountType('USER')}
+              className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors ${
+                accountType === 'USER'
+                  ? 'border-primary bg-primary/5 text-primary'
+                  : 'border-border text-muted-foreground hover:border-primary/50'
+              }`}
+            >
+              <ShoppingBag className="h-6 w-6" />
+              <span className="text-sm font-medium">Buyer</span>
+              <span className="text-xs">Shop & order</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setAccountType('SELLER')}
+              className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors ${
+                accountType === 'SELLER'
+                  ? 'border-primary bg-primary/5 text-primary'
+                  : 'border-border text-muted-foreground hover:border-primary/50'
+              }`}
+            >
+              <Store className="h-6 w-6" />
+              <span className="text-sm font-medium">Seller</span>
+              <span className="text-xs">List & sell</span>
+            </button>
+          </div>
+
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-1">
               <label className="text-sm font-medium">{t.auth.full_name}</label>

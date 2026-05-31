@@ -164,4 +164,34 @@ export class AdminService {
     if (!coupon) throw new NotFoundException('Coupon not found');
     return this.prisma.coupon.update({ where: { id }, data: { isActive: !coupon.isActive } });
   }
+
+  // ── Sellers ───────────────────────────────────────────────────────────────
+
+  async getSellers(status?: string) {
+    return this.prisma.sellerProfile.findMany({
+      where: status ? { status: status as any } : undefined,
+      include: {
+        user: { select: { id: true, fullName: true, email: true, phone: true, createdAt: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async approveSeller(sellerId: string) {
+    const seller = await this.prisma.sellerProfile.findUnique({ where: { id: sellerId } });
+    if (!seller) throw new NotFoundException('Seller not found');
+    return this.prisma.sellerProfile.update({
+      where: { id: sellerId },
+      data: { status: 'APPROVED', rejectionReason: null },
+    });
+  }
+
+  async rejectSeller(sellerId: string, reason: string) {
+    const seller = await this.prisma.sellerProfile.findUnique({ where: { id: sellerId } });
+    if (!seller) throw new NotFoundException('Seller not found');
+    return this.prisma.sellerProfile.update({
+      where: { id: sellerId },
+      data: { status: 'REJECTED', rejectionReason: reason },
+    });
+  }
 }

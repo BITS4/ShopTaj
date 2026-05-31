@@ -9,7 +9,14 @@ datasource db {
 
 enum Role {
   USER
+  SELLER
   ADMIN
+}
+
+enum SellerStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum OrderStatus {
@@ -62,6 +69,7 @@ model User {
   wishlist       Wishlist[]
   refreshTokens  RefreshToken[]
   couponUsages   CouponUsage[]
+  sellerProfile  SellerProfile?
 
   @@map("users")
 }
@@ -119,12 +127,14 @@ model Product {
   brand         String?
   tags          String[]
   categoryId    String  @map("category_id")
+  sellerId      String? @map("seller_id")
   searchVector  Unsupported("tsvector")? @map("search_vector")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   category   Category         @relation(fields: [categoryId], references: [id])
+  seller     SellerProfile?   @relation(fields: [sellerId], references: [id])
   images     ProductImage[]
   variants   ProductVariant[]
   cartItems  CartItem[]
@@ -133,6 +143,22 @@ model Product {
   wishlist   Wishlist[]
 
   @@map("products")
+}
+
+model SellerProfile {
+  id              String       @id @default(uuid())
+  userId          String       @unique @map("user_id")
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shopName        String       @map("shop_name")
+  description     String?
+  status          SellerStatus @default(PENDING)
+  documents       String[]
+  rejectionReason String?      @map("rejection_reason")
+  products        Product[]
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  @@map("seller_profiles")
 }
 
 model ProductImage {

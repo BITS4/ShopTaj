@@ -66,7 +66,7 @@ function VerifyEmailNoticePage() {
       if (data.accessToken) {
         setAuth(data.user, data.accessToken)
         toast.success(`Welcome, ${data.user.fullName}! Your email is verified.`)
-        router.push('/')
+        router.push(data.user.role === 'SELLER' ? '/seller/onboarding' : '/')
       } else {
         toast.success('Email verified! You can now log in.')
         router.push('/login')

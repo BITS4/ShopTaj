@@ -82,6 +82,47 @@ export class CloudinaryService {
     }
   }
 
+  async uploadDocument(
+    file: Express.Multer.File,
+    folder = 'seller-docs',
+  ): Promise<{ secure_url: string; public_id: string }> {
+    if (!file) throw new BadRequestException('No file provided');
+
+    const allowedMimes = [
+      'image/jpeg', 'image/png', 'image/webp',
+      'application/pdf',
+    ];
+    if (!allowedMimes.includes(file.mimetype)) {
+      throw new BadRequestException('Invalid file type. Only JPEG, PNG, PDF allowed');
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      throw new BadRequestException('File too large. Max 10MB');
+    }
+
+    if (this.isConfigured) {
+      return new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          { folder: `shoptaj/${folder}`, resource_type: 'auto' },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve({ secure_url: result.secure_url, public_id: result.public_id });
+          },
+        ).end(file.buffer);
+      });
+    } else {
+      const ext = file.originalname.split('.').pop() || 'pdf';
+      const filename = `${uuidv4()}.${ext}`;
+      const filePath = path.join(this.uploadDir, filename);
+      try {
+        fs.writeFileSync(filePath, file.buffer);
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        return { secure_url: `${frontendUrl}/uploads/${filename}`, public_id: filename };
+      } catch {
+        throw new BadRequestException('Could not save document');
+      }
+    }
+  }
+
   async deleteImage(publicId: string) {
     if (this.isConfigured) {
       return cloudinary.uploader.destroy(publicId);

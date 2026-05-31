@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ShoppingBag, Search, User, Menu, X, Heart, Package, Sparkles } from 'lucide-react'
+import { ShoppingBag, Search, User, Menu, X, Heart, Package, Sparkles, Store } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -105,6 +105,13 @@ export default function Navbar() {
                   <span className="font-medium">{user.fullName.split(' ')[0]}</span>
                 </Button>
               </Link>
+              {user.role === 'SELLER' && (
+                <Link href="/seller/dashboard">
+                  <Button size="sm" variant="outline" className="rounded-full ml-1 gap-1.5">
+                    <Store className="h-3.5 w-3.5" /> My Shop
+                  </Button>
+                </Link>
+              )}
               {user.role === 'ADMIN' && (
                 <Link href="/admin">
                   <Button size="sm" className="rounded-full ml-1 gradient-primary text-white border-0 shadow-md hover:shadow-primary/30 hover:opacity-90">
@@ -181,6 +188,13 @@ export default function Navbar() {
               <Link href="/profile" onClick={() => setMenuOpen(false)}>
                 <Button variant="ghost" className="w-full justify-start rounded-xl">{t.nav.profile}</Button>
               </Link>
+              {user.role === 'SELLER' && (
+                <Link href="/seller/dashboard" onClick={() => setMenuOpen(false)}>
+                  <Button variant="outline" className="w-full rounded-xl gap-2 justify-start">
+                    <Store className="h-4 w-4" /> My Shop
+                  </Button>
+                </Link>
+              )}
               {user.role === 'ADMIN' && (
                 <Link href="/admin" onClick={() => setMenuOpen(false)}>
                   <Button className="w-full rounded-xl gradient-primary text-white border-0">{t.nav.admin}</Button>

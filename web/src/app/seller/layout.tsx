@@ -3,30 +3,20 @@ import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useAuthStore } from '@/store/auth.store'
-import {
-  LayoutDashboard, Package, LayoutGrid, ShoppingBag,
-  Users, Tag, LogOut, Loader2, Store,
-} from 'lucide-react'
+import { LayoutDashboard, Package, Plus, LogOut, Loader2, Store } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 const NAV = [
-  { href: '/admin',            label: 'Dashboard',   icon: LayoutDashboard },
-  { href: '/admin/products',   label: 'Products',    icon: Package },
-  { href: '/admin/categories', label: 'Categories',  icon: LayoutGrid },
-  { href: '/admin/orders',     label: 'Orders',      icon: ShoppingBag },
-  { href: '/admin/users',      label: 'Users',       icon: Users },
-  { href: '/admin/coupons',    label: 'Coupons',     icon: Tag },
-  { href: '/admin/sellers',    label: 'Sellers',     icon: Store },
+  { href: '/seller/dashboard', label: 'Dashboard',    icon: LayoutDashboard },
+  { href: '/seller/products',  label: 'My Products',  icon: Package },
+  { href: '/seller/products/new', label: 'Add Product', icon: Plus },
 ]
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function SellerLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuthStore()
   const { logout } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
-
-  // Wait for Zustand to rehydrate from localStorage before checking auth.
-  // Without this, `user` is null on every navigation and triggers a redirect.
   const [hydrated, setHydrated] = useState(false)
   useEffect(() => { setHydrated(true) }, [])
 
@@ -34,12 +24,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (!hydrated) return
     if (!user) {
       router.replace(`/login?next=${pathname}`)
-    } else if (user.role !== 'ADMIN') {
+    } else if (user.role !== 'SELLER' && user.role !== 'ADMIN') {
       router.replace('/')
     }
   }, [hydrated, user, router, pathname])
 
-  // Show spinner while hydrating
   if (!hydrated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -48,33 +37,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     )
   }
 
-  // Not admin — show message (redirect in progress)
-  if (!user || user.role !== 'ADMIN') {
+  if (!user || (user.role !== 'SELLER' && user.role !== 'ADMIN')) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-3">
-          <p className="text-xl font-semibold">Admin access required</p>
-          <p className="text-sm text-muted-foreground">
-            Log in with <code className="bg-muted px-1.5 py-0.5 rounded text-xs">admin@shoptaj.com</code> / <code className="bg-muted px-1.5 py-0.5 rounded text-xs">Admin123!</code>
-          </p>
-          <Link href="/login?next=/admin" className="text-primary underline text-sm">Go to Login →</Link>
-        </div>
+        <p className="text-xl font-semibold">Seller account required</p>
       </div>
     )
   }
 
   return (
     <div className="flex min-h-screen bg-muted/30">
-      {/* Sidebar */}
       <aside className="w-56 shrink-0 bg-background border-r flex flex-col">
         <div className="px-5 py-5 border-b">
           <Link href="/" className="font-bold text-primary text-lg hover:opacity-80">ShopTaj</Link>
-          <p className="text-xs text-muted-foreground mt-0.5">Admin Panel</p>
+          <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+            <Store className="h-3 w-3" /> Seller Panel
+          </p>
         </div>
-
         <nav className="flex-1 py-4 space-y-0.5 px-2">
           {NAV.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href || (href !== '/admin' && pathname.startsWith(href))
+            const active = pathname === href
             return (
               <Link
                 key={href}
@@ -91,7 +73,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             )
           })}
         </nav>
-
         <div className="px-4 py-4 border-t space-y-2">
           <p className="text-xs text-muted-foreground truncate">{user.email}</p>
           <button
@@ -102,11 +83,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </button>
         </div>
       </aside>
-
-      {/* Main content */}
-      <main className="flex-1 overflow-auto">
-        {children}
-      </main>
+      <main className="flex-1 overflow-auto">{children}</main>
     </div>
   )
 }

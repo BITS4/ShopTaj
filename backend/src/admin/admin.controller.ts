@@ -131,4 +131,20 @@ export class AdminController {
   toggleCoupon(@Param('id') id: string) {
     return this.adminService.toggleCoupon(id);
   }
+
+  // ── Sellers ───────────────────────────────────────────────────────────────
+  @Get('sellers')
+  getSellers(@Query('status') status?: string) {
+    return this.adminService.getSellers(status);
+  }
+
+  @Patch('sellers/:id/approve')
+  approveSeller(@Param('id') id: string) {
+    return this.adminService.approveSeller(id);
+  }
+
+  @Patch('sellers/:id/reject')
+  rejectSeller(@Param('id') id: string, @Body() body: { reason: string }) {
+    return this.adminService.rejectSeller(id, body.reason);
+  }
 }
