@@ -1,4 +1,13 @@
-import { View, Text, TextInput, FlatList, TouchableOpacity, Image, StyleSheet, ActivityIndicator } from 'react-native'
+import {
+  View,
+  Text,
+  TextInput,
+  FlatList,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  ActivityIndicator,
+} from 'react-native'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
@@ -55,19 +64,32 @@ export default function SearchTab() {
           contentContainerStyle={{ gap: 12, paddingBottom: 80 }}
           ListHeaderComponent={<Text style={styles.resultCount}>{data.meta.total} results</Text>}
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.card} onPress={() => router.push(`/product/${item.slug ?? item.id}`)}>
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => router.push(`/product/${item.slug ?? item.id}`)}
+            >
               {item.images?.[0] ? (
-                <Image source={{ uri: fixImageUrl(item.images[0].url) }} style={styles.img} resizeMode="cover" />
+                <Image
+                  source={{ uri: fixImageUrl(item.images[0].url) }}
+                  style={styles.img}
+                  resizeMode="cover"
+                />
               ) : (
                 <View style={[styles.img, styles.placeholder]} />
               )}
               <View style={{ padding: 8 }}>
-                <Text style={styles.name} numberOfLines={2}>{item.name}</Text>
-                <Text style={styles.price}>${Number(item.discountPrice ?? item.price).toFixed(2)}</Text>
+                <Text style={styles.name} numberOfLines={2}>
+                  {item.name}
+                </Text>
+                <Text style={styles.price}>
+                  ${Number(item.discountPrice ?? item.price).toFixed(2)}
+                </Text>
               </View>
             </TouchableOpacity>
           )}
-          ListEmptyComponent={!isLoading ? <Text style={styles.emptyText}>No products found</Text> : null}
+          ListEmptyComponent={
+            !isLoading ? <Text style={styles.emptyText}>No products found</Text> : null
+          }
         />
       )}
     </View>
@@ -76,16 +98,50 @@ export default function SearchTab() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  header: { paddingTop: 56, paddingBottom: 16, paddingHorizontal: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
+  header: {
+    paddingTop: 56,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
   title: { fontSize: 24, fontWeight: 'bold', marginBottom: 12 },
   searchRow: { flexDirection: 'row', gap: 8 },
-  input: { flex: 1, height: 44, borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, paddingHorizontal: 12, fontSize: 15, backgroundColor: '#f9fafb' },
-  searchBtn: { backgroundColor: '#6366f1', paddingHorizontal: 16, borderRadius: 8, justifyContent: 'center' },
+  input: {
+    flex: 1,
+    height: 44,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    fontSize: 15,
+    backgroundColor: '#f9fafb',
+  },
+  searchBtn: {
+    backgroundColor: '#6366f1',
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    justifyContent: 'center',
+  },
   searchBtnText: { color: '#fff', fontWeight: '600' },
-  resultCount: { paddingHorizontal: 16, paddingTop: 12, color: '#6b7280', fontSize: 13, marginBottom: 4 },
+  resultCount: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    color: '#6b7280',
+    fontSize: 13,
+    marginBottom: 4,
+  },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   emptyText: { color: '#6b7280', textAlign: 'center', fontSize: 14 },
-  card: { flex: 1, backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#e5e7eb', overflow: 'hidden' },
+  card: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    overflow: 'hidden',
+  },
   img: { width: '100%', aspectRatio: 1 },
   placeholder: { backgroundColor: '#f3f4f6' },
   name: { fontSize: 13, fontWeight: '600', color: '#111827', marginBottom: 4 },

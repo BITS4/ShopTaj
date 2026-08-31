@@ -51,12 +51,7 @@ export interface Cart {
   total: Money
 }
 
-export type OrderStatus =
-  | 'PENDING'
-  | 'PROCESSING'
-  | 'SHIPPED'
-  | 'DELIVERED'
-  | 'CANCELLED'
+export type OrderStatus = 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED'
 
 export interface Order {
   id: string

@@ -19,17 +19,13 @@ describe('InMemoryStripeGateway', () => {
         client_secret: 'pi_test_1_secret_test',
       }),
     );
-    await expect(gateway.retrievePaymentIntent(created.id)).resolves.toBe(
-      created,
-    );
+    await expect(gateway.retrievePaymentIntent(created.id)).resolves.toBe(created);
   });
 
   it('parses local webhook fixtures and rejects unknown intents', async () => {
     const gateway = new InMemoryStripeGateway();
     const event = gateway.constructWebhookEvent(
-      Buffer.from(
-        JSON.stringify({ id: 'evt_test', type: 'payment_intent.succeeded' }),
-      ),
+      Buffer.from(JSON.stringify({ id: 'evt_test', type: 'payment_intent.succeeded' })),
       'unused-test-signature',
       'unused-test-secret',
     );

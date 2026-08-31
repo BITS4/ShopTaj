@@ -4,19 +4,26 @@ import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useAuthStore } from '@/store/auth.store'
 import {
-  LayoutDashboard, Package, LayoutGrid, ShoppingBag,
-  Users, Tag, LogOut, Loader2, Store,
+  LayoutDashboard,
+  Package,
+  LayoutGrid,
+  ShoppingBag,
+  Users,
+  Tag,
+  LogOut,
+  Loader2,
+  Store,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 const NAV = [
-  { href: '/admin',            label: 'Dashboard',   icon: LayoutDashboard },
-  { href: '/admin/products',   label: 'Products',    icon: Package },
-  { href: '/admin/categories', label: 'Categories',  icon: LayoutGrid },
-  { href: '/admin/orders',     label: 'Orders',      icon: ShoppingBag },
-  { href: '/admin/users',      label: 'Users',       icon: Users },
-  { href: '/admin/coupons',    label: 'Coupons',     icon: Tag },
-  { href: '/admin/sellers',    label: 'Sellers',     icon: Store },
+  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin/products', label: 'Products', icon: Package },
+  { href: '/admin/categories', label: 'Categories', icon: LayoutGrid },
+  { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
+  { href: '/admin/users', label: 'Users', icon: Users },
+  { href: '/admin/coupons', label: 'Coupons', icon: Tag },
+  { href: '/admin/sellers', label: 'Sellers', icon: Store },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -28,7 +35,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Wait for Zustand to rehydrate from localStorage before checking auth.
   // Without this, `user` is null on every navigation and triggers a redirect.
   const [hydrated, setHydrated] = useState(false)
-  useEffect(() => { setHydrated(true) }, [])
+  useEffect(() => {
+    setHydrated(true)
+  }, [])
 
   useEffect(() => {
     if (!hydrated) return
@@ -55,9 +64,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="text-center space-y-3">
           <p className="text-xl font-semibold">Admin access required</p>
           <p className="text-sm text-muted-foreground">
-            Log in with <code className="bg-muted px-1.5 py-0.5 rounded text-xs">admin@shoptaj.com</code> / <code className="bg-muted px-1.5 py-0.5 rounded text-xs">Admin123!</code>
+            Log in with{' '}
+            <code className="bg-muted px-1.5 py-0.5 rounded text-xs">admin@shoptaj.com</code> /{' '}
+            <code className="bg-muted px-1.5 py-0.5 rounded text-xs">Admin123!</code>
           </p>
-          <Link href="/login?next=/admin" className="text-primary underline text-sm">Go to Login →</Link>
+          <Link href="/login?next=/admin" className="text-primary underline text-sm">
+            Go to Login →
+          </Link>
         </div>
       </div>
     )
@@ -68,7 +81,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Sidebar */}
       <aside className="w-56 shrink-0 bg-background border-r flex flex-col">
         <div className="px-5 py-5 border-b">
-          <Link href="/" className="font-bold text-primary text-lg hover:opacity-80">ShopTaj</Link>
+          <Link href="/" className="font-bold text-primary text-lg hover:opacity-80">
+            ShopTaj
+          </Link>
           <p className="text-xs text-muted-foreground mt-0.5">Admin Panel</p>
         </div>
 
@@ -104,9 +119,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-auto">
-        {children}
-      </main>
+      <main className="flex-1 overflow-auto">{children}</main>
     </div>
   )
 }

@@ -6,10 +6,7 @@ import { UsersController } from './users.controller';
 import { CloudinaryModule } from '../common/cloudinary/cloudinary.module';
 
 @Module({
-  imports: [
-    MulterModule.register({ storage: memoryStorage() }),
-    CloudinaryModule,
-  ],
+  imports: [MulterModule.register({ storage: memoryStorage() }), CloudinaryModule],
   providers: [UsersService],
   controllers: [UsersController],
   exports: [UsersService],

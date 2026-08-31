@@ -21,7 +21,10 @@ interface CouponFormValues {
   expiresAt?: string
 }
 
-interface CouponPayload extends Omit<CouponFormValues, 'discountValue' | 'minOrderValue' | 'maxUses'> {
+interface CouponPayload extends Omit<
+  CouponFormValues,
+  'discountValue' | 'minOrderValue' | 'maxUses'
+> {
   discountValue: number
   minOrderValue?: string | number
   maxUses?: string | number
@@ -54,12 +57,20 @@ export default function AdminCouponsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-coupons'],
-    queryFn: async () => { const { data } = await api.get<Coupon[]>('/admin/coupons'); return data },
+    queryFn: async () => {
+      const { data } = await api.get<Coupon[]>('/admin/coupons')
+      return data
+    },
   })
 
   const create = useMutation({
     mutationFn: (body: CouponPayload) => api.post('/admin/coupons', body),
-    onSuccess: () => { toast.success('Coupon created'); qc.invalidateQueries({ queryKey: ['admin-coupons'] }); setShowForm(false); reset() },
+    onSuccess: () => {
+      toast.success('Coupon created')
+      qc.invalidateQueries({ queryKey: ['admin-coupons'] })
+      setShowForm(false)
+      reset()
+    },
     onError: (error: unknown) => toast.error(getErrorMessage(error, 'Failed to create coupon')),
   })
 
@@ -82,30 +93,70 @@ export default function AdminCouponsPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Coupons</h1>
         <Button onClick={() => setShowForm(!showForm)}>
-          <Plus className="h-4 w-4 mr-2" />{showForm ? 'Cancel' : 'New Coupon'}
+          <Plus className="h-4 w-4 mr-2" />
+          {showForm ? 'Cancel' : 'New Coupon'}
         </Button>
       </div>
 
       {showForm && (
         <Card className="mb-8">
-          <CardHeader><CardTitle>Create Coupon</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Create Coupon</CardTitle>
+          </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="grid sm:grid-cols-2 gap-4">
-              <div><label className="text-xs font-medium">Code *</label><Input {...register('code', { required: true })} placeholder="SUMMER20" className="uppercase" /></div>
+              <div>
+                <label className="text-xs font-medium">Code *</label>
+                <Input
+                  {...register('code', { required: true })}
+                  placeholder="SUMMER20"
+                  className="uppercase"
+                />
+              </div>
               <div>
                 <label className="text-xs font-medium">Discount Type *</label>
-                <select className="w-full h-10 border rounded-md px-3 text-sm bg-background" {...register('discountType', { required: true })}>
+                <select
+                  className="w-full h-10 border rounded-md px-3 text-sm bg-background"
+                  {...register('discountType', { required: true })}
+                >
                   <option value="PERCENTAGE">Percentage (%)</option>
                   <option value="FIXED">Fixed ($)</option>
                 </select>
               </div>
-              <div><label className="text-xs font-medium">Discount Value *</label><Input type="number" step="0.01" {...register('discountValue', { required: true })} /></div>
-              <div><label className="text-xs font-medium">Min Order Value</label><Input type="number" step="0.01" {...register('minOrderValue')} /></div>
-              <div><label className="text-xs font-medium">Max Uses</label><Input type="number" {...register('maxUses')} /></div>
-              <div><label className="text-xs font-medium">Expires At</label><Input type="datetime-local" {...register('expiresAt')} /></div>
+              <div>
+                <label className="text-xs font-medium">Discount Value *</label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  {...register('discountValue', { required: true })}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium">Min Order Value</label>
+                <Input type="number" step="0.01" {...register('minOrderValue')} />
+              </div>
+              <div>
+                <label className="text-xs font-medium">Max Uses</label>
+                <Input type="number" {...register('maxUses')} />
+              </div>
+              <div>
+                <label className="text-xs font-medium">Expires At</label>
+                <Input type="datetime-local" {...register('expiresAt')} />
+              </div>
               <div className="sm:col-span-2 flex gap-3">
-                <Button type="submit" disabled={create.isPending}>Create Coupon</Button>
-                <Button type="button" variant="ghost" onClick={() => { setShowForm(false); reset() }}>Cancel</Button>
+                <Button type="submit" disabled={create.isPending}>
+                  Create Coupon
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setShowForm(false)
+                    reset()
+                  }}
+                >
+                  Cancel
+                </Button>
               </div>
             </form>
           </CardContent>
@@ -113,7 +164,11 @@ export default function AdminCouponsPage() {
       )}
 
       {isLoading ? (
-        <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-lg" />)}</div>
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-16 rounded-lg" />
+          ))}
+        </div>
       ) : (
         <div className="border rounded-xl overflow-hidden">
           <table className="w-full text-sm">
@@ -132,11 +187,22 @@ export default function AdminCouponsPage() {
                 <tr key={c.id} className="border-t hover:bg-muted/20">
                   <td className="px-4 py-3 font-mono font-semibold">{c.code}</td>
                   <td className="px-4 py-3">
-                    {c.discountType === 'PERCENTAGE' ? `${c.discountValue}%` : `$${c.discountValue}`}
+                    {c.discountType === 'PERCENTAGE'
+                      ? `${c.discountValue}%`
+                      : `$${c.discountValue}`}
                   </td>
-                  <td className="px-4 py-3 hidden sm:table-cell text-muted-foreground">{c.usedCount}{c.maxUses ? `/${c.maxUses}` : ''}</td>
-                  <td className="px-4 py-3 hidden md:table-cell text-muted-foreground">{c.expiresAt ? formatDate(c.expiresAt) : '—'}</td>
-                  <td className="px-4 py-3"><Badge variant={c.isActive ? 'default' : 'secondary'}>{c.isActive ? 'Active' : 'Disabled'}</Badge></td>
+                  <td className="px-4 py-3 hidden sm:table-cell text-muted-foreground">
+                    {c.usedCount}
+                    {c.maxUses ? `/${c.maxUses}` : ''}
+                  </td>
+                  <td className="px-4 py-3 hidden md:table-cell text-muted-foreground">
+                    {c.expiresAt ? formatDate(c.expiresAt) : '—'}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Badge variant={c.isActive ? 'default' : 'secondary'}>
+                      {c.isActive ? 'Active' : 'Disabled'}
+                    </Badge>
+                  </td>
                   <td className="px-4 py-3">
                     <Button size="sm" variant="outline" onClick={() => toggle.mutate(c.id)}>
                       {c.isActive ? 'Disable' : 'Enable'}

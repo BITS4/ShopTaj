@@ -43,7 +43,13 @@ api.interceptors.response.use(
       } catch {
         useAuthStore.getState().clearAuth()
         if (typeof window !== 'undefined') {
-          const authPages = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email-notice']
+          const authPages = [
+            '/login',
+            '/register',
+            '/forgot-password',
+            '/reset-password',
+            '/verify-email-notice',
+          ]
           if (!authPages.some((p) => window.location.pathname.startsWith(p))) {
             window.location.href = '/login'
           }

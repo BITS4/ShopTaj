@@ -8,26 +8,26 @@ services:
       POSTGRES_PASSWORD: shoptaj_test
       POSTGRES_DB: shoptaj_test
     ports:
-      - "5433:5432"
+      - '5433:5432'
     tmpfs:
       - /var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U shoptaj_test -d shoptaj_test"]
+      test: ['CMD-SHELL', 'pg_isready -U shoptaj_test -d shoptaj_test']
       interval: 3s
       timeout: 3s
       retries: 15
-    restart: "no"
+    restart: 'no'
 
   redis-test:
     image: redis:7-alpine
     command: redis-server --save "" --appendonly no
     ports:
-      - "6380:6379"
+      - '6380:6379'
     tmpfs:
       - /data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 3s
       timeout: 3s
       retries: 15
-    restart: "no"
+    restart: 'no'

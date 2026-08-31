@@ -16,8 +16,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 import type { Product } from '@/types'
 
-interface Props { product: Product }
-interface WishlistItem { productId: string }
+interface Props {
+  product: Product
+}
+interface WishlistItem {
+  productId: string
+}
 
 export default function ProductCard({ product }: Props) {
   const { addItem } = useCart()
@@ -47,9 +51,7 @@ export default function ProductCard({ product }: Props) {
 
   const toggleWishlist = useMutation({
     mutationFn: () =>
-      isWishlisted
-        ? api.delete(`/wishlist/${product.id}`)
-        : api.post(`/wishlist/${product.id}`),
+      isWishlisted ? api.delete(`/wishlist/${product.id}`) : api.post(`/wishlist/${product.id}`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['wishlist-ids'] })
       qc.invalidateQueries({ queryKey: ['wishlist'] })
@@ -79,13 +81,18 @@ export default function ProductCard({ product }: Props) {
   }
 
   return (
-    <div className={cn(
-      'group relative flex flex-col rounded-2xl border bg-card overflow-hidden',
-      'transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-primary/20',
-      isOutOfStock && 'opacity-75'
-    )}>
+    <div
+      className={cn(
+        'group relative flex flex-col rounded-2xl border bg-card overflow-hidden',
+        'transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-primary/20',
+        isOutOfStock && 'opacity-75',
+      )}
+    >
       {/* Image */}
-      <Link href={`/products/${product.slug}`} className="relative aspect-[4/3] overflow-hidden bg-muted/40">
+      <Link
+        href={`/products/${product.slug}`}
+        className="relative aspect-[4/3] overflow-hidden bg-muted/40"
+      >
         {mainImage ? (
           <Image
             src={mainImage.url}
@@ -113,7 +120,9 @@ export default function ProductCard({ product }: Props) {
             </Badge>
           )}
           {isOutOfStock && (
-            <Badge variant="secondary" className="text-xs">Out of stock</Badge>
+            <Badge variant="secondary" className="text-xs">
+              Out of stock
+            </Badge>
           )}
         </div>
 
@@ -122,10 +131,15 @@ export default function ProductCard({ product }: Props) {
           onClick={handleWishlist}
           className={cn(
             'absolute top-2.5 right-2.5 h-8 w-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center transition-all duration-300 hover:bg-white hover:scale-110 shadow-md',
-            isWishlisted ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+            isWishlisted ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
           )}
         >
-          <Heart className={cn('h-4 w-4 transition-colors', isWishlisted ? 'fill-rose-500 text-rose-500' : 'text-muted-foreground')} />
+          <Heart
+            className={cn(
+              'h-4 w-4 transition-colors',
+              isWishlisted ? 'fill-rose-500 text-rose-500' : 'text-muted-foreground',
+            )}
+          />
         </button>
       </Link>
 
@@ -156,7 +170,9 @@ export default function ProductCard({ product }: Props) {
           {discount ? (
             <>
               <span className="font-black text-base text-primary">{formatPrice(discount)}</span>
-              <span className="text-xs text-muted-foreground line-through">{formatPrice(price)}</span>
+              <span className="text-xs text-muted-foreground line-through">
+                {formatPrice(price)}
+              </span>
             </>
           ) : (
             <span className="font-black text-base text-primary">{formatPrice(price)}</span>
@@ -168,13 +184,18 @@ export default function ProductCard({ product }: Props) {
           size="sm"
           className={cn(
             'w-full mt-1.5 rounded-xl font-semibold transition-all',
-            !isOutOfStock && 'gradient-primary text-white border-0 hover:opacity-90 hover:shadow-md hover:shadow-primary/30'
+            !isOutOfStock &&
+              'gradient-primary text-white border-0 hover:opacity-90 hover:shadow-md hover:shadow-primary/30',
           )}
           disabled={isOutOfStock || addItem.isPending}
           onClick={handleAddToCart}
         >
           <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
-          {addItem.isPending ? t.products.adding : isOutOfStock ? t.products.out_of_stock : t.products.add_to_cart}
+          {addItem.isPending
+            ? t.products.adding
+            : isOutOfStock
+              ? t.products.out_of_stock
+              : t.products.add_to_cart}
         </Button>
       </div>
     </div>

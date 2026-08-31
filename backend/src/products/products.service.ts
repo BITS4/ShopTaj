@@ -11,15 +11,22 @@ export class ProductsService {
 
   async findAll(query: ProductQueryDto) {
     const {
-      search, categoryId, brand, minPrice, maxPrice,
-      minRating: _minRating, inStock, sortBy, page = 1, limit = 20,
+      search,
+      categoryId,
+      brand,
+      minPrice,
+      maxPrice,
+      minRating: _minRating,
+      inStock,
+      sortBy,
+      page = 1,
+      limit = 20,
     } = query;
     const skip = (page - 1) * limit;
 
     const visibilityQuery = query as ProductQueryDto & { isActive?: string };
-    const where: Prisma.ProductWhereInput = visibilityQuery.isActive === 'all'
-      ? {}
-      : { isActive: true };
+    const where: Prisma.ProductWhereInput =
+      visibilityQuery.isActive === 'all' ? {} : { isActive: true };
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },

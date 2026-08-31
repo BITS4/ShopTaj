@@ -49,7 +49,9 @@ export default function CartTab() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}><Text style={styles.title}>Cart ({cart.items.length})</Text></View>
+      <View style={styles.header}>
+        <Text style={styles.title}>Cart ({cart.items.length})</Text>
+      </View>
       <FlatList
         data={cart.items}
         keyExtractor={(item) => item.id}
@@ -57,22 +59,42 @@ export default function CartTab() {
         renderItem={({ item }) => (
           <View style={styles.item}>
             {item.product.images?.[0] ? (
-              <Image source={{ uri: fixImageUrl(item.product.images[0].url) }} style={styles.img} resizeMode="cover" />
+              <Image
+                source={{ uri: fixImageUrl(item.product.images[0].url) }}
+                style={styles.img}
+                resizeMode="cover"
+              />
             ) : (
               <View style={[styles.img, { backgroundColor: '#f3f4f6' }]} />
             )}
             <View style={styles.itemBody}>
-              <Text style={styles.itemName} numberOfLines={2}>{item.product.name}</Text>
-              <Text style={styles.itemPrice}>${Number(item.variant?.price ?? item.product.discountPrice ?? item.product.price).toFixed(2)}</Text>
+              <Text style={styles.itemName} numberOfLines={2}>
+                {item.product.name}
+              </Text>
+              <Text style={styles.itemPrice}>
+                $
+                {Number(
+                  item.variant?.price ?? item.product.discountPrice ?? item.product.price,
+                ).toFixed(2)}
+              </Text>
               <View style={styles.qtyRow}>
-                <TouchableOpacity style={styles.qtyBtn} onPress={() => updateItem.mutate({ id: item.id, quantity: item.quantity - 1 })}>
+                <TouchableOpacity
+                  style={styles.qtyBtn}
+                  onPress={() => updateItem.mutate({ id: item.id, quantity: item.quantity - 1 })}
+                >
                   <Text style={styles.qtyBtnText}>−</Text>
                 </TouchableOpacity>
                 <Text style={styles.qty}>{item.quantity}</Text>
-                <TouchableOpacity style={styles.qtyBtn} onPress={() => updateItem.mutate({ id: item.id, quantity: item.quantity + 1 })}>
+                <TouchableOpacity
+                  style={styles.qtyBtn}
+                  onPress={() => updateItem.mutate({ id: item.id, quantity: item.quantity + 1 })}
+                >
                   <Text style={styles.qtyBtnText}>+</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => removeItem.mutate(item.id)} style={{ marginLeft: 'auto' }}>
+                <TouchableOpacity
+                  onPress={() => removeItem.mutate(item.id)}
+                  style={{ marginLeft: 'auto' }}
+                >
                   <Text style={{ color: '#ef4444', fontSize: 13 }}>Remove</Text>
                 </TouchableOpacity>
               </View>
@@ -95,20 +117,47 @@ export default function CartTab() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  header: { paddingTop: 56, paddingHorizontal: 16, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
+  header: {
+    paddingTop: 56,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
   title: { fontSize: 24, fontWeight: 'bold' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
   emptyIcon: { fontSize: 64 },
   emptyTitle: { fontSize: 18, fontWeight: '600', color: '#374151' },
-  btn: { backgroundColor: '#6366f1', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8, marginTop: 8 },
+  btn: {
+    backgroundColor: '#6366f1',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 8,
+  },
   btnText: { color: '#fff', fontWeight: '600' },
-  item: { flexDirection: 'row', gap: 12, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#e5e7eb' },
+  item: {
+    flexDirection: 'row',
+    gap: 12,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
   img: { width: 80, height: 80, borderRadius: 8 },
   itemBody: { flex: 1 },
   itemName: { fontSize: 14, fontWeight: '600', color: '#111827', marginBottom: 4 },
   itemPrice: { fontSize: 15, fontWeight: 'bold', color: '#6366f1', marginBottom: 8 },
   qtyRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  qtyBtn: { width: 28, height: 28, borderRadius: 6, borderWidth: 1, borderColor: '#e5e7eb', alignItems: 'center', justifyContent: 'center' },
+  qtyBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   qtyBtnText: { fontSize: 16, color: '#374151' },
   qty: { fontSize: 15, fontWeight: '600', minWidth: 24, textAlign: 'center' },
   footer: { padding: 16, borderTopWidth: 1, borderTopColor: '#e5e7eb', backgroundColor: '#fff' },

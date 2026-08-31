@@ -22,7 +22,10 @@ interface ProductFormValues {
   isActive: boolean
 }
 
-interface CreateProductPayload extends Omit<ProductFormValues, 'price' | 'discountPrice' | 'stock' | 'tags'> {
+interface CreateProductPayload extends Omit<
+  ProductFormValues,
+  'price' | 'discountPrice' | 'stock' | 'tags'
+> {
   price: number
   discountPrice?: number
   stock: number
@@ -56,7 +59,10 @@ export default function NewSellerProductPage() {
 
   const { data: categories } = useQuery({
     queryKey: ['categories'],
-    queryFn: async () => { const { data } = await api.get<CategoryOption[]>('/categories'); return data },
+    queryFn: async () => {
+      const { data } = await api.get<CategoryOption[]>('/categories')
+      return data
+    },
   })
 
   const createProduct = useMutation({
@@ -84,7 +90,12 @@ export default function NewSellerProductPage() {
       price: parseFloat(String(data.price)),
       stock: parseInt(String(data.stock), 10),
       discountPrice: data.discountPrice ? parseFloat(String(data.discountPrice)) : undefined,
-      tags: data.tags ? data.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],
+      tags: data.tags
+        ? data.tags
+            .split(',')
+            .map((t: string) => t.trim())
+            .filter(Boolean)
+        : [],
     })
   }
 
@@ -92,21 +103,36 @@ export default function NewSellerProductPage() {
     <div className="p-8 max-w-2xl">
       <h1 className="text-2xl font-bold mb-6">Add New Product</h1>
       <Card>
-        <CardHeader><CardTitle>Product Details</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Product Details</CardTitle>
+        </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-1">
               <label className="text-sm font-medium">Product Name *</label>
-              <Input {...register('name', { required: true })} placeholder="e.g. Handmade Silk Scarf" />
+              <Input
+                {...register('name', { required: true })}
+                placeholder="e.g. Handmade Silk Scarf"
+              />
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-sm font-medium">Price (сом) *</label>
-                <Input type="number" step="0.01" {...register('price', { required: true })} placeholder="0.00" />
+                <Input
+                  type="number"
+                  step="0.01"
+                  {...register('price', { required: true })}
+                  placeholder="0.00"
+                />
               </div>
               <div className="space-y-1">
                 <label className="text-sm font-medium">Discount Price</label>
-                <Input type="number" step="0.01" {...register('discountPrice')} placeholder="0.00" />
+                <Input
+                  type="number"
+                  step="0.01"
+                  {...register('discountPrice')}
+                  placeholder="0.00"
+                />
               </div>
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
@@ -122,7 +148,9 @@ export default function NewSellerProductPage() {
                 >
                   <option value="">Select category</option>
                   {categories?.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -149,7 +177,9 @@ export default function NewSellerProductPage() {
               <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 cursor-pointer hover:border-primary transition-colors">
                 <Upload className="h-6 w-6 text-muted-foreground mb-1" />
                 <span className="text-sm text-muted-foreground">
-                  {imageFiles?.length ? `${imageFiles.length} file(s) selected` : 'Click to upload images'}
+                  {imageFiles?.length
+                    ? `${imageFiles.length} file(s) selected`
+                    : 'Click to upload images'}
                 </span>
                 <input
                   type="file"
@@ -164,7 +194,9 @@ export default function NewSellerProductPage() {
               <Button type="submit" disabled={createProduct.isPending}>
                 {createProduct.isPending ? 'Creating...' : 'Create Product'}
               </Button>
-              <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
+              <Button type="button" variant="outline" onClick={() => router.back()}>
+                Cancel
+              </Button>
             </div>
           </form>
         </CardContent>

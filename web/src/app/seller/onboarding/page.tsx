@@ -24,7 +24,11 @@ export default function SellerOnboardingPage() {
   const [files, setFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<{
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<{
     shopName: string
     description: string
   }>()
@@ -39,7 +43,10 @@ export default function SellerOnboardingPage() {
   }
 
   const submitDocuments = async () => {
-    if (files.length === 0) { toast.error('Upload at least one document'); return }
+    if (files.length === 0) {
+      toast.error('Upload at least one document')
+      return
+    }
     setUploading(true)
     try {
       const formData = new FormData()
@@ -64,9 +71,12 @@ export default function SellerOnboardingPage() {
             </div>
             <h2 className="text-2xl font-bold">Application Submitted!</h2>
             <p className="text-muted-foreground text-sm">
-              Your seller application is under review. We'll notify you by email once approved. This usually takes 1-2 business days.
+              Your seller application is under review. We'll notify you by email once approved. This
+              usually takes 1-2 business days.
             </p>
-            <Button onClick={() => router.push('/')} className="w-full">Back to Shop</Button>
+            <Button onClick={() => router.push('/')} className="w-full">
+              Back to Shop
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -88,22 +98,33 @@ export default function SellerOnboardingPage() {
 
         {/* Steps indicator */}
         <div className="flex items-center gap-2">
-          <div className={`flex-1 h-1.5 rounded-full ${step === 'info' ? 'bg-primary' : 'bg-primary'}`} />
-          <div className={`flex-1 h-1.5 rounded-full ${step === 'documents' ? 'bg-primary' : 'bg-muted'}`} />
+          <div
+            className={`flex-1 h-1.5 rounded-full ${step === 'info' ? 'bg-primary' : 'bg-primary'}`}
+          />
+          <div
+            className={`flex-1 h-1.5 rounded-full ${step === 'documents' ? 'bg-primary' : 'bg-muted'}`}
+          />
         </div>
 
         {step === 'info' && (
           <Card>
-            <CardHeader><CardTitle>Shop Information</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle>Shop Information</CardTitle>
+            </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit(submitInfo)} className="space-y-4">
                 <div className="space-y-1">
                   <label className="text-sm font-medium">Shop Name *</label>
                   <Input
                     placeholder="e.g. Dushanbe Crafts"
-                    {...register('shopName', { required: 'Shop name is required', minLength: { value: 2, message: 'Min 2 characters' } })}
+                    {...register('shopName', {
+                      required: 'Shop name is required',
+                      minLength: { value: 2, message: 'Min 2 characters' },
+                    })}
                   />
-                  {errors.shopName && <p className="text-xs text-destructive">{errors.shopName.message}</p>}
+                  {errors.shopName && (
+                    <p className="text-xs text-destructive">{errors.shopName.message}</p>
+                  )}
                 </div>
                 <div className="space-y-1">
                   <label className="text-sm font-medium">Description</label>
@@ -129,7 +150,8 @@ export default function SellerOnboardingPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Upload documents proving you're a legitimate seller. Accepted: business registration, product photos, invoices, ID. (JPEG, PNG, or PDF — max 10MB each)
+                Upload documents proving you're a legitimate seller. Accepted: business
+                registration, product photos, invoices, ID. (JPEG, PNG, or PDF — max 10MB each)
               </p>
               <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-8 cursor-pointer hover:border-primary transition-colors">
                 <Upload className="h-8 w-8 text-muted-foreground mb-2" />

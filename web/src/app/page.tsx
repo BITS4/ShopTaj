@@ -17,10 +17,20 @@ type LocalisedCategory = Category & {
 }
 
 const CATEGORY_ICONS: Record<string, string> = {
-  electronics: '💻', clothing: '👗', 'home-garden': '🏠', books: '📚',
-  cosmetics: '💄', sports: '⚽', food: '🍎', toys: '🧸',
-  decoration: '🎨', automotive: '🚗', health: '💊', stationery: '✏️',
-  pets: '🐾', furniture: '🛋️',
+  electronics: '💻',
+  clothing: '👗',
+  'home-garden': '🏠',
+  books: '📚',
+  cosmetics: '💄',
+  sports: '⚽',
+  food: '🍎',
+  toys: '🧸',
+  decoration: '🎨',
+  automotive: '🚗',
+  health: '💊',
+  stationery: '✏️',
+  pets: '🐾',
+  furniture: '🛋️',
 }
 
 export default function HomePage() {
@@ -29,9 +39,11 @@ export default function HomePage() {
   const { user } = useAuthStore()
 
   const catName = (cat: LocalisedCategory) =>
-    (locale === 'ru' && cat.nameRu) ? cat.nameRu :
-    (locale === 'tg' && cat.nameTg) ? cat.nameTg :
-    cat.name
+    locale === 'ru' && cat.nameRu
+      ? cat.nameRu
+      : locale === 'tg' && cat.nameTg
+        ? cat.nameTg
+        : cat.name
 
   const { data: products, isLoading } = useQuery<Product[]>({
     queryKey: ['featured'],
@@ -53,7 +65,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen">
-
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden gradient-hero py-20 px-4">
         {/* Decorative blobs */}
@@ -67,7 +78,9 @@ export default function HomePage() {
           </div>
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tighter mb-6 leading-[1.05]">
             {t.home.hero_title.split(' ').map((word: string, i: number) => (
-              <span key={i} className={i % 3 === 1 ? 'text-gradient' : ''}>{word}{' '}</span>
+              <span key={i} className={i % 3 === 1 ? 'text-gradient' : ''}>
+                {word}{' '}
+              </span>
             ))}
           </h1>
           <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
@@ -75,13 +88,20 @@ export default function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/products">
-              <Button size="lg" className="rounded-full px-8 h-12 gradient-primary text-white border-0 shadow-lg hover:shadow-primary/40 hover:opacity-90 transition-all text-base">
+              <Button
+                size="lg"
+                className="rounded-full px-8 h-12 gradient-primary text-white border-0 shadow-lg hover:shadow-primary/40 hover:opacity-90 transition-all text-base"
+              >
                 <ShoppingBag className="h-4 w-4 mr-2" />
                 {t.home.shop_now}
               </Button>
             </Link>
             <Link href="/products">
-              <Button size="lg" variant="outline" className="rounded-full px-8 h-12 text-base border-2 hover:bg-primary/5 transition-all">
+              <Button
+                size="lg"
+                variant="outline"
+                className="rounded-full px-8 h-12 text-base border-2 hover:bg-primary/5 transition-all"
+              >
                 {t.home.view_featured}
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
@@ -110,7 +130,9 @@ export default function HomePage() {
         <section className="container mx-auto px-4 py-16">
           <div className="flex items-end justify-between mb-8">
             <div>
-              <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-1">{t.home.browse_label}</p>
+              <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-1">
+                {t.home.browse_label}
+              </p>
               <h2 className="text-3xl font-bold">{t.home.shop_by_category}</h2>
             </div>
           </div>
@@ -124,7 +146,9 @@ export default function HomePage() {
                 <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform duration-300">
                   {CATEGORY_ICONS[cat.slug] ?? '🛍️'}
                 </div>
-                <span className="text-xs font-semibold text-center leading-tight">{catName(cat)}</span>
+                <span className="text-xs font-semibold text-center leading-tight">
+                  {catName(cat)}
+                </span>
               </Link>
             ))}
           </div>
@@ -135,11 +159,16 @@ export default function HomePage() {
       <section className="container mx-auto px-4 py-8 pb-20">
         <div className="flex items-end justify-between mb-8">
           <div>
-            <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-1">{t.home.handpicked_label}</p>
+            <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-1">
+              {t.home.handpicked_label}
+            </p>
             <h2 className="text-3xl font-bold">{t.home.featured_products}</h2>
           </div>
           <Link href="/products">
-            <Button variant="ghost" className="rounded-full gap-1 text-primary font-semibold hover:bg-primary/10">
+            <Button
+              variant="ghost"
+              className="rounded-full gap-1 text-primary font-semibold hover:bg-primary/10"
+            >
               {t.home.view_all} <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
@@ -166,23 +195,31 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
-            {products.map((product) => <ProductCard key={product.id} product={product} />)}
+            {products.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
           </div>
         )}
       </section>
 
       {/* ── Bottom banner — only for guests ─────────────────────────────── */}
-      {!user && <section className="gradient-primary py-16 px-4">
-        <div className="container mx-auto max-w-4xl text-center text-white">
-          <h2 className="text-3xl sm:text-4xl font-black mb-4">{t.home.banner_title}</h2>
-          <p className="text-white/80 mb-8 text-lg">{t.home.banner_sub}</p>
-          <Link href="/register">
-            <Button size="lg" variant="secondary" className="rounded-full px-10 h-12 font-bold text-primary hover:scale-105 transition-transform shadow-xl">
-              {t.home.create_account} →
-            </Button>
-          </Link>
-        </div>
-      </section>}
+      {!user && (
+        <section className="gradient-primary py-16 px-4">
+          <div className="container mx-auto max-w-4xl text-center text-white">
+            <h2 className="text-3xl sm:text-4xl font-black mb-4">{t.home.banner_title}</h2>
+            <p className="text-white/80 mb-8 text-lg">{t.home.banner_sub}</p>
+            <Link href="/register">
+              <Button
+                size="lg"
+                variant="secondary"
+                className="rounded-full px-10 h-12 font-bold text-primary hover:scale-105 transition-transform shadow-xl"
+              >
+                {t.home.create_account} →
+              </Button>
+            </Link>
+          </div>
+        </section>
+      )}
     </div>
   )
 }

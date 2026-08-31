@@ -17,7 +17,8 @@ const LABELS = {
     success_title: 'Payment Successful!',
     success_msg: 'Your order has been confirmed and is being prepared.',
     fail_title: 'Payment Not Completed',
-    fail_msg: 'The payment was cancelled or failed. Your order has been cancelled. Please try again.',
+    fail_msg:
+      'The payment was cancelled or failed. Your order has been cancelled. Please try again.',
     view_orders: 'View My Orders',
     try_again: 'Try Again',
     continue: 'Continue Shopping',
@@ -27,7 +28,8 @@ const LABELS = {
     success_title: 'Оплата прошла успешно!',
     success_msg: 'Ваш заказ подтверждён и готовится к отправке.',
     fail_title: 'Оплата не завершена',
-    fail_msg: 'Оплата была отменена или произошла ошибка. Заказ отменён. Пожалуйста, попробуйте снова.',
+    fail_msg:
+      'Оплата была отменена или произошла ошибка. Заказ отменён. Пожалуйста, попробуйте снова.',
     view_orders: 'Мои заказы',
     try_again: 'Попробовать снова',
     continue: 'Продолжить покупки',
@@ -57,8 +59,14 @@ function BePaidReturnPage() {
   const [status, setStatus] = useState<'loading' | 'success' | 'fail'>('loading')
 
   useEffect(() => {
-    if (failed) { setStatus('fail'); return }
-    if (!orderId) { setStatus('fail'); return }
+    if (failed) {
+      setStatus('fail')
+      return
+    }
+    if (!orderId) {
+      setStatus('fail')
+      return
+    }
 
     // Poll for order payment status (webhook may arrive slightly after redirect)
     let attempts = 0
@@ -109,8 +117,12 @@ function BePaidReturnPage() {
           <h1 className="text-2xl font-bold text-destructive">{L.fail_title}</h1>
           <p className="text-muted-foreground">{L.fail_msg}</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/checkout"><Button variant="destructive">{L.try_again}</Button></Link>
-            <Link href="/products"><Button variant="outline">{L.continue}</Button></Link>
+            <Link href="/checkout">
+              <Button variant="destructive">{L.try_again}</Button>
+            </Link>
+            <Link href="/products">
+              <Button variant="outline">{L.continue}</Button>
+            </Link>
           </div>
         </div>
       </div>
@@ -129,8 +141,12 @@ function BePaidReturnPage() {
           </div>
         )}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link href="/profile/orders"><Button>{L.view_orders}</Button></Link>
-          <Link href="/products"><Button variant="outline">{L.continue}</Button></Link>
+          <Link href="/profile/orders">
+            <Button>{L.view_orders}</Button>
+          </Link>
+          <Link href="/products">
+            <Button variant="outline">{L.continue}</Button>
+          </Link>
         </div>
       </div>
     </div>
@@ -138,5 +154,9 @@ function BePaidReturnPage() {
 }
 
 export default function BePaidReturnPageWithSuspense() {
-  return <Suspense fallback={null}><BePaidReturnPage /></Suspense>
+  return (
+    <Suspense fallback={null}>
+      <BePaidReturnPage />
+    </Suspense>
+  )
 }

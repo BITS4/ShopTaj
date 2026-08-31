@@ -90,9 +90,7 @@ export class SellerService {
         ...productData,
         slug,
         sellerId: profile.id,
-        variants: variants?.length
-          ? { create: variants }
-          : undefined,
+        variants: variants?.length ? { create: variants } : undefined,
       },
     });
     return product;
@@ -129,7 +127,8 @@ export class SellerService {
 
   private async requireApprovedProfile(userId: string) {
     const profile = await this.prisma.sellerProfile.findUnique({ where: { userId } });
-    if (!profile) throw new NotFoundException('Seller profile not found. Complete onboarding first.');
+    if (!profile)
+      throw new NotFoundException('Seller profile not found. Complete onboarding first.');
     if (profile.status !== 'APPROVED') {
       throw new ForbiddenException(
         profile.status === 'PENDING'
@@ -149,7 +148,10 @@ export class SellerService {
   }
 
   private async generateSlug(name: string): Promise<string> {
-    const base = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const base = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
     let slug = base;
     let i = 1;
     while (await this.prisma.product.findUnique({ where: { slug } })) {

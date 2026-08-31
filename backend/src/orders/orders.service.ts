@@ -32,7 +32,12 @@ export class OrdersService {
     const order = await this.prisma.order.findFirst({
       where: { id: orderId, userId },
       include: {
-        items: { include: { product: { include: { images: { where: { isMain: true }, take: 1 } } }, variant: true } },
+        items: {
+          include: {
+            product: { include: { images: { where: { isMain: true }, take: 1 } } },
+            variant: true,
+          },
+        },
         shippingAddress: true,
       },
     });
@@ -43,7 +48,8 @@ export class OrdersService {
   async cancel(userId: string, orderId: string) {
     const order = await this.prisma.order.findFirst({ where: { id: orderId, userId } });
     if (!order) throw new NotFoundException('Order not found');
-    if (order.status !== 'PENDING') throw new ForbiddenException('Only pending orders can be cancelled');
+    if (order.status !== 'PENDING')
+      throw new ForbiddenException('Only pending orders can be cancelled');
 
     return this.prisma.order.update({
       where: { id: orderId },

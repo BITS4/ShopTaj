@@ -79,9 +79,7 @@ describe('AdminService', () => {
 
   describe('analytics and listings', () => {
     it('builds analytics from paid revenue and preserves top-product ranking', async () => {
-      prisma.order.count
-        .mockResolvedValueOnce(14)
-        .mockResolvedValueOnce(3);
+      prisma.order.count.mockResolvedValueOnce(14).mockResolvedValueOnce(3);
       prisma.user.count.mockResolvedValue(9);
       prisma.order.aggregate.mockResolvedValue({
         _sum: { totalAmount: 275.5 },
@@ -149,9 +147,7 @@ describe('AdminService', () => {
       prisma.order.findMany.mockResolvedValue([{ id: 'order-1' }]);
       prisma.order.count.mockResolvedValue(1);
 
-      await expect(
-        service.getOrders('0', '250', 'SHIPPED'),
-      ).resolves.toEqual({
+      await expect(service.getOrders('0', '250', 'SHIPPED')).resolves.toEqual({
         data: [{ id: 'order-1' }],
         meta: { total: 1, page: 1, limit: 100 },
       });
@@ -215,13 +211,12 @@ describe('AdminService', () => {
         id: 'order-1',
         status: 'DELIVERED',
       });
-      whatsapp.sendOrderStatusUpdate.mockRejectedValue(
-        new Error('notification unavailable'),
-      );
+      whatsapp.sendOrderStatusUpdate.mockRejectedValue(new Error('notification unavailable'));
 
-      await expect(
-        service.updateOrderStatus('order-1', { status: 'DELIVERED' }),
-      ).resolves.toEqual({ id: 'order-1', status: 'DELIVERED' });
+      await expect(service.updateOrderStatus('order-1', { status: 'DELIVERED' })).resolves.toEqual({
+        id: 'order-1',
+        status: 'DELIVERED',
+      });
       expect(prisma.order.update).toHaveBeenCalledWith({
         where: { id: 'order-1' },
         data: { status: 'DELIVERED' },
@@ -278,9 +273,9 @@ describe('AdminService', () => {
     it('rejects payment confirmation for an unknown order', async () => {
       prisma.order.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.confirmPayment('missing-order', 'PAID'),
-      ).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.confirmPayment('missing-order', 'PAID')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
       expect(prisma.order.update).not.toHaveBeenCalled();
     });
   });
@@ -302,20 +297,13 @@ describe('AdminService', () => {
       categories.delete.mockReturnValue('deleted-category');
 
       expect(service.createProduct(productDto)).toBe('created-product');
-      expect(service.updateProduct('product-1', { stock: 5 })).toBe(
-        'updated-product',
-      );
+      expect(service.updateProduct('product-1', { stock: 5 })).toBe('updated-product');
       expect(service.deleteProduct('product-1')).toBe('deleted-product');
       expect(service.createCategory(categoryDto)).toBe('created-category');
-      expect(service.updateCategory('category-1', categoryDto)).toBe(
-        'updated-category',
-      );
+      expect(service.updateCategory('category-1', categoryDto)).toBe('updated-category');
       expect(service.deleteCategory('category-1')).toBe('deleted-category');
       expect(products.create).toHaveBeenCalledWith(productDto);
-      expect(categories.update).toHaveBeenCalledWith(
-        'category-1',
-        categoryDto,
-      );
+      expect(categories.update).toHaveBeenCalledWith('category-1', categoryDto);
     });
 
     it('toggles an existing coupon and rejects an unknown coupon', async () => {
@@ -338,9 +326,7 @@ describe('AdminService', () => {
       });
 
       prisma.coupon.findUnique.mockResolvedValueOnce(null);
-      await expect(service.toggleCoupon('missing-coupon')).rejects.toThrow(
-        'Coupon not found',
-      );
+      await expect(service.toggleCoupon('missing-coupon')).rejects.toThrow('Coupon not found');
     });
 
     it('validates coupon enum and positive numeric constraints', async () => {
@@ -355,12 +341,7 @@ describe('AdminService', () => {
       const errors = await validate(dto);
 
       expect(errors.map((error) => error.property)).toEqual(
-        expect.arrayContaining([
-          'discountType',
-          'discountValue',
-          'minOrderValue',
-          'maxUses',
-        ]),
+        expect.arrayContaining(['discountType', 'discountValue', 'minOrderValue', 'maxUses']),
       );
 
       const valid = Object.assign(new CreateCouponDto(), {
@@ -430,9 +411,7 @@ describe('AdminService', () => {
       });
 
       prisma.sellerProfile.findUnique.mockResolvedValueOnce(null);
-      await expect(service.approveSeller('missing-seller')).rejects.toThrow(
-        'Seller not found',
-      );
+      await expect(service.approveSeller('missing-seller')).rejects.toThrow('Seller not found');
     });
   });
 });

@@ -12,12 +12,18 @@ export default function SellerDashboardPage() {
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['seller-profile'],
-    queryFn: async () => { const { data } = await api.get('/seller/profile'); return data },
+    queryFn: async () => {
+      const { data } = await api.get('/seller/profile')
+      return data
+    },
   })
 
   const { data: productsData } = useQuery({
     queryKey: ['seller-products'],
-    queryFn: async () => { const { data } = await api.get('/seller/products'); return data },
+    queryFn: async () => {
+      const { data } = await api.get('/seller/products')
+      return data
+    },
     enabled: profile?.status === 'APPROVED',
   })
 
@@ -55,13 +61,17 @@ export default function SellerDashboardPage() {
           <div>
             <p className={`font-semibold ${s.color}`}>{s.label}</p>
             {profile.status === 'PENDING' && (
-              <p className="text-sm text-muted-foreground">Your application is under review. We'll notify you by email.</p>
+              <p className="text-sm text-muted-foreground">
+                Your application is under review. We'll notify you by email.
+              </p>
             )}
             {profile.status === 'REJECTED' && profile.rejectionReason && (
               <p className="text-sm text-muted-foreground">Reason: {profile.rejectionReason}</p>
             )}
             {profile.status === 'APPROVED' && (
-              <p className="text-sm text-muted-foreground">Your shop is live. Start adding products!</p>
+              <p className="text-sm text-muted-foreground">
+                Your shop is live. Start adding products!
+              </p>
             )}
           </div>
         </CardContent>
@@ -99,7 +109,12 @@ export default function SellerDashboardPage() {
             <Upload className="h-6 w-6 text-muted-foreground" />
             <div>
               <p className="font-medium text-sm">Resubmit with updated documents</p>
-              <Button size="sm" variant="outline" className="mt-2" onClick={() => router.push('/seller/onboarding')}>
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-2"
+                onClick={() => router.push('/seller/onboarding')}
+              >
                 Resubmit Application
               </Button>
             </div>
@@ -110,12 +125,19 @@ export default function SellerDashboardPage() {
       {/* Documents */}
       {profile.documents?.length > 0 && (
         <Card>
-          <CardHeader><CardTitle className="text-base">Submitted Documents</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle className="text-base">Submitted Documents</CardTitle>
+          </CardHeader>
           <CardContent>
             <ul className="space-y-1">
               {profile.documents.map((url: string, i: number) => (
                 <li key={i}>
-                  <a href={url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline"
+                  >
                     Document {i + 1}
                   </a>
                 </li>

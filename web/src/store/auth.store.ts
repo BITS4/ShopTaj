@@ -17,8 +17,7 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       setAuth: (user, accessToken) => set({ user, accessToken }),
       clearAuth: () => set({ user: null, accessToken: null }),
-      updateUser: (partial) =>
-        set((s) => ({ user: s.user ? { ...s.user, ...partial } : null })),
+      updateUser: (partial) => set((s) => ({ user: s.user ? { ...s.user, ...partial } : null })),
     }),
     { name: 'shoptaj-auth' },
   ),

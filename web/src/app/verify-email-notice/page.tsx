@@ -43,7 +43,7 @@ function VerifyEmailNoticePage() {
   // Countdown timer for resend
   useEffect(() => {
     if (countdown <= 0) return
-    const t = setTimeout(() => setCountdown(c => c - 1), 1000)
+    const t = setTimeout(() => setCountdown((c) => c - 1), 1000)
     return () => clearTimeout(t)
   }, [countdown])
 
@@ -54,7 +54,7 @@ function VerifyEmailNoticePage() {
     setCode(next)
     if (digit && idx < 5) inputRefs.current[idx + 1]?.focus()
     // Auto-submit when all 6 digits filled
-    if (digit && idx === 5 && next.every(d => d)) {
+    if (digit && idx === 5 && next.every((d) => d)) {
       submitCode(next.join(''))
     }
   }
@@ -75,10 +75,16 @@ function VerifyEmailNoticePage() {
   }
 
   const submitCode = async (fullCode: string) => {
-    if (!email) { toast.error('Enter your email first'); return }
+    if (!email) {
+      toast.error('Enter your email first')
+      return
+    }
     setVerifying(true)
     try {
-      const { data } = await api.post<VerifyCodeResponse>('/auth/verify-code', { email, code: fullCode })
+      const { data } = await api.post<VerifyCodeResponse>('/auth/verify-code', {
+        email,
+        code: fullCode,
+      })
       // Backend auto-logs in after verification
       if (data.accessToken) {
         setAuth(data.user, data.accessToken)
@@ -97,7 +103,10 @@ function VerifyEmailNoticePage() {
   }
 
   const resend = async () => {
-    if (!email) { toast.error('Enter your email'); return }
+    if (!email) {
+      toast.error('Enter your email')
+      return
+    }
     setResending(true)
     try {
       await api.post('/auth/resend-code', { email })
@@ -126,7 +135,8 @@ function VerifyEmailNoticePage() {
           <div>
             <h1 className="text-2xl font-bold">Verify your email</h1>
             <p className="text-muted-foreground text-sm mt-2">
-              Enter the 6-digit code we sent to<br />
+              Enter the 6-digit code we sent to
+              <br />
               <span className="font-medium text-foreground">{email || 'your email'}</span>
             </p>
           </div>
@@ -137,7 +147,7 @@ function VerifyEmailNoticePage() {
               type="email"
               placeholder="your@email.com"
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full border rounded-md px-3 py-2 text-sm bg-background text-center"
             />
           )}
@@ -147,13 +157,15 @@ function VerifyEmailNoticePage() {
             {code.map((digit, idx) => (
               <input
                 key={idx}
-                ref={el => { inputRefs.current[idx] = el }}
+                ref={(el) => {
+                  inputRefs.current[idx] = el
+                }}
                 type="text"
                 inputMode="numeric"
                 maxLength={1}
                 value={digit}
-                onChange={e => handleDigit(idx, e.target.value)}
-                onKeyDown={e => handleKeyDown(idx, e)}
+                onChange={(e) => handleDigit(idx, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(idx, e)}
                 disabled={verifying}
                 className={`w-11 h-14 text-center text-2xl font-bold border-2 rounded-xl bg-background transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary ${
                   digit ? 'border-primary bg-primary/5' : 'border-input'
@@ -170,7 +182,10 @@ function VerifyEmailNoticePage() {
             disabled={codeValue.length < 6 || verifying || !email}
           >
             {verifying ? (
-              <><Loader2 className="h-4 w-4 animate-spin mr-2" />Verifying…</>
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Verifying…
+              </>
             ) : (
               'Verify Email'
             )}
@@ -187,15 +202,17 @@ function VerifyEmailNoticePage() {
                 disabled={resending}
                 className="text-primary hover:underline font-medium inline-flex items-center gap-1"
               >
-                {resending ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                {resending ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3 w-3" />
+                )}
                 Resend code
               </button>
             )}
           </div>
 
-          <p className="text-xs text-muted-foreground">
-            Code expires in 10 minutes
-          </p>
+          <p className="text-xs text-muted-foreground">Code expires in 10 minutes</p>
         </CardContent>
       </Card>
     </div>
@@ -203,5 +220,9 @@ function VerifyEmailNoticePage() {
 }
 
 export default function VerifyEmailNoticePageWithSuspense() {
-  return <Suspense fallback={null}><VerifyEmailNoticePage /></Suspense>
+  return (
+    <Suspense fallback={null}>
+      <VerifyEmailNoticePage />
+    </Suspense>
+  )
 }

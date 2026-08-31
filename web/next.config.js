@@ -12,7 +12,11 @@ const nextConfig = {
   },
   experimental: {
     serverActions: {
-      allowedOrigins: ['localhost:3000', process.env.VERCEL_URL, process.env.NEXT_PUBLIC_DOMAIN].filter(Boolean),
+      allowedOrigins: [
+        'localhost:3000',
+        process.env.VERCEL_URL,
+        process.env.NEXT_PUBLIC_DOMAIN,
+      ].filter(Boolean),
     },
   },
 }

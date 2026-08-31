@@ -3,16 +3,34 @@ import { ShoppingBag, Package, Truck, CheckCircle, XCircle } from 'lucide-react'
 import { useLanguageStore } from '@/store/language.store'
 
 const STEPS = [
-  { key: 'PENDING',    icon: ShoppingBag },
+  { key: 'PENDING', icon: ShoppingBag },
   { key: 'PROCESSING', icon: Package },
-  { key: 'SHIPPED',    icon: Truck },
-  { key: 'DELIVERED',  icon: CheckCircle },
+  { key: 'SHIPPED', icon: Truck },
+  { key: 'DELIVERED', icon: CheckCircle },
 ]
 
 const LABELS: Record<string, Record<string, string>> = {
-  en: { PENDING: 'Order Placed', PROCESSING: 'Processing', SHIPPED: 'Shipped', DELIVERED: 'Delivered', CANCELLED: 'Cancelled' },
-  ru: { PENDING: 'Заказ оформлен', PROCESSING: 'Обработка', SHIPPED: 'Отправлен', DELIVERED: 'Доставлен', CANCELLED: 'Отменён' },
-  tg: { PENDING: 'Фармоиш қабул', PROCESSING: 'Коркард', SHIPPED: 'Фиристода шуд', DELIVERED: 'Расид', CANCELLED: 'Бекор шуд' },
+  en: {
+    PENDING: 'Order Placed',
+    PROCESSING: 'Processing',
+    SHIPPED: 'Shipped',
+    DELIVERED: 'Delivered',
+    CANCELLED: 'Cancelled',
+  },
+  ru: {
+    PENDING: 'Заказ оформлен',
+    PROCESSING: 'Обработка',
+    SHIPPED: 'Отправлен',
+    DELIVERED: 'Доставлен',
+    CANCELLED: 'Отменён',
+  },
+  tg: {
+    PENDING: 'Фармоиш қабул',
+    PROCESSING: 'Коркард',
+    SHIPPED: 'Фиристода шуд',
+    DELIVERED: 'Расид',
+    CANCELLED: 'Бекор шуд',
+  },
 }
 
 export default function OrderTracker({ status }: { status: string }) {
@@ -40,7 +58,9 @@ export default function OrderTracker({ status }: { status: string }) {
         <div className="absolute top-5 left-5 right-5 h-0.5 bg-muted-foreground/20 -z-0" />
         <div
           className="absolute top-5 left-5 h-0.5 bg-primary transition-all duration-500 -z-0"
-          style={{ width: activeIndex <= 0 ? '0%' : `${(activeIndex / (STEPS.length - 1)) * 100}%` }}
+          style={{
+            width: activeIndex <= 0 ? '0%' : `${(activeIndex / (STEPS.length - 1)) * 100}%`,
+          }}
         />
 
         {STEPS.map((step, i) => {
@@ -61,7 +81,9 @@ export default function OrderTracker({ status }: { status: string }) {
               >
                 <Icon className="h-5 w-5" />
               </div>
-              <span className={`text-xs font-medium text-center leading-tight ${done ? 'text-foreground' : 'text-muted-foreground/50'}`}>
+              <span
+                className={`text-xs font-medium text-center leading-tight ${done ? 'text-foreground' : 'text-muted-foreground/50'}`}
+              >
                 {labels[step.key]}
               </span>
             </div>

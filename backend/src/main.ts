@@ -9,10 +9,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { Logger as PinoLogger } from 'nestjs-pino';
 import { AppModule } from './app.module';
-import {
-  isCorsOriginAllowed,
-  resolveCorsOrigins,
-} from './common/config/cors';
+import { isCorsOriginAllowed, resolveCorsOrigins } from './common/config/cors';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -33,8 +30,7 @@ async function bootstrap() {
 
   const allowedOrigins = resolveCorsOrigins();
   app.enableCors({
-    origin: (origin, callback) =>
-      callback(null, isCorsOriginAllowed(origin, allowedOrigins)),
+    origin: (origin, callback) => callback(null, isCorsOriginAllowed(origin, allowedOrigins)),
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],

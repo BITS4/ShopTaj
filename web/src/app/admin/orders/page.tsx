@@ -50,12 +50,18 @@ export default function AdminOrdersPage() {
   const updateStatus = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) =>
       api.patch(`/admin/orders/${id}/status`, { status }),
-    onSuccess: () => { toast.success('Status updated'); qc.invalidateQueries({ queryKey: ['admin-orders'] }) },
+    onSuccess: () => {
+      toast.success('Status updated')
+      qc.invalidateQueries({ queryKey: ['admin-orders'] })
+    },
   })
 
   const confirmPayment = useMutation({
     mutationFn: (id: string) => api.patch(`/admin/orders/${id}/payment`, { paymentStatus: 'PAID' }),
-    onSuccess: () => { toast.success('Payment confirmed!'); qc.invalidateQueries({ queryKey: ['admin-orders'] }) },
+    onSuccess: () => {
+      toast.success('Payment confirmed!')
+      qc.invalidateQueries({ queryKey: ['admin-orders'] })
+    },
     onError: (error: unknown) => toast.error(getErrorMessage(error, 'Failed')),
   })
 
@@ -65,23 +71,36 @@ export default function AdminOrdersPage() {
 
       {/* Filter */}
       <div className="flex gap-2 flex-wrap mb-6">
-        <Button size="sm" variant={!filter ? 'default' : 'outline'} onClick={() => setFilter('')}>All</Button>
+        <Button size="sm" variant={!filter ? 'default' : 'outline'} onClick={() => setFilter('')}>
+          All
+        </Button>
         {STATUSES.map((s) => (
-          <Button key={s} size="sm" variant={filter === s ? 'default' : 'outline'} onClick={() => setFilter(s)}>
+          <Button
+            key={s}
+            size="sm"
+            variant={filter === s ? 'default' : 'outline'}
+            onClick={() => setFilter(s)}
+          >
             {s}
           </Button>
         ))}
       </div>
 
       {isLoading ? (
-        <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-lg" />)}</div>
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-20 rounded-lg" />
+          ))}
+        </div>
       ) : isError ? (
         <div className="text-center py-16 border rounded-xl text-muted-foreground">
           <p className="font-medium text-destructive">Failed to load orders</p>
           <p className="text-sm mt-1">Make sure you are logged in as admin@shoptaj.com</p>
         </div>
       ) : !data?.data?.length ? (
-        <div className="text-center py-16 border rounded-xl text-muted-foreground">No orders found</div>
+        <div className="text-center py-16 border rounded-xl text-muted-foreground">
+          No orders found
+        </div>
       ) : (
         <div className="border rounded-xl overflow-hidden">
           <table className="w-full text-sm">
@@ -98,17 +117,31 @@ export default function AdminOrdersPage() {
             <tbody>
               {data?.data.map((order) => (
                 <tr key={order.id} className="border-t hover:bg-muted/20">
-                  <td className="px-4 py-3 font-mono text-xs">{order.id.slice(0, 8).toUpperCase()}</td>
-                  <td className="px-4 py-3 hidden md:table-cell">{order.user?.fullName}<br /><span className="text-muted-foreground text-xs">{order.user?.email}</span></td>
+                  <td className="px-4 py-3 font-mono text-xs">
+                    {order.id.slice(0, 8).toUpperCase()}
+                  </td>
+                  <td className="px-4 py-3 hidden md:table-cell">
+                    {order.user?.fullName}
+                    <br />
+                    <span className="text-muted-foreground text-xs">{order.user?.email}</span>
+                  </td>
                   <td className="px-4 py-3 font-semibold">{formatPrice(order.totalAmount)}</td>
-                  <td className="px-4 py-3 hidden sm:table-cell text-muted-foreground whitespace-nowrap">{formatDateTime(order.createdAt)}</td>
+                  <td className="px-4 py-3 hidden sm:table-cell text-muted-foreground whitespace-nowrap">
+                    {formatDateTime(order.createdAt)}
+                  </td>
                   <td className="px-4 py-3">
                     <select
                       value={order.status}
                       className="text-xs border rounded px-2 py-1 bg-background"
-                      onChange={(e) => updateStatus.mutate({ id: order.id, status: e.target.value })}
+                      onChange={(e) =>
+                        updateStatus.mutate({ id: order.id, status: e.target.value })
+                      }
                     >
-                      {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                      {STATUSES.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
                     </select>
                   </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">

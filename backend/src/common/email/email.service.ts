@@ -33,7 +33,6 @@ export class EmailService {
       const from = this.config.get<string>('RESEND_FROM_EMAIL') || 'onboarding@resend.dev';
       this.fromAddress = `ShopTaj <${from}>`;
       this.logger.log(`✅ Email: using Resend (from: ${this.fromAddress})`);
-
     } else if (!isProd && isReal(gmailUser) && isReal(gmailPass)) {
       this.provider = 'gmail';
       this.transporter = nodemailer.createTransport({
@@ -44,14 +43,12 @@ export class EmailService {
       });
       this.fromAddress = `ShopTaj <${gmailUser}>`;
       this.logger.log(`✅ Email: using Gmail (${gmailUser})`);
-
     } else if (isReal(resendKey)) {
       this.provider = 'resend';
       this.resend = new Resend(resendKey);
       const from = this.config.get<string>('RESEND_FROM_EMAIL') || 'onboarding@resend.dev';
       this.fromAddress = `ShopTaj <${from}>`;
       this.logger.log(`✅ Email: using Resend (from: ${this.fromAddress})`);
-
     } else {
       this.provider = 'none';
       this.logger.warn('⚠️  Email: not configured — codes will only appear in this terminal');
@@ -60,19 +57,29 @@ export class EmailService {
 
   async sendVerificationCode(to: string, name: string, code: string) {
     this.logCode(to, code);
-    await this.send(to, `${code} is your ShopTaj verification code`,
-      this.codeTemplate(name, code, 'Verify your email', 10));
+    await this.send(
+      to,
+      `${code} is your ShopTaj verification code`,
+      this.codeTemplate(name, code, 'Verify your email', 10),
+    );
   }
 
   async sendPasswordResetCode(to: string, name: string, code: string) {
     this.logCode(to, code);
-    await this.send(to, `${code} is your ShopTaj password reset code`,
-      this.codeTemplate(name, code, 'Reset your password', 60));
+    await this.send(
+      to,
+      `${code} is your ShopTaj password reset code`,
+      this.codeTemplate(name, code, 'Reset your password', 60),
+    );
   }
 
   async sendOrderConfirmationEmail(to: string, name: string, orderId: string) {
     const url = `${this.config.get('FRONTEND_URL')}/profile/orders/${orderId}`;
-    await this.send(to, 'Your ShopTaj order is confirmed! 🎉', this.orderTemplate(name, orderId, url));
+    await this.send(
+      to,
+      'Your ShopTaj order is confirmed! 🎉',
+      this.orderTemplate(name, orderId, url),
+    );
   }
 
   private logCode(to: string, code: string) {
@@ -90,7 +97,6 @@ export class EmailService {
       } catch (error: unknown) {
         this.logger.error(`❌ Gmail error: ${this.errorMessage(error)}`);
       }
-
     } else if (this.provider === 'resend' && this.resend) {
       try {
         const result = await this.resend.emails.send({ from: this.fromAddress, to, subject, html });

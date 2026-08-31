@@ -11,23 +11,32 @@ import { useAuth } from '@/hooks/useAuth'
 import { useT } from '@/store/language.store'
 import { ShoppingBag, Store } from 'lucide-react'
 
-const schema = z.object({
-  fullName: z.string().min(2, 'At least 2 characters'),
-  email: z.string().email('Invalid email'),
-  phone: z.string().min(7, 'Enter a valid phone number').regex(/^[+\d\s\-()]+$/, 'Invalid phone format'),
-  password: z.string().min(8, 'At least 8 characters'),
-  confirmPassword: z.string(),
-}).refine((d) => d.password === d.confirmPassword, {
-  message: "Passwords don't match",
-  path: ['confirmPassword'],
-})
+const schema = z
+  .object({
+    fullName: z.string().min(2, 'At least 2 characters'),
+    email: z.string().email('Invalid email'),
+    phone: z
+      .string()
+      .min(7, 'Enter a valid phone number')
+      .regex(/^[+\d\s\-()]+$/, 'Invalid phone format'),
+    password: z.string().min(8, 'At least 8 characters'),
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  })
 type FormData = z.infer<typeof schema>
 
 export default function RegisterPage() {
   const { register: registerUser } = useAuth()
   const t = useT()
   const [accountType, setAccountType] = useState<'USER' | 'SELLER'>('USER')
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) })
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormData>({ resolver: zodResolver(schema) })
   const onSubmit = ({ confirmPassword: _confirmPassword, ...data }: FormData) =>
     registerUser.mutate({ ...data, accountType })
 
@@ -74,7 +83,9 @@ export default function RegisterPage() {
             <div className="space-y-1">
               <label className="text-sm font-medium">{t.auth.full_name}</label>
               <Input placeholder="John Doe" {...register('fullName')} />
-              {errors.fullName && <p className="text-xs text-destructive">{errors.fullName.message}</p>}
+              {errors.fullName && (
+                <p className="text-xs text-destructive">{errors.fullName.message}</p>
+              )}
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium">{t.auth.email}</label>
@@ -91,19 +102,25 @@ export default function RegisterPage() {
             <div className="space-y-1">
               <label className="text-sm font-medium">{t.auth.password}</label>
               <Input type="password" placeholder="Min 8 characters" {...register('password')} />
-              {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
+              {errors.password && (
+                <p className="text-xs text-destructive">{errors.password.message}</p>
+              )}
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium">{t.auth.confirm_password}</label>
               <Input type="password" placeholder="••••••••" {...register('confirmPassword')} />
-              {errors.confirmPassword && <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>}
+              {errors.confirmPassword && (
+                <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>
+              )}
             </div>
             <Button type="submit" className="w-full" disabled={registerUser.isPending}>
               {registerUser.isPending ? t.auth.creating : t.auth.create_account}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
               {t.auth.have_account}{' '}
-              <Link href="/login" className="text-primary hover:underline font-medium">{t.auth.sign_in_link}</Link>
+              <Link href="/login" className="text-primary hover:underline font-medium">
+                {t.auth.sign_in_link}
+              </Link>
             </p>
           </form>
         </CardContent>

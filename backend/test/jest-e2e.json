@@ -4,9 +4,6 @@
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
   "transform": {
-    "^.+\\.ts$": [
-      "ts-jest",
-      { "tsconfig": "<rootDir>/test/tsconfig.e2e.json" }
-    ]
+    "^.+\\.ts$": ["ts-jest", { "tsconfig": "<rootDir>/test/tsconfig.e2e.json" }]
   }
 }

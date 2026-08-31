@@ -32,14 +32,37 @@ interface AdminAnalytics {
 export default function AdminDashboard() {
   const { data: analytics, isLoading } = useQuery({
     queryKey: ['analytics'],
-    queryFn: async () => { const { data } = await api.get<AdminAnalytics>('/admin/analytics'); return data },
+    queryFn: async () => {
+      const { data } = await api.get<AdminAnalytics>('/admin/analytics')
+      return data
+    },
   })
 
   const stats = [
-    { label: 'Total Revenue', value: analytics ? formatPrice(analytics.totalRevenue) : '—', icon: DollarSign, color: 'text-green-600' },
-    { label: 'Total Orders', value: analytics?.totalOrders ?? '—', icon: ShoppingBag, color: 'text-blue-600' },
-    { label: 'Total Users', value: analytics?.totalUsers ?? '—', icon: Users, color: 'text-purple-600' },
-    { label: 'Orders Today', value: analytics?.ordersToday ?? '—', icon: TrendingUp, color: 'text-orange-600' },
+    {
+      label: 'Total Revenue',
+      value: analytics ? formatPrice(analytics.totalRevenue) : '—',
+      icon: DollarSign,
+      color: 'text-green-600',
+    },
+    {
+      label: 'Total Orders',
+      value: analytics?.totalOrders ?? '—',
+      icon: ShoppingBag,
+      color: 'text-blue-600',
+    },
+    {
+      label: 'Total Users',
+      value: analytics?.totalUsers ?? '—',
+      icon: Users,
+      color: 'text-purple-600',
+    },
+    {
+      label: 'Orders Today',
+      value: analytics?.ordersToday ?? '—',
+      icon: TrendingUp,
+      color: 'text-orange-600',
+    },
   ]
 
   return (
@@ -54,7 +77,11 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{stat.label}</p>
-                  {isLoading ? <Skeleton className="h-8 w-20 mt-1" /> : <p className={`text-2xl font-bold mt-1 ${stat.color}`}>{stat.value}</p>}
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-20 mt-1" />
+                  ) : (
+                    <p className={`text-2xl font-bold mt-1 ${stat.color}`}>{stat.value}</p>
+                  )}
                 </div>
                 <stat.icon className={`h-8 w-8 ${stat.color} opacity-20`} />
               </div>
@@ -80,15 +107,21 @@ export default function AdminDashboard() {
       {/* Top Products */}
       {analytics && analytics.topProducts.length > 0 && (
         <Card>
-          <CardHeader><CardTitle>Top Selling Products</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Top Selling Products</CardTitle>
+          </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {analytics.topProducts.map((tp, i) => (
                 <div key={tp.productId} className="flex items-center gap-3 text-sm">
-                  <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-xs">{i + 1}</span>
+                  <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-xs">
+                    {i + 1}
+                  </span>
                   <span className="flex-1 font-medium">{tp.product?.name ?? 'Unknown'}</span>
                   <span className="text-muted-foreground">{tp._sum.quantity} sold</span>
-                  <span className="font-semibold">{tp.product ? formatPrice(tp.product.price) : ''}</span>
+                  <span className="font-semibold">
+                    {tp.product ? formatPrice(tp.product.price) : ''}
+                  </span>
                 </div>
               ))}
             </div>

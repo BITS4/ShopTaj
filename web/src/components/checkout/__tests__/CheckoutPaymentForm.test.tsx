@@ -64,9 +64,7 @@ function TestProviders({ children }: PropsWithChildren) {
     defaultOptions: { queries: { retry: false } },
   })
 
-  return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  )
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
 }
 
 describe('CheckoutPaymentForm', () => {

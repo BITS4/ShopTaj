@@ -1,0 +1,12 @@
+node_modules/
+.claude/
+dist/
+build/
+.next/
+.expo/
+coverage/
+test-results/
+.nyc_output/
+artifacts/
+*.tsbuildinfo
+**/next-env.d.ts

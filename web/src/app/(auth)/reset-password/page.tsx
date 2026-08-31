@@ -32,9 +32,19 @@ function ResetPasswordPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <Input type="password" placeholder="New password (min 8 chars)" {...register('password', { required: true, minLength: 8 })} />
-            <Input type="password" placeholder="Confirm password" {...register('confirm', { required: true })} />
-            <Button type="submit" className="w-full">Reset Password</Button>
+            <Input
+              type="password"
+              placeholder="New password (min 8 chars)"
+              {...register('password', { required: true, minLength: 8 })}
+            />
+            <Input
+              type="password"
+              placeholder="Confirm password"
+              {...register('confirm', { required: true })}
+            />
+            <Button type="submit" className="w-full">
+              Reset Password
+            </Button>
           </form>
         </CardContent>
       </Card>
@@ -43,5 +53,9 @@ function ResetPasswordPage() {
 }
 
 export default function ResetPasswordPageWithSuspense() {
-  return <Suspense fallback={null}><ResetPasswordPage /></Suspense>
+  return (
+    <Suspense fallback={null}>
+      <ResetPasswordPage />
+    </Suspense>
+  )
 }

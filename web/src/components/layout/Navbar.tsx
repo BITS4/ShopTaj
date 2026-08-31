@@ -36,14 +36,15 @@ export default function Navbar() {
   const count = itemCount()
 
   return (
-    <header className={cn(
-      'sticky top-0 z-50 w-full transition-all duration-300',
-      scrolled
-        ? 'bg-white/90 backdrop-blur-xl shadow-sm border-b border-border/50'
-        : 'bg-white/70 backdrop-blur-md border-b border-transparent'
-    )}>
+    <header
+      className={cn(
+        'sticky top-0 z-50 w-full transition-all duration-300',
+        scrolled
+          ? 'bg-white/90 backdrop-blur-xl shadow-sm border-b border-border/50'
+          : 'bg-white/70 backdrop-blur-md border-b border-transparent',
+      )}
+    >
       <div className="container mx-auto flex h-16 items-center justify-between px-4 gap-4">
-
         {/* Logo */}
         <Link href="/" className="flex items-center gap-1.5 shrink-0 group">
           <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center shadow-md group-hover:shadow-primary/40 transition-shadow">
@@ -68,7 +69,9 @@ export default function Navbar() {
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-0.5">
           <Link href="/products">
-            <Button variant="ghost" size="sm" className="rounded-full font-medium">{t.nav.products}</Button>
+            <Button variant="ghost" size="sm" className="rounded-full font-medium">
+              {t.nav.products}
+            </Button>
           </Link>
 
           <LanguageSwitcher />
@@ -76,17 +79,28 @@ export default function Navbar() {
           {user ? (
             <>
               <Link href="/profile/orders">
-                <Button variant="ghost" size="icon" className="rounded-full h-9 w-9" title={t.nav.orders}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full h-9 w-9"
+                  title={t.nav.orders}
+                >
                   <Package className="h-4.5 w-4.5" />
                 </Button>
               </Link>
               <Link href="/profile/wishlist">
-                <Button variant="ghost" size="icon" className="rounded-full h-9 w-9" title={t.nav.wishlist}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full h-9 w-9"
+                  title={t.nav.wishlist}
+                >
                   <Heart className="h-4.5 w-4.5" />
                 </Button>
               </Link>
               <Button
-                variant="ghost" size="icon"
+                variant="ghost"
+                size="icon"
                 className="rounded-full h-9 w-9 relative"
                 onClick={toggleCart}
               >
@@ -100,7 +114,9 @@ export default function Navbar() {
               <Link href="/profile">
                 <Button variant="ghost" size="sm" className="rounded-full gap-1.5 ml-1">
                   <div className="h-6 w-6 rounded-full gradient-primary flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">{user.fullName[0].toUpperCase()}</span>
+                    <span className="text-white text-xs font-bold">
+                      {user.fullName[0].toUpperCase()}
+                    </span>
                   </div>
                   <span className="font-medium">{user.fullName.split(' ')[0]}</span>
                 </Button>
@@ -114,22 +130,35 @@ export default function Navbar() {
               )}
               {user.role === 'ADMIN' && (
                 <Link href="/admin">
-                  <Button size="sm" className="rounded-full ml-1 gradient-primary text-white border-0 shadow-md hover:shadow-primary/30 hover:opacity-90">
+                  <Button
+                    size="sm"
+                    className="rounded-full ml-1 gradient-primary text-white border-0 shadow-md hover:shadow-primary/30 hover:opacity-90"
+                  >
                     {t.nav.admin}
                   </Button>
                 </Link>
               )}
-              <Button variant="ghost" size="sm" className="rounded-full text-muted-foreground" onClick={() => logout.mutate()}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="rounded-full text-muted-foreground"
+                onClick={() => logout.mutate()}
+              >
                 {t.nav.logout}
               </Button>
             </>
           ) : (
             <>
               <Link href="/login">
-                <Button variant="ghost" size="sm" className="rounded-full font-medium">{t.nav.login}</Button>
+                <Button variant="ghost" size="sm" className="rounded-full font-medium">
+                  {t.nav.login}
+                </Button>
               </Link>
               <Link href="/register">
-                <Button size="sm" className="rounded-full gradient-primary text-white border-0 shadow-md hover:shadow-primary/30 hover:opacity-90 ml-1">
+                <Button
+                  size="sm"
+                  className="rounded-full gradient-primary text-white border-0 shadow-md hover:shadow-primary/30 hover:opacity-90 ml-1"
+                >
                   {t.nav.signup}
                 </Button>
               </Link>
@@ -140,7 +169,12 @@ export default function Navbar() {
         {/* Mobile */}
         <div className="md:hidden flex items-center gap-2">
           {user && (
-            <Button variant="ghost" size="icon" className="rounded-full relative" onClick={toggleCart}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full relative"
+              onClick={toggleCart}
+            >
               <ShoppingBag className="h-5 w-5" />
               {count > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full gradient-primary text-white text-[10px] font-bold flex items-center justify-center">
@@ -169,24 +203,45 @@ export default function Navbar() {
               onChange={(e) => setSearch(e.target.value)}
               className="rounded-full"
             />
-            <Button type="submit" size="sm" className="rounded-full gradient-primary text-white border-0">Go</Button>
+            <Button
+              type="submit"
+              size="sm"
+              className="rounded-full gradient-primary text-white border-0"
+            >
+              Go
+            </Button>
           </form>
           <Link href="/products" onClick={() => setMenuOpen(false)}>
-            <Button variant="ghost" className="w-full justify-start rounded-xl">{t.nav.products}</Button>
+            <Button variant="ghost" className="w-full justify-start rounded-xl">
+              {t.nav.products}
+            </Button>
           </Link>
           {user ? (
             <>
-              <Button variant="ghost" className="w-full justify-start rounded-xl" onClick={() => { toggleCart(); setMenuOpen(false) }}>
+              <Button
+                variant="ghost"
+                className="w-full justify-start rounded-xl"
+                onClick={() => {
+                  toggleCart()
+                  setMenuOpen(false)
+                }}
+              >
                 {t.nav.cart} {count > 0 && `(${count})`}
               </Button>
               <Link href="/profile/orders" onClick={() => setMenuOpen(false)}>
-                <Button variant="ghost" className="w-full justify-start rounded-xl">{t.nav.orders}</Button>
+                <Button variant="ghost" className="w-full justify-start rounded-xl">
+                  {t.nav.orders}
+                </Button>
               </Link>
               <Link href="/profile/wishlist" onClick={() => setMenuOpen(false)}>
-                <Button variant="ghost" className="w-full justify-start rounded-xl">{t.nav.wishlist}</Button>
+                <Button variant="ghost" className="w-full justify-start rounded-xl">
+                  {t.nav.wishlist}
+                </Button>
               </Link>
               <Link href="/profile" onClick={() => setMenuOpen(false)}>
-                <Button variant="ghost" className="w-full justify-start rounded-xl">{t.nav.profile}</Button>
+                <Button variant="ghost" className="w-full justify-start rounded-xl">
+                  {t.nav.profile}
+                </Button>
               </Link>
               {user.role === 'SELLER' && (
                 <Link href="/seller/dashboard" onClick={() => setMenuOpen(false)}>
@@ -197,20 +252,33 @@ export default function Navbar() {
               )}
               {user.role === 'ADMIN' && (
                 <Link href="/admin" onClick={() => setMenuOpen(false)}>
-                  <Button className="w-full rounded-xl gradient-primary text-white border-0">{t.nav.admin}</Button>
+                  <Button className="w-full rounded-xl gradient-primary text-white border-0">
+                    {t.nav.admin}
+                  </Button>
                 </Link>
               )}
-              <Button variant="ghost" className="w-full justify-start rounded-xl text-muted-foreground" onClick={() => { logout.mutate(); setMenuOpen(false) }}>
+              <Button
+                variant="ghost"
+                className="w-full justify-start rounded-xl text-muted-foreground"
+                onClick={() => {
+                  logout.mutate()
+                  setMenuOpen(false)
+                }}
+              >
                 {t.nav.logout}
               </Button>
             </>
           ) : (
             <>
               <Link href="/login" onClick={() => setMenuOpen(false)}>
-                <Button variant="ghost" className="w-full justify-start rounded-xl">{t.nav.login}</Button>
+                <Button variant="ghost" className="w-full justify-start rounded-xl">
+                  {t.nav.login}
+                </Button>
               </Link>
               <Link href="/register" onClick={() => setMenuOpen(false)}>
-                <Button className="w-full rounded-xl gradient-primary text-white border-0">{t.nav.signup}</Button>
+                <Button className="w-full rounded-xl gradient-primary text-white border-0">
+                  {t.nav.signup}
+                </Button>
               </Link>
             </>
           )}

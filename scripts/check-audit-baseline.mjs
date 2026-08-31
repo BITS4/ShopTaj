@@ -7,28 +7,14 @@ const severities = ['high', 'critical'];
 let failed = false;
 
 for (const [workspace, allowed] of Object.entries(baseline)) {
-  const auditArgs = [
-    'audit',
-    '--prefix',
-    workspace,
-    '--omit=dev',
-    '--audit-level=high',
-    '--json',
-  ];
-  const command =
-    process.platform === 'win32' ? process.env.ComSpec ?? 'cmd.exe' : 'npm';
+  const auditArgs = ['audit', '--prefix', workspace, '--omit=dev', '--audit-level=high', '--json'];
+  const command = process.platform === 'win32' ? (process.env.ComSpec ?? 'cmd.exe') : 'npm';
   const commandArgs =
-    process.platform === 'win32'
-      ? ['/d', '/s', '/c', 'npm.cmd', ...auditArgs]
-      : auditArgs;
-  const result = spawnSync(
-    command,
-    commandArgs,
-    {
-      encoding: 'utf8',
-      maxBuffer: 20 * 1024 * 1024,
-    },
-  );
+    process.platform === 'win32' ? ['/d', '/s', '/c', 'npm.cmd', ...auditArgs] : auditArgs;
+  const result = spawnSync(command, commandArgs, {
+    encoding: 'utf8',
+    maxBuffer: 20 * 1024 * 1024,
+  });
 
   if (result.error) {
     console.error(`${workspace}: npm audit could not start: ${result.error.message}`);
@@ -63,8 +49,7 @@ for (const [workspace, allowed] of Object.entries(baseline)) {
     const maximum = allowed[severity] ?? 0;
     if (actual > maximum) {
       console.error(
-        `${workspace}: ${severity} vulnerabilities increased from ` +
-          `${maximum} to ${actual}.`,
+        `${workspace}: ${severity} vulnerabilities increased from ` + `${maximum} to ${actual}.`,
       );
       failed = true;
     }

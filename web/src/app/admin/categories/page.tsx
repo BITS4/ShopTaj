@@ -45,25 +45,43 @@ export default function AdminCategoriesPage() {
 
   const { data: categories, isLoading } = useQuery({
     queryKey: ['categories'],
-    queryFn: async () => { const { data } = await api.get<Category[]>('/categories'); return data },
+    queryFn: async () => {
+      const { data } = await api.get<Category[]>('/categories')
+      return data
+    },
   })
 
   const create = useMutation({
     mutationFn: (body: CategoryFormValues) => api.post('/admin/categories', body),
-    onSuccess: () => { toast.success('Category created'); qc.invalidateQueries({ queryKey: ['categories'] }); setShowForm(false); reset() },
+    onSuccess: () => {
+      toast.success('Category created')
+      qc.invalidateQueries({ queryKey: ['categories'] })
+      setShowForm(false)
+      reset()
+    },
     onError: (error: unknown) => toast.error(getErrorMessage(error, 'Failed to create category')),
   })
 
   const update = useMutation({
-    mutationFn: ({ id, ...body }: CategoryFormValues & { id: string }) => api.patch(`/admin/categories/${id}`, body),
-    onSuccess: () => { toast.success('Category updated'); qc.invalidateQueries({ queryKey: ['categories'] }); setEditId(null); reset() },
+    mutationFn: ({ id, ...body }: CategoryFormValues & { id: string }) =>
+      api.patch(`/admin/categories/${id}`, body),
+    onSuccess: () => {
+      toast.success('Category updated')
+      qc.invalidateQueries({ queryKey: ['categories'] })
+      setEditId(null)
+      reset()
+    },
     onError: (error: unknown) => toast.error(getErrorMessage(error, 'Failed to update')),
   })
 
   const remove = useMutation({
     mutationFn: (id: string) => api.delete(`/admin/categories/${id}`),
-    onSuccess: () => { toast.success('Category deleted'); qc.invalidateQueries({ queryKey: ['categories'] }) },
-    onError: (error: unknown) => toast.error(getErrorMessage(error, 'Cannot delete — category may have products')),
+    onSuccess: () => {
+      toast.success('Category deleted')
+      qc.invalidateQueries({ queryKey: ['categories'] })
+    },
+    onError: (error: unknown) =>
+      toast.error(getErrorMessage(error, 'Cannot delete — category may have products')),
   })
 
   const onSubmit = (data: CategoryFormValues) => {
@@ -87,20 +105,32 @@ export default function AdminCategoriesPage() {
     setValue('parentId', cat.parentId || '')
   }
 
-  const cancel = () => { setShowForm(false); setEditId(null); reset() }
+  const cancel = () => {
+    setShowForm(false)
+    setEditId(null)
+    reset()
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Categories</h1>
-        <Button onClick={() => { cancel(); setShowForm(true) }}>
-          <Plus className="h-4 w-4 mr-2" />Add Category
+        <Button
+          onClick={() => {
+            cancel()
+            setShowForm(true)
+          }}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add Category
         </Button>
       </div>
 
       {(showForm || editId) && (
         <Card className="mb-6 border-primary/30">
-          <CardHeader><CardTitle>{editId ? 'Edit Category' : 'New Category'}</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>{editId ? 'Edit Category' : 'New Category'}</CardTitle>
+          </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="grid sm:grid-cols-3 gap-4">
               <div>
@@ -116,23 +146,35 @@ export default function AdminCategoriesPage() {
                 <Input {...register('nameTg')} placeholder="Электроника" />
               </div>
               <div>
-                <label className="text-xs font-medium">Parent Category <span className="text-muted-foreground">(for sub-categories)</span></label>
-                <select className="w-full h-10 border rounded-md px-3 text-sm bg-background" {...register('parentId')}>
+                <label className="text-xs font-medium">
+                  Parent Category{' '}
+                  <span className="text-muted-foreground">(for sub-categories)</span>
+                </label>
+                <select
+                  className="w-full h-10 border rounded-md px-3 text-sm bg-background"
+                  {...register('parentId')}
+                >
                   <option value="">None (top-level)</option>
                   {categories?.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="text-xs font-medium">Image URL <span className="text-muted-foreground">(optional)</span></label>
+                <label className="text-xs font-medium">
+                  Image URL <span className="text-muted-foreground">(optional)</span>
+                </label>
                 <Input {...register('imageUrl')} placeholder="https://..." />
               </div>
               <div className="sm:col-span-3 flex gap-3">
                 <Button type="submit" disabled={create.isPending || update.isPending}>
                   {create.isPending || update.isPending ? 'Saving…' : editId ? 'Update' : 'Create'}
                 </Button>
-                <Button type="button" variant="outline" onClick={cancel}>Cancel</Button>
+                <Button type="button" variant="outline" onClick={cancel}>
+                  Cancel
+                </Button>
               </div>
             </form>
           </CardContent>
@@ -159,12 +201,21 @@ export default function AdminCategoriesPage() {
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEdit(cat)}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => startEdit(cat)}
+                  >
                     <Pencil className="h-4 w-4" />
                   </Button>
                   <Button
-                    variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
-                    onClick={() => { if (confirm(`Delete "${cat.name}"?`)) remove.mutate(cat.id) }}
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-destructive hover:text-destructive"
+                    onClick={() => {
+                      if (confirm(`Delete "${cat.name}"?`)) remove.mutate(cat.id)
+                    }}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -172,18 +223,30 @@ export default function AdminCategoriesPage() {
               </div>
               {/* Sub-categories */}
               {cat.children?.map((child) => (
-                <div key={child.id} className="flex items-center justify-between px-4 py-2.5 border-b hover:bg-muted/20 pl-10">
+                <div
+                  key={child.id}
+                  className="flex items-center justify-between px-4 py-2.5 border-b hover:bg-muted/20 pl-10"
+                >
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <ChevronRight className="h-3 w-3" />
                     {child.name}
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEdit(child)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => startEdit(child)}
+                    >
                       <Pencil className="h-3 w-3" />
                     </Button>
                     <Button
-                      variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"
-                      onClick={() => { if (confirm(`Delete "${child.name}"?`)) remove.mutate(child.id) }}
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      onClick={() => {
+                        if (confirm(`Delete "${child.name}"?`)) remove.mutate(child.id)
+                      }}
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>

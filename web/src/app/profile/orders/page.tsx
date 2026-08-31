@@ -38,8 +38,11 @@ function getApiErrorMessage(error: unknown): string {
 }
 
 const STATUS_COLOR: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  PENDING: 'secondary', PROCESSING: 'default', SHIPPED: 'default',
-  DELIVERED: 'outline', CANCELLED: 'destructive',
+  PENDING: 'secondary',
+  PROCESSING: 'default',
+  SHIPPED: 'default',
+  DELIVERED: 'outline',
+  CANCELLED: 'destructive',
 }
 
 export default function OrdersPage() {
@@ -78,9 +81,7 @@ export default function OrdersPage() {
       {isError && (
         <div className="text-center py-12 border rounded-xl">
           <p className="text-destructive font-medium mb-2">Failed to load orders</p>
-          <p className="text-sm text-muted-foreground mb-4">
-            {getApiErrorMessage(error)}
-          </p>
+          <p className="text-sm text-muted-foreground mb-4">{getApiErrorMessage(error)}</p>
           <Button onClick={() => refetch()}>Try Again</Button>
         </div>
       )}
@@ -112,7 +113,10 @@ export default function OrdersPage() {
                   </div>
                 </div>
                 <div className="mt-3 text-sm text-muted-foreground">
-                  {order.items.slice(0, 3).map((item) => item.productName || item.product?.name).join(', ')}
+                  {order.items
+                    .slice(0, 3)
+                    .map((item) => item.productName || item.product?.name)
+                    .join(', ')}
                   {order.items.length > 3 && ` +${order.items.length - 3} more`}
                 </div>
               </div>

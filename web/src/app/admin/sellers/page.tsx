@@ -8,7 +8,7 @@ import api from '@/lib/api'
 import { CheckCircle2, XCircle, Clock, FileText, ExternalLink } from 'lucide-react'
 
 const STATUS_TABS = ['ALL', 'PENDING', 'APPROVED', 'REJECTED'] as const
-type SellerStatus = Exclude<typeof STATUS_TABS[number], 'ALL'>
+type SellerStatus = Exclude<(typeof STATUS_TABS)[number], 'ALL'>
 
 interface AdminSeller {
   id: string
@@ -27,21 +27,26 @@ interface AdminSeller {
 
 export default function AdminSellersPage() {
   const qc = useQueryClient()
-  const [tab, setTab] = useState<typeof STATUS_TABS[number]>('PENDING')
+  const [tab, setTab] = useState<(typeof STATUS_TABS)[number]>('PENDING')
   const [rejectId, setRejectId] = useState<string | null>(null)
   const [rejectReason, setRejectReason] = useState('')
 
   const { data: sellers, isLoading } = useQuery({
     queryKey: ['admin-sellers', tab],
     queryFn: async () => {
-      const { data } = await api.get<AdminSeller[]>('/admin/sellers', { params: tab !== 'ALL' ? { status: tab } : {} })
+      const { data } = await api.get<AdminSeller[]>('/admin/sellers', {
+        params: tab !== 'ALL' ? { status: tab } : {},
+      })
       return data
     },
   })
 
   const approve = useMutation({
     mutationFn: (id: string) => api.patch(`/admin/sellers/${id}/approve`),
-    onSuccess: () => { toast.success('Seller approved'); qc.invalidateQueries({ queryKey: ['admin-sellers'] }) },
+    onSuccess: () => {
+      toast.success('Seller approved')
+      qc.invalidateQueries({ queryKey: ['admin-sellers'] })
+    },
   })
 
   const reject = useMutation({
@@ -75,7 +80,9 @@ export default function AdminSellersPage() {
             key={t}
             onClick={() => setTab(t)}
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              tab === t ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'
+              tab === t
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground hover:bg-accent'
             }`}
           >
             {t}
@@ -102,7 +109,9 @@ export default function AdminSellersPage() {
                   </div>
                   <p className="text-sm text-muted-foreground mt-0.5">{seller.description}</p>
                   <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                    <p>Owner: {seller.user.fullName} · {seller.user.email} · {seller.user.phone}</p>
+                    <p>
+                      Owner: {seller.user.fullName} · {seller.user.email} · {seller.user.phone}
+                    </p>
                     <p>Applied: {new Date(seller.createdAt).toLocaleDateString()}</p>
                     {seller.rejectionReason && (
                       <p className="text-red-500">Rejection reason: {seller.rejectionReason}</p>
@@ -112,7 +121,11 @@ export default function AdminSellersPage() {
 
                 {seller.status === 'PENDING' && (
                   <div className="flex gap-2 shrink-0">
-                    <Button size="sm" onClick={() => approve.mutate(seller.id)} disabled={approve.isPending}>
+                    <Button
+                      size="sm"
+                      onClick={() => approve.mutate(seller.id)}
+                      disabled={approve.isPending}
+                    >
                       Approve
                     </Button>
                     <Button
@@ -166,7 +179,14 @@ export default function AdminSellersPage() {
                     >
                       Confirm Reject
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => { setRejectId(null); setRejectReason('') }}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setRejectId(null)
+                        setRejectReason('')
+                      }}
+                    >
                       Cancel
                     </Button>
                   </div>

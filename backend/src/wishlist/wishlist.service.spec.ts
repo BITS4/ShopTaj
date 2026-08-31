@@ -19,10 +19,7 @@ describe('WishlistService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        WishlistService,
-        { provide: PrismaService, useValue: prisma },
-      ],
+      providers: [WishlistService, { provide: PrismaService, useValue: prisma }],
     }).compile();
 
     service = module.get(WishlistService);
@@ -74,9 +71,7 @@ describe('WishlistService', () => {
   it('rejects a duplicate add instead of creating a second row', async () => {
     prisma.wishlist.findUnique.mockResolvedValue({ id: 'wishlist-existing' });
 
-    await expect(service.add('user-1', 'product-1')).rejects.toBeInstanceOf(
-      ConflictException,
-    );
+    await expect(service.add('user-1', 'product-1')).rejects.toBeInstanceOf(ConflictException);
     expect(prisma.wishlist.create).not.toHaveBeenCalled();
   });
 

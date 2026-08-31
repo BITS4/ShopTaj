@@ -13,10 +13,7 @@ describe('ObservabilityController', () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ObservabilityController],
-      providers: [
-        MetricsService,
-        { provide: PrismaService, useValue: prisma },
-      ],
+      providers: [MetricsService, { provide: PrismaService, useValue: prisma }],
     }).compile();
 
     controller = module.get(ObservabilityController);
@@ -39,9 +36,7 @@ describe('ObservabilityController', () => {
   it('returns a 503-compatible exception when the database is unavailable', async () => {
     prisma.$queryRaw.mockRejectedValue(new Error('connection refused'));
 
-    await expect(controller.health()).rejects.toBeInstanceOf(
-      ServiceUnavailableException,
-    );
+    await expect(controller.health()).rejects.toBeInstanceOf(ServiceUnavailableException);
   });
 
   it('renders Prometheus process and application metrics', async () => {

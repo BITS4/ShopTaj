@@ -36,7 +36,8 @@ export default function CartPage() {
 
   const finalTotal = (cart?.total ?? 0) - discount
 
-  if (isLoading) return <div className="container mx-auto px-4 py-8 text-center">{t.common.loading}</div>
+  if (isLoading)
+    return <div className="container mx-auto px-4 py-8 text-center">{t.common.loading}</div>
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -46,7 +47,9 @@ export default function CartPage() {
         <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
           <ShoppingBag className="h-24 w-24 mb-4" />
           <h2 className="text-xl font-semibold">{t.cart.empty}</h2>
-          <Link href="/products" className="mt-4"><Button>{t.cart.browse}</Button></Link>
+          <Link href="/products" className="mt-4">
+            <Button>{t.cart.browse}</Button>
+          </Link>
         </div>
       ) : (
         <div className="grid lg:grid-cols-3 gap-8">
@@ -56,7 +59,12 @@ export default function CartPage() {
               <div key={item.id} className="flex gap-4 p-4 border rounded-xl">
                 <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-muted">
                   {item.product.images[0] && (
-                    <Image src={item.product.images[0].url} alt={item.product.name} fill className="object-cover" />
+                    <Image
+                      src={item.product.images[0].url}
+                      alt={item.product.name}
+                      fill
+                      className="object-cover"
+                    />
                   )}
                 </div>
                 <div className="flex-1">
@@ -69,21 +77,44 @@ export default function CartPage() {
                     </p>
                   )}
                   <p className="text-lg font-bold text-primary mt-1">
-                    {formatPrice(item.variant?.price ?? item.product.discountPrice ?? item.product.price)}
+                    {formatPrice(
+                      item.variant?.price ?? item.product.discountPrice ?? item.product.price,
+                    )}
                   </p>
                   <div className="flex items-center gap-2 mt-2">
                     <div className="flex items-center border rounded-md">
-                      <button className="px-3 py-1.5 hover:bg-muted text-sm" onClick={() => updateItem.mutate({ id: item.id, quantity: item.quantity - 1 })}>−</button>
+                      <button
+                        className="px-3 py-1.5 hover:bg-muted text-sm"
+                        onClick={() =>
+                          updateItem.mutate({ id: item.id, quantity: item.quantity - 1 })
+                        }
+                      >
+                        −
+                      </button>
                       <span className="px-3 py-1.5 text-sm">{item.quantity}</span>
-                      <button className="px-3 py-1.5 hover:bg-muted text-sm" onClick={() => updateItem.mutate({ id: item.id, quantity: item.quantity + 1 })}>+</button>
+                      <button
+                        className="px-3 py-1.5 hover:bg-muted text-sm"
+                        onClick={() =>
+                          updateItem.mutate({ id: item.id, quantity: item.quantity + 1 })
+                        }
+                      >
+                        +
+                      </button>
                     </div>
-                    <button onClick={() => removeItem.mutate(item.id)} className="p-1.5 text-destructive hover:bg-destructive/10 rounded-md">
+                    <button
+                      onClick={() => removeItem.mutate(item.id)}
+                      className="p-1.5 text-destructive hover:bg-destructive/10 rounded-md"
+                    >
                       <X className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
                 <div className="text-right font-semibold">
-                  {formatPrice(Number(item.variant?.price ?? item.product.discountPrice ?? item.product.price) * item.quantity)}
+                  {formatPrice(
+                    Number(
+                      item.variant?.price ?? item.product.discountPrice ?? item.product.price,
+                    ) * item.quantity,
+                  )}
                 </div>
               </div>
             ))}
@@ -93,12 +124,19 @@ export default function CartPage() {
           <div className="space-y-4">
             <div className="border rounded-xl p-6 space-y-4">
               <h2 className="text-lg font-bold">{t.cart.title}</h2>
-              <div className="flex justify-between text-sm"><span>{t.cart.subtotal}</span><span>{formatPrice(cart.total)}</span></div>
+              <div className="flex justify-between text-sm">
+                <span>{t.cart.subtotal}</span>
+                <span>{formatPrice(cart.total)}</span>
+              </div>
               {discount > 0 && (
-                <div className="flex justify-between text-sm text-green-600"><span>{t.cart.discount}</span><span>-{formatPrice(discount)}</span></div>
+                <div className="flex justify-between text-sm text-green-600">
+                  <span>{t.cart.discount}</span>
+                  <span>-{formatPrice(discount)}</span>
+                </div>
               )}
               <div className="border-t pt-3 flex justify-between font-bold">
-                <span>{t.cart.total}</span><span>{formatPrice(finalTotal)}</span>
+                <span>{t.cart.total}</span>
+                <span>{formatPrice(finalTotal)}</span>
               </div>
               <div className="flex gap-2">
                 <Input
@@ -107,15 +145,24 @@ export default function CartPage() {
                   onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                   className="text-sm"
                 />
-                <Button variant="outline" size="sm" onClick={handleCoupon} disabled={applyCoupon.isPending}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCoupon}
+                  disabled={applyCoupon.isPending}
+                >
                   {t.cart.apply_coupon}
                 </Button>
               </div>
               <Link href={couponData ? `/checkout?coupon=${couponCode}` : '/checkout'}>
-                <Button className="w-full" size="lg">{t.cart.checkout}</Button>
+                <Button className="w-full" size="lg">
+                  {t.cart.checkout}
+                </Button>
               </Link>
               <Link href="/products">
-                <Button variant="ghost" className="w-full">{t.cart.continue}</Button>
+                <Button variant="ghost" className="w-full">
+                  {t.cart.continue}
+                </Button>
               </Link>
             </div>
           </div>

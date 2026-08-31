@@ -1,6 +1,6 @@
-import { defineConfig, globalIgnores } from 'eslint/config'
-import nextCoreWebVitals from 'eslint-config-next/core-web-vitals'
-import nextTypeScript from 'eslint-config-next/typescript'
+import { defineConfig, globalIgnores } from 'eslint/config';
+import nextCoreWebVitals from 'eslint-config-next/core-web-vitals';
+import nextTypeScript from 'eslint-config-next/typescript';
 
 export default defineConfig([
   ...nextCoreWebVitals,
@@ -20,10 +20,5 @@ export default defineConfig([
       'react-hooks/set-state-in-effect': 'off',
     },
   },
-  globalIgnores([
-    '.next/**',
-    'coverage/**',
-    'node_modules/**',
-    'next-env.d.ts',
-  ]),
-])
+  globalIgnores(['.next/**', 'coverage/**', 'node_modules/**', 'next-env.d.ts']),
+]);

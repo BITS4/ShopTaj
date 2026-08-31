@@ -5,15 +5,9 @@ import Stripe from 'stripe';
 export const STRIPE_GATEWAY = Symbol('STRIPE_GATEWAY');
 
 export interface StripeGateway {
-  createPaymentIntent(
-    params: Stripe.PaymentIntentCreateParams,
-  ): Promise<Stripe.PaymentIntent>;
+  createPaymentIntent(params: Stripe.PaymentIntentCreateParams): Promise<Stripe.PaymentIntent>;
   retrievePaymentIntent(id: string): Promise<Stripe.PaymentIntent>;
-  constructWebhookEvent(
-    rawBody: Buffer,
-    signature: string,
-    secret: string,
-  ): Stripe.Event;
+  constructWebhookEvent(rawBody: Buffer, signature: string, secret: string): Stripe.Event;
 }
 
 export class StripeSdkGateway implements StripeGateway {
@@ -27,9 +21,7 @@ export class StripeSdkGateway implements StripeGateway {
     });
   }
 
-  createPaymentIntent(
-    params: Stripe.PaymentIntentCreateParams,
-  ): Promise<Stripe.PaymentIntent> {
+  createPaymentIntent(params: Stripe.PaymentIntentCreateParams): Promise<Stripe.PaymentIntent> {
     return this.client.paymentIntents.create(params);
   }
 
@@ -37,11 +29,7 @@ export class StripeSdkGateway implements StripeGateway {
     return this.client.paymentIntents.retrieve(id);
   }
 
-  constructWebhookEvent(
-    rawBody: Buffer,
-    signature: string,
-    secret: string,
-  ): Stripe.Event {
+  constructWebhookEvent(rawBody: Buffer, signature: string, secret: string): Stripe.Event {
     return this.client.webhooks.constructEvent(rawBody, signature, secret);
   }
 }
@@ -79,11 +67,7 @@ export class InMemoryStripeGateway implements StripeGateway {
     return intent;
   }
 
-  constructWebhookEvent(
-    rawBody: Buffer,
-    _signature: string,
-    _secret: string,
-  ): Stripe.Event {
+  constructWebhookEvent(rawBody: Buffer, _signature: string, _secret: string): Stripe.Event {
     return JSON.parse(rawBody.toString('utf8')) as Stripe.Event;
   }
 }
@@ -93,8 +77,7 @@ export const stripeGatewayProvider: Provider<StripeGateway> = {
   inject: [ConfigService],
   useFactory: (config: ConfigService): StripeGateway => {
     const isTest =
-      config.get<string>('NODE_ENV') === 'test' ||
-      config.get<string>('TEST_MODE') === 'true';
+      config.get<string>('NODE_ENV') === 'test' || config.get<string>('TEST_MODE') === 'true';
 
     return isTest
       ? new InMemoryStripeGateway()

@@ -41,26 +41,23 @@ export class WhatsAppService {
   ): Promise<void> {
     if (!this.isConfigured) return;
     try {
-      const res = await fetch(
-        `https://graph.facebook.com/v20.0/${this.phoneNumberId}/messages`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${this.accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            messaging_product: 'whatsapp',
-            to,
-            type: 'template',
-            template: {
-              name: templateName,
-              language: { code: langCode },
-              components,
-            },
-          }),
+      const res = await fetch(`https://graph.facebook.com/v20.0/${this.phoneNumberId}/messages`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+          'Content-Type': 'application/json',
         },
-      );
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          to,
+          type: 'template',
+          template: {
+            name: templateName,
+            language: { code: langCode },
+            components,
+          },
+        }),
+      });
       if (!res.ok) {
         const errorBody: unknown = await res.json().catch(() => ({}));
         this.logger.error(`WhatsApp API error to ${to}: ${JSON.stringify(errorBody)}`);

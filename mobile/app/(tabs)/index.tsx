@@ -1,4 +1,13 @@
-import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet, FlatList, ActivityIndicator } from 'react-native'
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+} from 'react-native'
 import { useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
 import api, { fixImageUrl } from '../../lib/api'
@@ -17,17 +26,29 @@ function ProductCard({ product }: { product: Product }) {
   const mainImage = fixImageUrl(product.images?.[0]?.url)
 
   return (
-    <TouchableOpacity style={styles.card} onPress={() => router.push(`/product/${product.slug ?? product.id}`)}>
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => router.push(`/product/${product.slug ?? product.id}`)}
+    >
       {mainImage ? (
         <Image source={{ uri: mainImage }} style={styles.cardImage} resizeMode="cover" />
       ) : (
-        <View style={[styles.cardImage, { backgroundColor: '#f3f4f6', alignItems: 'center', justifyContent: 'center' }]}>
+        <View
+          style={[
+            styles.cardImage,
+            { backgroundColor: '#f3f4f6', alignItems: 'center', justifyContent: 'center' },
+          ]}
+        >
           <Text style={{ color: '#9ca3af', fontSize: 12 }}>No image</Text>
         </View>
       )}
       <View style={styles.cardBody}>
-        <Text style={styles.cardCategory} numberOfLines={1}>{product.category?.name}</Text>
-        <Text style={styles.cardName} numberOfLines={2}>{product.name}</Text>
+        <Text style={styles.cardCategory} numberOfLines={1}>
+          {product.category?.name}
+        </Text>
+        <Text style={styles.cardName} numberOfLines={2}>
+          {product.name}
+        </Text>
         <Text style={styles.cardPrice}>${price.toFixed(2)}</Text>
       </View>
     </TouchableOpacity>
@@ -81,9 +102,19 @@ export default function HomeTab() {
       {categories && categories.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{L.categories}</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 10 }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 16, gap: 10 }}
+          >
             {categories.map((cat) => (
-              <TouchableOpacity key={cat.id} style={styles.catChip} onPress={() => router.push({ pathname: '/(tabs)/search', params: { categoryId: cat.id } })}>
+              <TouchableOpacity
+                key={cat.id}
+                style={styles.catChip}
+                onPress={() =>
+                  router.push({ pathname: '/(tabs)/search', params: { categoryId: cat.id } })
+                }
+              >
                 <Text style={styles.catChipText}>{cat.name}</Text>
               </TouchableOpacity>
             ))}
@@ -104,7 +135,11 @@ export default function HomeTab() {
             scrollEnabled={false}
             columnWrapperStyle={{ gap: 12, paddingHorizontal: 16 }}
             contentContainerStyle={{ gap: 12, paddingBottom: 12 }}
-            renderItem={({ item }) => <View style={{ flex: 1 }}><ProductCard product={item} /></View>}
+            renderItem={({ item }) => (
+              <View style={{ flex: 1 }}>
+                <ProductCard product={item} />
+              </View>
+            )}
           />
         )}
       </View>
@@ -119,14 +154,36 @@ const styles = StyleSheet.create({
   logo: { fontSize: 24, fontWeight: 'bold', color: '#fff' },
   subtitle: { color: '#e0e7ff', marginTop: 4 },
   langRow: { flexDirection: 'row', gap: 6 },
-  langBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
-  langBtnActive: { backgroundColor: 'rgba(255,255,255,0.35)', borderWidth: 1.5, borderColor: '#fff' },
+  langBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  langBtnActive: {
+    backgroundColor: 'rgba(255,255,255,0.35)',
+    borderWidth: 1.5,
+    borderColor: '#fff',
+  },
   langFlag: { fontSize: 16 },
   section: { marginBottom: 24, marginTop: 16 },
   sectionTitle: { fontSize: 18, fontWeight: 'bold', marginHorizontal: 16, marginBottom: 12 },
-  catChip: { backgroundColor: '#f3f4f6', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
+  catChip: {
+    backgroundColor: '#f3f4f6',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
   catChipText: { fontSize: 13, color: '#374151' },
-  card: { backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#e5e7eb', overflow: 'hidden' },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    overflow: 'hidden',
+  },
   cardImage: { width: '100%', aspectRatio: 1 },
   cardBody: { padding: 10 },
   cardCategory: { fontSize: 10, color: '#6b7280', marginBottom: 2 },

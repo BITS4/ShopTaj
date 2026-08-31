@@ -24,7 +24,12 @@ export default function LanguageSwitcher() {
       >
         <span>{locales[locale].flag}</span>
         <span className="hidden sm:inline">{locales[locale].label}</span>
-        <svg className="h-3 w-3 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg
+          className="h-3 w-3 text-muted-foreground"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
@@ -34,7 +39,10 @@ export default function LanguageSwitcher() {
           {(Object.entries(locales) as [Locale, typeof locales.en][]).map(([key, val]) => (
             <button
               key={key}
-              onClick={() => { setLocale(key); setOpen(false) }}
+              onClick={() => {
+                setLocale(key)
+                setOpen(false)
+              }}
               className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-accent transition-colors ${locale === key ? 'bg-primary/10 text-primary font-semibold' : ''}`}
             >
               <span className="text-base">{val.flag}</span>

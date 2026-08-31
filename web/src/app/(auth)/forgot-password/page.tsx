@@ -34,8 +34,14 @@ export default function ForgotPasswordPage() {
             <p className="text-center text-sm text-muted-foreground py-4">✅ {t.auth.reset_sent}</p>
           ) : (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <Input type="email" placeholder="you@example.com" {...register('email', { required: true })} />
-              <Button type="submit" className="w-full">{t.auth.send_link}</Button>
+              <Input
+                type="email"
+                placeholder="you@example.com"
+                {...register('email', { required: true })}
+              />
+              <Button type="submit" className="w-full">
+                {t.auth.send_link}
+              </Button>
             </form>
           )}
         </CardContent>

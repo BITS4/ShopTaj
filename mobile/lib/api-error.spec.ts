@@ -8,9 +8,7 @@ describe('getApiErrorMessage', () => {
       response: { data: { message: ['Email is invalid', 'Password is short'] } },
     }
 
-    expect(getApiErrorMessage(error, 'Request failed')).toBe(
-      'Email is invalid, Password is short',
-    )
+    expect(getApiErrorMessage(error, 'Request failed')).toBe('Email is invalid, Password is short')
   })
 
   it('does not expose arbitrary thrown values to the user', () => {

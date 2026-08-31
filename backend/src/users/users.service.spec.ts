@@ -35,10 +35,7 @@ describe('UsersService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        UsersService,
-        { provide: PrismaService, useValue: prisma },
-      ],
+      providers: [UsersService, { provide: PrismaService, useValue: prisma }],
     }).compile();
 
     service = module.get(UsersService);
@@ -79,9 +76,7 @@ describe('UsersService', () => {
     it('throws when the authenticated user no longer exists', async () => {
       prisma.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.getProfile('missing-user')).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      await expect(service.getProfile('missing-user')).rejects.toBeInstanceOf(NotFoundException);
     });
   });
 
@@ -95,9 +90,9 @@ describe('UsersService', () => {
     };
     prisma.user.update.mockResolvedValue(updated);
 
-    await expect(
-      service.updateProfile('user-1', { fullName: 'Updated Buyer' }),
-    ).resolves.toBe(updated);
+    await expect(service.updateProfile('user-1', { fullName: 'Updated Buyer' })).resolves.toBe(
+      updated,
+    );
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: 'user-1' },
       data: { fullName: 'Updated Buyer' },
@@ -115,9 +110,7 @@ describe('UsersService', () => {
     const updated = { id: 'user-1', avatarUrl: 'https://cdn.example/avatar.jpg' };
     prisma.user.update.mockResolvedValue(updated);
 
-    await expect(
-      service.updateAvatar('user-1', updated.avatarUrl),
-    ).resolves.toBe(updated);
+    await expect(service.updateAvatar('user-1', updated.avatarUrl)).resolves.toBe(updated);
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: 'user-1' },
       data: { avatarUrl: updated.avatarUrl },
@@ -210,9 +203,9 @@ describe('UsersService', () => {
       prisma.address.updateMany.mockResolvedValue({ count: 1 });
       prisma.address.update.mockResolvedValue(updated);
 
-      await expect(
-        service.updateAddress('user-1', 'address-1', { isDefault: true }),
-      ).resolves.toBe(updated);
+      await expect(service.updateAddress('user-1', 'address-1', { isDefault: true })).resolves.toBe(
+        updated,
+      );
 
       expect(prisma.address.updateMany).toHaveBeenCalledWith({
         where: { userId: 'user-1' },
@@ -248,9 +241,9 @@ describe('UsersService', () => {
     it('rejects deletion when the scoped address lookup finds no match', async () => {
       prisma.address.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.deleteAddress('user-1', 'foreign-address'),
-      ).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.deleteAddress('user-1', 'foreign-address')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
       expect(prisma.address.delete).not.toHaveBeenCalled();
     });
 
@@ -261,9 +254,9 @@ describe('UsersService', () => {
       });
       prisma.address.delete.mockResolvedValue({ id: 'address-1' });
 
-      await expect(
-        service.deleteAddress('user-1', 'address-1'),
-      ).resolves.toEqual({ message: 'Address deleted' });
+      await expect(service.deleteAddress('user-1', 'address-1')).resolves.toEqual({
+        message: 'Address deleted',
+      });
       expect(prisma.address.delete).toHaveBeenCalledWith({
         where: { id: 'address-1' },
       });

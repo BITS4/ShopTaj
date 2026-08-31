@@ -1,4 +1,15 @@
-import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, Alert, Dimensions, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
+import {
+  View,
+  Text,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  Dimensions,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+} from 'react-native'
 import { useState, useRef } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -26,13 +37,19 @@ export default function ProductDetailScreen() {
 
   const addToCart = useMutation({
     mutationFn: () => api.post('/cart/items', { productId: product?.id, quantity: 1 }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['cart'] }); Alert.alert('Added!', 'Item added to cart') },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['cart'] })
+      Alert.alert('Added!', 'Item added to cart')
+    },
     onError: () => Alert.alert('Sign in required', 'Please sign in to add items to cart'),
   })
 
-  if (isLoading || !product) return (
-    <View style={styles.center}><Text>Loading…</Text></View>
-  )
+  if (isLoading || !product)
+    return (
+      <View style={styles.center}>
+        <Text>Loading…</Text>
+      </View>
+    )
 
   const price = Number(product.discountPrice ?? product.price)
   const images = product.images ?? []
@@ -79,7 +96,9 @@ export default function ProductDetailScreen() {
         {/* Image counter badge */}
         {images.length > 1 && (
           <View style={styles.counter}>
-            <Text style={styles.counterText}>{activeImg + 1} / {images.length}</Text>
+            <Text style={styles.counterText}>
+              {activeImg + 1} / {images.length}
+            </Text>
           </View>
         )}
 
@@ -133,23 +152,32 @@ export default function ProductDetailScreen() {
           )}
         </View>
 
-        {product.description && (
-          <Text style={styles.desc}>{product.description}</Text>
-        )}
+        {product.description && <Text style={styles.desc}>{product.description}</Text>}
 
         <View style={styles.stockRow}>
-          <View style={[styles.stockDot, { backgroundColor: product.stock > 0 ? '#22c55e' : '#ef4444' }]} />
-          <Text style={styles.stock}>{product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}</Text>
+          <View
+            style={[
+              styles.stockDot,
+              { backgroundColor: product.stock > 0 ? '#22c55e' : '#ef4444' },
+            ]}
+          />
+          <Text style={styles.stock}>
+            {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
+          </Text>
         </View>
 
         {product.avgRating && (
-          <Text style={styles.rating}>⭐ {product.avgRating.toFixed(1)} ({product.reviewCount} reviews)</Text>
+          <Text style={styles.rating}>
+            ⭐ {product.avgRating.toFixed(1)} ({product.reviewCount} reviews)
+          </Text>
         )}
 
         {product.tags && product.tags.length > 0 && (
           <View style={styles.tags}>
             {product.tags.map((tag: string) => (
-              <View key={tag} style={styles.tag}><Text style={styles.tagText}>{tag}</Text></View>
+              <View key={tag} style={styles.tag}>
+                <Text style={styles.tagText}>{tag}</Text>
+              </View>
             ))}
           </View>
         )}
@@ -158,7 +186,10 @@ export default function ProductDetailScreen() {
           style={[styles.btn, product.stock === 0 && styles.btnDisabled]}
           disabled={product.stock === 0 || addToCart.isPending}
           onPress={() => {
-            if (!user) { router.push('/(auth)/login'); return }
+            if (!user) {
+              router.push('/(auth)/login')
+              return
+            }
             addToCart.mutate()
           }}
         >
@@ -192,16 +223,24 @@ const styles = StyleSheet.create({
   placeholder: { backgroundColor: '#f3f4f6' },
 
   counter: {
-    position: 'absolute', bottom: 12, right: 12,
-    backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: 12,
-    paddingHorizontal: 10, paddingVertical: 4,
+    position: 'absolute',
+    bottom: 12,
+    right: 12,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
   counterText: { color: '#fff', fontSize: 12, fontWeight: '600' },
 
   discountBadge: {
-    position: 'absolute', top: 12, left: 12,
-    backgroundColor: '#ef4444', borderRadius: 8,
-    paddingHorizontal: 10, paddingVertical: 4,
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    backgroundColor: '#ef4444',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
   discountBadgeText: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
 
@@ -228,12 +267,25 @@ const styles = StyleSheet.create({
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tag: { backgroundColor: '#f3f4f6', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   tagText: { fontSize: 12, color: '#374151' },
-  btn: { backgroundColor: '#6366f1', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 8 },
+  btn: {
+    backgroundColor: '#6366f1',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 8,
+  },
   btnDisabled: { backgroundColor: '#9ca3af' },
   btnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   reviews: { marginTop: 16 },
   reviewsTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 12 },
-  reviewCard: { padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#e5e7eb', marginBottom: 8, gap: 4 },
+  reviewCard: {
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    marginBottom: 8,
+    gap: 4,
+  },
   reviewer: { fontWeight: '600', fontSize: 14 },
   reviewRating: { fontSize: 14 },
   reviewComment: { fontSize: 13, color: '#4b5563' },

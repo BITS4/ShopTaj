@@ -197,7 +197,8 @@ const en = {
   // Order success
   success: {
     title: 'Order Confirmed!',
-    message: 'Thank you for your purchase. A confirmation email has been sent to you. We will notify you when your order ships.',
+    message:
+      'Thank you for your purchase. A confirmation email has been sent to you. We will notify you when your order ships.',
     view_orders: 'View My Orders',
     continue: 'Continue Shopping',
   },

@@ -1,7 +1,4 @@
-import {
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../prisma/prisma.service';
 import { CartService } from './cart.service';
@@ -30,10 +27,7 @@ describe('CartService', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        CartService,
-        { provide: PrismaService, useValue: prisma },
-      ],
+      providers: [CartService, { provide: PrismaService, useValue: prisma }],
     }).compile();
 
     service = module.get(CartService);
@@ -133,9 +127,9 @@ describe('CartService', () => {
     });
     prisma.cartItem.delete.mockResolvedValue({});
 
-    await expect(
-      service.updateItem('user-1', 'item-1', { quantity: 0 }),
-    ).resolves.toEqual({ message: 'Item removed' });
+    await expect(service.updateItem('user-1', 'item-1', { quantity: 0 })).resolves.toEqual({
+      message: 'Item removed',
+    });
     expect(prisma.cartItem.delete).toHaveBeenCalledWith({
       where: { id: 'item-1' },
     });
@@ -154,9 +148,7 @@ describe('CartService', () => {
     };
     prisma.coupon.findUnique.mockResolvedValue(coupon);
 
-    await expect(service.applyCoupon('user-1', 'SAVE5')).rejects.toThrow(
-      'Coupon exhausted',
-    );
+    await expect(service.applyCoupon('user-1', 'SAVE5')).rejects.toThrow('Coupon exhausted');
 
     prisma.coupon.findUnique.mockResolvedValue({
       ...coupon,

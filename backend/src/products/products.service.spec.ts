@@ -33,10 +33,7 @@ describe('ProductsService', () => {
     jest.resetAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ProductsService,
-        { provide: PrismaService, useValue: prisma },
-      ],
+      providers: [ProductsService, { provide: PrismaService, useValue: prisma }],
     }).compile();
 
     service = module.get(ProductsService);
@@ -198,9 +195,7 @@ describe('ProductsService', () => {
     it('rejects an unknown product slug', async () => {
       prisma.product.findUnique.mockResolvedValue(null);
 
-      await expect(service.findBySlug('missing')).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      await expect(service.findBySlug('missing')).rejects.toBeInstanceOf(NotFoundException);
     });
 
     it('fetches the active featured shelf', async () => {
@@ -296,9 +291,9 @@ describe('ProductsService', () => {
     it('rejects updating a product that does not exist', async () => {
       prisma.product.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.update('missing', { name: 'Updated' }),
-      ).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.update('missing', { name: 'Updated' })).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
       expect(prisma.product.update).not.toHaveBeenCalled();
     });
 
@@ -321,9 +316,7 @@ describe('ProductsService', () => {
       prisma.product.findUnique.mockResolvedValue(null);
 
       await expect(
-        service.addImages('missing', [
-          { url: 'https://cdn.example/a.jpg', publicId: 'a' },
-        ]),
+        service.addImages('missing', [{ url: 'https://cdn.example/a.jpg', publicId: 'a' }]),
       ).rejects.toBeInstanceOf(NotFoundException);
       expect(prisma.productImage.count).not.toHaveBeenCalled();
     });
@@ -363,14 +356,10 @@ describe('ProductsService', () => {
       prisma.productImage.count.mockResolvedValue(2);
       prisma.productImage.createMany.mockResolvedValue({ count: 1 });
 
-      await service.addImages('product-1', [
-        { url: 'https://cdn.example/c.jpg', publicId: 'c' },
-      ]);
+      await service.addImages('product-1', [{ url: 'https://cdn.example/c.jpg', publicId: 'c' }]);
 
       expect(prisma.productImage.createMany).toHaveBeenCalledWith({
-        data: [
-          expect.objectContaining({ isMain: false, sortOrder: 2 }),
-        ],
+        data: [expect.objectContaining({ isMain: false, sortOrder: 2 })],
       });
     });
   });
@@ -379,9 +368,7 @@ describe('ProductsService', () => {
     it('rejects deleting an unknown product', async () => {
       prisma.product.findUnique.mockResolvedValue(null);
 
-      await expect(service.delete('missing')).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      await expect(service.delete('missing')).rejects.toBeInstanceOf(NotFoundException);
       expect(prisma.orderItem.count).not.toHaveBeenCalled();
     });
 
@@ -391,8 +378,7 @@ describe('ProductsService', () => {
       prisma.product.update.mockResolvedValue({});
 
       await expect(service.delete('product-1')).resolves.toEqual({
-        message:
-          'Product hidden (it exists in order history and cannot be fully deleted)',
+        message: 'Product hidden (it exists in order history and cannot be fully deleted)',
       });
       expect(prisma.product.update).toHaveBeenCalledWith({
         where: { id: 'product-1' },

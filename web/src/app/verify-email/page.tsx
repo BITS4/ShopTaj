@@ -13,31 +13,39 @@ function VerifyEmailPage() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
 
   useEffect(() => {
-    if (!token) { setStatus('error'); return }
-    api.get(`/auth/verify-email?token=${token}`)
+    if (!token) {
+      setStatus('error')
+      return
+    }
+    api
+      .get(`/auth/verify-email?token=${token}`)
       .then(() => setStatus('success'))
       .catch(() => setStatus('error'))
   }, [token])
 
-  if (status === 'loading') return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center space-y-4">
-        <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-        <p className="text-muted-foreground">Verifying your email…</p>
+  if (status === 'loading')
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+          <p className="text-muted-foreground">Verifying your email…</p>
+        </div>
       </div>
-    </div>
-  )
+    )
 
-  if (status === 'success') return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="text-center space-y-6 max-w-sm">
-        <CheckCircle className="h-20 w-20 text-green-500 mx-auto" />
-        <h1 className="text-2xl font-bold">Email Verified!</h1>
-        <p className="text-muted-foreground">Your account is now active. You can log in.</p>
-        <Button className="w-full" onClick={() => router.push('/login')}>Go to Login</Button>
+  if (status === 'success')
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="text-center space-y-6 max-w-sm">
+          <CheckCircle className="h-20 w-20 text-green-500 mx-auto" />
+          <h1 className="text-2xl font-bold">Email Verified!</h1>
+          <p className="text-muted-foreground">Your account is now active. You can log in.</p>
+          <Button className="w-full" onClick={() => router.push('/login')}>
+            Go to Login
+          </Button>
+        </div>
       </div>
-    </div>
-  )
+    )
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
@@ -45,12 +53,18 @@ function VerifyEmailPage() {
         <XCircle className="h-20 w-20 text-destructive mx-auto" />
         <h1 className="text-2xl font-bold">Invalid Link</h1>
         <p className="text-muted-foreground">This verification link is invalid or has expired.</p>
-        <Button className="w-full" onClick={() => router.push('/login')}>Back to Login</Button>
+        <Button className="w-full" onClick={() => router.push('/login')}>
+          Back to Login
+        </Button>
       </div>
     </div>
   )
 }
 
 export default function VerifyEmailPageWithSuspense() {
-  return <Suspense fallback={null}><VerifyEmailPage /></Suspense>
+  return (
+    <Suspense fallback={null}>
+      <VerifyEmailPage />
+    </Suspense>
+  )
 }

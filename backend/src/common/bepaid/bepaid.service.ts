@@ -23,13 +23,17 @@ export class BePaidService {
   }
 
   get isConfigured(): boolean {
-    return !!(this.shopId && this.secretKey &&
-      !this.shopId.includes('your') && !this.secretKey.includes('your'));
+    return !!(
+      this.shopId &&
+      this.secretKey &&
+      !this.shopId.includes('your') &&
+      !this.secretKey.includes('your')
+    );
   }
 
   async createCheckout(params: {
     orderId: string;
-    amount: number;        // in dollars/main units
+    amount: number; // in dollars/main units
     currency: string;
     description: string;
     customerEmail: string;
@@ -70,20 +74,18 @@ export class BePaidService {
 
     const auth = Buffer.from(`${this.shopId}:${this.secretKey}`).toString('base64');
 
-    const { data } = await axios.post(
-      `${this.baseUrl}/ctp/api/checkouts`,
-      body,
-      {
-        headers: {
-          Authorization: `Basic ${auth}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          'X-API-Version': '2',
-        },
+    const { data } = await axios.post(`${this.baseUrl}/ctp/api/checkouts`, body, {
+      headers: {
+        Authorization: `Basic ${auth}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'X-API-Version': '2',
       },
-    );
+    });
 
-    this.logger.log(`bePaid checkout created: token=${data.checkout.token} orderId=${params.orderId}`);
+    this.logger.log(
+      `bePaid checkout created: token=${data.checkout.token} orderId=${params.orderId}`,
+    );
 
     return {
       token: data.checkout.token,

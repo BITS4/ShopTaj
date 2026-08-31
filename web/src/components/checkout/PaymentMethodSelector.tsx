@@ -32,10 +32,7 @@ const paymentMethods: Array<{
   },
 ]
 
-export function PaymentMethodSelector({
-  value,
-  onChange,
-}: PaymentMethodSelectorProps) {
+export function PaymentMethodSelector({ value, onChange }: PaymentMethodSelectorProps) {
   return (
     <Card>
       <CardHeader>
@@ -46,9 +43,7 @@ export function PaymentMethodSelector({
           <label
             key={method.id}
             className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition ${
-              value === method.id
-                ? 'border-primary bg-primary/5'
-                : 'hover:border-muted-foreground'
+              value === method.id ? 'border-primary bg-primary/5' : 'hover:border-muted-foreground'
             }`}
           >
             <input
@@ -63,9 +58,7 @@ export function PaymentMethodSelector({
             </span>
             <span className="flex-1 text-sm">
               <span className="block font-semibold">{method.label}</span>
-              <span className="block text-xs text-muted-foreground">
-                {method.description}
-              </span>
+              <span className="block text-xs text-muted-foreground">{method.description}</span>
             </span>
           </label>
         ))}

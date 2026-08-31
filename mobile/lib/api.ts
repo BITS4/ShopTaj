@@ -6,14 +6,9 @@ import { fixImageUrl as replaceLocalImageHost } from './image-url'
 // Expo exposes the Metro host on a physical device. Environment variables can
 // override it for emulators, tunnels, and production builds.
 const DEV_HOST =
-  process.env.EXPO_PUBLIC_DEV_HOST ??
-  Constants.expoConfig?.hostUri?.split(':')[0] ??
-  'localhost'
-const configuredApiUrl =
-  process.env.EXPO_PUBLIC_API_URL ?? Constants.expoConfig?.extra?.apiUrl
-const BASE_URL: string =
-  configuredApiUrl ??
-  `http://${DEV_HOST}:3001/api`
+  process.env.EXPO_PUBLIC_DEV_HOST ?? Constants.expoConfig?.hostUri?.split(':')[0] ?? 'localhost'
+const configuredApiUrl = process.env.EXPO_PUBLIC_API_URL ?? Constants.expoConfig?.extra?.apiUrl
+const BASE_URL: string = configuredApiUrl ?? `http://${DEV_HOST}:3001/api`
 
 // Images in dev are served by Next.js on port 3000.
 // In production they'll come from Cloudinary or the Railway backend — no fix needed.

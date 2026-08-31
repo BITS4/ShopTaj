@@ -23,7 +23,9 @@ export default function CartDrawer() {
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <ShoppingBag className="h-5 w-5" /> {t.nav.cart} ({cart?.items.length ?? 0})
           </h2>
-          <Button variant="ghost" size="icon" onClick={closeCart}><X className="h-5 w-5" /></Button>
+          <Button variant="ghost" size="icon" onClick={closeCart}>
+            <X className="h-5 w-5" />
+          </Button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -40,7 +42,12 @@ export default function CartDrawer() {
               <div key={item.id} className="flex gap-3 p-3 border rounded-lg">
                 <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-muted">
                   {item.product.images[0] && (
-                    <Image src={item.product.images[0].url} alt={item.product.name} fill className="object-cover" />
+                    <Image
+                      src={item.product.images[0].url}
+                      alt={item.product.name}
+                      fill
+                      className="object-cover"
+                    />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -51,20 +58,38 @@ export default function CartDrawer() {
                     </p>
                   )}
                   <p className="text-sm font-semibold mt-1">
-                    {formatPrice(item.variant?.price ?? item.product.discountPrice ?? item.product.price)}
+                    {formatPrice(
+                      item.variant?.price ?? item.product.discountPrice ?? item.product.price,
+                    )}
                   </p>
                   <div className="flex items-center gap-2 mt-2">
-                    <Button variant="outline" size="icon" className="h-7 w-7"
-                      onClick={() => updateItem.mutate({ id: item.id, quantity: item.quantity - 1 })}>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() =>
+                        updateItem.mutate({ id: item.id, quantity: item.quantity - 1 })
+                      }
+                    >
                       <Minus className="h-3 w-3" />
                     </Button>
                     <span className="text-sm w-6 text-center">{item.quantity}</span>
-                    <Button variant="outline" size="icon" className="h-7 w-7"
-                      onClick={() => updateItem.mutate({ id: item.id, quantity: item.quantity + 1 })}>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() =>
+                        updateItem.mutate({ id: item.id, quantity: item.quantity + 1 })
+                      }
+                    >
                       <Plus className="h-3 w-3" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 ml-auto text-destructive"
-                      onClick={() => removeItem.mutate(item.id)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 ml-auto text-destructive"
+                      onClick={() => removeItem.mutate(item.id)}
+                    >
                       <X className="h-3 w-3" />
                     </Button>
                   </div>
@@ -84,7 +109,9 @@ export default function CartDrawer() {
               <Button className="w-full">{t.cart.checkout}</Button>
             </Link>
             <Link href="/cart" onClick={closeCart}>
-              <Button variant="outline" className="w-full">{t.cart.continue}</Button>
+              <Button variant="outline" className="w-full">
+                {t.cart.continue}
+              </Button>
             </Link>
           </div>
         )}

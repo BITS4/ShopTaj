@@ -22,12 +22,18 @@ export default function WishlistPage() {
 
   const { data: wishlist, isLoading } = useQuery<WishlistItem[]>({
     queryKey: ['wishlist'],
-    queryFn: async () => { const { data } = await api.get<WishlistItem[]>('/wishlist'); return data },
+    queryFn: async () => {
+      const { data } = await api.get<WishlistItem[]>('/wishlist')
+      return data
+    },
   })
 
   const remove = useMutation({
     mutationFn: (productId: string) => api.delete(`/wishlist/${productId}`),
-    onSuccess: () => { toast.success('Removed'); qc.invalidateQueries({ queryKey: ['wishlist'] }) },
+    onSuccess: () => {
+      toast.success('Removed')
+      qc.invalidateQueries({ queryKey: ['wishlist'] })
+    },
   })
 
   return (
@@ -37,13 +43,17 @@ export default function WishlistPage() {
       </h1>
       {isLoading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="aspect-[3/4] rounded-xl" />)}
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="aspect-[3/4] rounded-xl" />
+          ))}
         </div>
       ) : !wishlist?.length ? (
         <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
           <Heart className="h-20 w-20 mb-4" />
           <p className="text-lg">{t.wishlist.empty}</p>
-          <Link href="/products"><Button className="mt-4">{t.wishlist.discover}</Button></Link>
+          <Link href="/products">
+            <Button className="mt-4">{t.wishlist.discover}</Button>
+          </Link>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
@@ -51,7 +61,8 @@ export default function WishlistPage() {
             <div key={item.id} className="relative">
               <ProductCard product={item.product} />
               <Button
-                variant="destructive" size="icon"
+                variant="destructive"
+                size="icon"
                 className="absolute top-2 right-2 h-7 w-7 rounded-full"
                 onClick={() => remove.mutate(item.productId)}
               >

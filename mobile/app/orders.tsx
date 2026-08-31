@@ -1,4 +1,11 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native'
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+} from 'react-native'
 import { useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../store/auth.store'
@@ -9,13 +16,35 @@ import type { Order, PaginatedResponse } from '../types/api'
 const STEPS = ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED'] as const
 
 const STEP_LABELS: Record<string, Record<string, string>> = {
-  en: { PENDING: 'Placed', PROCESSING: 'Processing', SHIPPED: 'Shipped', DELIVERED: 'Delivered', CANCELLED: 'Cancelled' },
-  ru: { PENDING: 'Оформлен', PROCESSING: 'Обработка', SHIPPED: 'Отправлен', DELIVERED: 'Доставлен', CANCELLED: 'Отменён' },
-  tg: { PENDING: 'Қабул', PROCESSING: 'Коркард', SHIPPED: 'Фиристода', DELIVERED: 'Расид', CANCELLED: 'Бекор' },
+  en: {
+    PENDING: 'Placed',
+    PROCESSING: 'Processing',
+    SHIPPED: 'Shipped',
+    DELIVERED: 'Delivered',
+    CANCELLED: 'Cancelled',
+  },
+  ru: {
+    PENDING: 'Оформлен',
+    PROCESSING: 'Обработка',
+    SHIPPED: 'Отправлен',
+    DELIVERED: 'Доставлен',
+    CANCELLED: 'Отменён',
+  },
+  tg: {
+    PENDING: 'Қабул',
+    PROCESSING: 'Коркард',
+    SHIPPED: 'Фиристода',
+    DELIVERED: 'Расид',
+    CANCELLED: 'Бекор',
+  },
 }
 
 const TITLES: Record<string, string> = { en: 'My Orders', ru: 'Мои заказы', tg: 'Фармоишҳоям' }
-const EMPTY: Record<string, string> = { en: 'No orders yet', ru: 'Заказов пока нет', tg: 'Ҳоло фармоише нест' }
+const EMPTY: Record<string, string> = {
+  en: 'No orders yet',
+  ru: 'Заказов пока нет',
+  tg: 'Ҳоло фармоише нест',
+}
 
 function OrderTracker({ status }: { status: string }) {
   const { locale } = useLanguageStore()
@@ -24,7 +53,9 @@ function OrderTracker({ status }: { status: string }) {
   if (status === 'CANCELLED') {
     return (
       <View style={[tracker.row, { backgroundColor: '#fef2f2', borderRadius: 8, padding: 8 }]}>
-        <Text style={{ color: '#dc2626', fontWeight: '600', fontSize: 12 }}>✕ {labels.CANCELLED}</Text>
+        <Text style={{ color: '#dc2626', fontWeight: '600', fontSize: 12 }}>
+          ✕ {labels.CANCELLED}
+        </Text>
       </View>
     )
   }
@@ -41,10 +72,19 @@ function OrderTracker({ status }: { status: string }) {
             {i > 0 && (
               <View style={[tracker.line, done && i <= activeIndex ? tracker.lineActive : {}]} />
             )}
-            <View style={[tracker.dot, done ? tracker.dotDone : tracker.dotEmpty, active && tracker.dotActive]}>
+            <View
+              style={[
+                tracker.dot,
+                done ? tracker.dotDone : tracker.dotEmpty,
+                active && tracker.dotActive,
+              ]}
+            >
               {done && !active && <Text style={{ color: '#6366f1', fontSize: 8 }}>✓</Text>}
             </View>
-            <Text style={[tracker.label, done ? tracker.labelDone : tracker.labelEmpty]} numberOfLines={1}>
+            <Text
+              style={[tracker.label, done ? tracker.labelDone : tracker.labelEmpty]}
+              numberOfLines={1}
+            >
               {labels[step]}
             </Text>
           </View>
@@ -71,9 +111,17 @@ export default function OrdersScreen() {
   if (!user) {
     return (
       <View style={styles.center}>
-        <Text style={styles.emptyText}>{locale === 'ru' ? 'Войдите, чтобы видеть заказы' : locale === 'tg' ? 'Ворид шавед' : 'Sign in to see orders'}</Text>
+        <Text style={styles.emptyText}>
+          {locale === 'ru'
+            ? 'Войдите, чтобы видеть заказы'
+            : locale === 'tg'
+              ? 'Ворид шавед'
+              : 'Sign in to see orders'}
+        </Text>
         <TouchableOpacity style={styles.btn} onPress={() => router.push('/(auth)/login')}>
-          <Text style={styles.btnText}>{locale === 'ru' ? 'Войти' : locale === 'tg' ? 'Даромадан' : 'Sign In'}</Text>
+          <Text style={styles.btnText}>
+            {locale === 'ru' ? 'Войти' : locale === 'tg' ? 'Даромадан' : 'Sign In'}
+          </Text>
         </TouchableOpacity>
       </View>
     )
@@ -118,11 +166,32 @@ export default function OrdersScreen() {
 }
 
 const tracker = StyleSheet.create({
-  container: { flexDirection: 'row', alignItems: 'flex-start', marginVertical: 10, justifyContent: 'space-between' },
+  container: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginVertical: 10,
+    justifyContent: 'space-between',
+  },
   stepWrap: { flex: 1, alignItems: 'center', position: 'relative' },
-  line: { position: 'absolute', top: 8, left: '-50%', right: '50%', height: 2, backgroundColor: '#e5e7eb', zIndex: 0 },
+  line: {
+    position: 'absolute',
+    top: 8,
+    left: '-50%',
+    right: '50%',
+    height: 2,
+    backgroundColor: '#e5e7eb',
+    zIndex: 0,
+  },
   lineActive: { backgroundColor: '#6366f1' },
-  dot: { width: 18, height: 18, borderRadius: 9, borderWidth: 2, alignItems: 'center', justifyContent: 'center', zIndex: 1 },
+  dot: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
   dotEmpty: { borderColor: '#d1d5db', backgroundColor: '#f9fafb' },
   dotDone: { borderColor: '#6366f1', backgroundColor: '#eef2ff' },
   dotActive: { backgroundColor: '#6366f1', borderColor: '#6366f1' },
@@ -134,7 +203,15 @@ const tracker = StyleSheet.create({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  header: { flexDirection: 'row', alignItems: 'center', paddingTop: 56, paddingBottom: 16, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 56,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
   back: { marginRight: 12 },
   backText: { fontSize: 28, color: '#6366f1', lineHeight: 32 },
   title: { fontSize: 20, fontWeight: 'bold' },

@@ -1,13 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { IsString, IsOptional, IsEnum, IsNumber, IsPositive } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  DiscountType,
-  OrderStatus,
-  PaymentStatus,
-  Prisma,
-  SellerStatus,
-} from '@prisma/client';
+import { DiscountType, OrderStatus, PaymentStatus, Prisma, SellerStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from '../products/dto/create-product.dto';
 import { ProductsService } from '../products/products.service';
@@ -135,7 +129,15 @@ export class AdminService {
         skip,
         take: l,
         orderBy: { createdAt: 'desc' },
-        select: { id: true, email: true, fullName: true, role: true, isBanned: true, isEmailVerified: true, createdAt: true },
+        select: {
+          id: true,
+          email: true,
+          fullName: true,
+          role: true,
+          isBanned: true,
+          isEmailVerified: true,
+          createdAt: true,
+        },
       }),
       this.prisma.user.count({ where }),
     ]);
@@ -156,13 +158,25 @@ export class AdminService {
     });
   }
 
-  createProduct(dto: CreateProductDto) { return this.productsService.create(dto); }
-  updateProduct(id: string, dto: Partial<CreateProductDto>) { return this.productsService.update(id, dto); }
-  deleteProduct(id: string) { return this.productsService.delete(id); }
+  createProduct(dto: CreateProductDto) {
+    return this.productsService.create(dto);
+  }
+  updateProduct(id: string, dto: Partial<CreateProductDto>) {
+    return this.productsService.update(id, dto);
+  }
+  deleteProduct(id: string) {
+    return this.productsService.delete(id);
+  }
 
-  createCategory(dto: CreateCategoryDto) { return this.categoriesService.create(dto); }
-  updateCategory(id: string, dto: Partial<CreateCategoryDto>) { return this.categoriesService.update(id, dto); }
-  deleteCategory(id: string) { return this.categoriesService.delete(id); }
+  createCategory(dto: CreateCategoryDto) {
+    return this.categoriesService.create(dto);
+  }
+  updateCategory(id: string, dto: Partial<CreateCategoryDto>) {
+    return this.categoriesService.update(id, dto);
+  }
+  deleteCategory(id: string) {
+    return this.categoriesService.delete(id);
+  }
 
   async getCoupons() {
     return this.prisma.coupon.findMany({ orderBy: { createdAt: 'desc' } });

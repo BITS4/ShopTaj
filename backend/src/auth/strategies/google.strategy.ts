@@ -17,7 +17,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     super({
       clientID: config.get('GOOGLE_CLIENT_ID') || 'not-configured',
       clientSecret: config.get('GOOGLE_CLIENT_SECRET') || 'not-configured',
-      callbackURL: config.get('GOOGLE_CALLBACK_URL') || 'http://localhost:3001/api/auth/google/callback',
+      callbackURL:
+        config.get('GOOGLE_CALLBACK_URL') || 'http://localhost:3001/api/auth/google/callback',
       scope: ['email', 'profile'],
     });
   }
@@ -34,9 +35,10 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       return;
     }
 
-    const fullName = [profile.name?.givenName, profile.name?.familyName]
-      .filter((part): part is string => Boolean(part))
-      .join(' ') || profile.displayName;
+    const fullName =
+      [profile.name?.givenName, profile.name?.familyName]
+        .filter((part): part is string => Boolean(part))
+        .join(' ') || profile.displayName;
 
     const user: GoogleAuthUser = {
       googleId: profile.id,

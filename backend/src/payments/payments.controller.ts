@@ -4,7 +4,13 @@ import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
-import { PaymentsService, CreatePaymentIntentDto, ConfirmOrderDto, BankTransferOrderDto, BePaidCreateDto } from './payments.service';
+import {
+  PaymentsService,
+  CreatePaymentIntentDto,
+  ConfirmOrderDto,
+  BankTransferOrderDto,
+  BePaidCreateDto,
+} from './payments.service';
 
 @ApiTags('payments')
 @Controller('payments')
@@ -45,10 +51,7 @@ export class PaymentsController {
   }
 
   @Post('webhook')
-  webhook(
-    @Req() req: RawBodyRequest<Request>,
-    @Headers('stripe-signature') signature: string,
-  ) {
+  webhook(@Req() req: RawBodyRequest<Request>, @Headers('stripe-signature') signature: string) {
     return this.paymentsService.handleWebhook(req.rawBody, signature);
   }
 }

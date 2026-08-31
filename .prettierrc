@@ -1,0 +1,15 @@
+{
+  "semi": true,
+  "singleQuote": true,
+  "trailingComma": "all",
+  "printWidth": 100,
+  "endOfLine": "auto",
+  "overrides": [
+    {
+      "files": ["web/**/*.{js,jsx,ts,tsx}", "mobile/**/*.{js,jsx,ts,tsx}"],
+      "options": {
+        "semi": false
+      }
+    }
+  ]
+}

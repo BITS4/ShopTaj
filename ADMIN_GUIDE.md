@@ -16,13 +16,13 @@
 
 The admin panel has 5 sections:
 
-| Section | URL | Purpose |
-|---------|-----|---------|
-| Dashboard | /admin | Analytics & overview |
-| Products | /admin/products | Manage product catalog |
-| Orders | /admin/orders | View & update orders |
-| Users | /admin/users | Manage customers |
-| Coupons | /admin/coupons | Create & manage discount codes |
+| Section   | URL             | Purpose                        |
+| --------- | --------------- | ------------------------------ |
+| Dashboard | /admin          | Analytics & overview           |
+| Products  | /admin/products | Manage product catalog         |
+| Orders    | /admin/orders   | View & update orders           |
+| Users     | /admin/users    | Manage customers               |
+| Coupons   | /admin/coupons  | Create & manage discount codes |
 
 ---
 
@@ -33,16 +33,19 @@ The first page you see after entering the admin panel.
 ### What you see:
 
 **4 Stat Cards:**
+
 - **Total Revenue** — sum of all paid orders in dollars
 - **Total Orders** — number of all orders ever placed
 - **Total Users** — number of registered accounts
 - **Orders Today** — orders placed today
 
 **Top Selling Products:**
+
 - A ranked list of the 5 best-selling products
 - Shows product name, units sold, and price
 
 ### How to use:
+
 - This page is read-only, just for monitoring
 - Click any card in the navigation section below the stats to jump to that section
 
@@ -53,6 +56,7 @@ The first page you see after entering the admin panel.
 Full control over your product catalog.
 
 ### Viewing Products
+
 - All products are listed in a table
 - Columns: Name, Category, Price, Stock, Status (Active/Hidden)
 - You can see which products are active (visible to customers) or hidden
@@ -64,18 +68,18 @@ Full control over your product catalog.
 1. Click the **"Add Product"** button (top right)
 2. Fill in the form:
 
-| Field | Required | Notes |
-|-------|----------|-------|
-| Name | YES | Product title shown to customers |
-| Brand | no | e.g. Nike, Apple, Samsung |
-| Description | no | Full product description |
-| Price | YES | Regular price in USD (e.g. 49.99) |
-| Discount Price | no | Sale price — shown instead of regular price |
-| Stock | YES | Number of units available |
-| Category | YES | Must select from existing categories |
-| Tags | no | Comma separated: `shoes, sport, running` |
-| Featured | no | Check to show on homepage featured section |
-| Active | no | Uncheck to hide product from customers |
+| Field          | Required | Notes                                       |
+| -------------- | -------- | ------------------------------------------- |
+| Name           | YES      | Product title shown to customers            |
+| Brand          | no       | e.g. Nike, Apple, Samsung                   |
+| Description    | no       | Full product description                    |
+| Price          | YES      | Regular price in USD (e.g. 49.99)           |
+| Discount Price | no       | Sale price — shown instead of regular price |
+| Stock          | YES      | Number of units available                   |
+| Category       | YES      | Must select from existing categories        |
+| Tags           | no       | Comma separated: `shoes, sport, running`    |
+| Featured       | no       | Check to show on homepage featured section  |
+| Active         | no       | Uncheck to hide product from customers      |
 
 3. Click **"Create Product"**
 
@@ -107,6 +111,7 @@ Full control over your product catalog.
 View all customer orders and update their status.
 
 ### Viewing Orders
+
 - All orders listed in a table
 - Columns: Order ID, Customer name/email, Total, Date, Status
 - You can filter by status using the buttons at the top:
@@ -146,6 +151,7 @@ As admin, you can set any status at any time.
 View all registered customers and manage their access.
 
 ### Viewing Users
+
 - All users listed in a table
 - Columns: Name, Email, Join date, Role, Status (Active/Banned)
 
@@ -176,6 +182,7 @@ If a user is abusing the platform (fake orders, spam, fraud):
 Create and manage discount codes for promotions.
 
 ### Viewing Coupons
+
 - All coupons listed in a table
 - Columns: Code, Discount, Times Used, Expiry Date, Status
 
@@ -186,18 +193,19 @@ Create and manage discount codes for promotions.
 1. Click **"New Coupon"** (top right)
 2. Fill in the form:
 
-| Field | Required | Notes |
-|-------|----------|-------|
-| Code | YES | The code customers type at checkout, e.g. `SUMMER20` |
-| Discount Type | YES | **Percentage** (%) or **Fixed** ($) |
-| Discount Value | YES | e.g. `10` for 10% off, or `20` for $20 off |
-| Min Order Value | no | Minimum cart total required to use the coupon |
-| Max Uses | no | Leave empty for unlimited uses |
-| Expires At | no | Date/time when the coupon stops working |
+| Field           | Required | Notes                                                |
+| --------------- | -------- | ---------------------------------------------------- |
+| Code            | YES      | The code customers type at checkout, e.g. `SUMMER20` |
+| Discount Type   | YES      | **Percentage** (%) or **Fixed** ($)                  |
+| Discount Value  | YES      | e.g. `10` for 10% off, or `20` for $20 off           |
+| Min Order Value | no       | Minimum cart total required to use the coupon        |
+| Max Uses        | no       | Leave empty for unlimited uses                       |
+| Expires At      | no       | Date/time when the coupon stops working              |
 
 3. Click **"Create Coupon"**
 
 **Examples:**
+
 - `WELCOME10` — 10% off, no minimum → Discount Type: Percentage, Value: 10
 - `SAVE20` — $20 off orders over $100 → Discount Type: Fixed, Value: 20, Min Order: 100
 - `FLASH50` — 50% off, expires tonight → Discount Type: Percentage, Value: 50, Expires At: tonight's date
@@ -221,30 +229,33 @@ You don't need to delete coupons. You can toggle them on/off:
 After running the seed, these are already set up:
 
 ### Products (10 items across 4 categories)
-| Product | Category | Price |
-|---------|----------|-------|
-| Wireless Headphones Pro | Electronics | $149.99 → $119.99 |
-| Smart Watch Series X | Electronics | $299.99 → $249.99 |
-| Mechanical Keyboard | Electronics | $89.99 |
-| Classic White T-Shirt | Clothing | $29.99 |
-| Slim Fit Jeans | Clothing | $79.99 → $59.99 |
-| Running Sneakers | Clothing | $119.99 → $99.99 |
-| Coffee Maker Deluxe | Home & Garden | $69.99 |
-| Indoor Plant Kit | Home & Garden | $34.99 |
-| Clean Code (Book) | Books | $44.99 |
-| Design Patterns (Book) | Books | $54.99 |
+
+| Product                 | Category      | Price             |
+| ----------------------- | ------------- | ----------------- |
+| Wireless Headphones Pro | Electronics   | $149.99 → $119.99 |
+| Smart Watch Series X    | Electronics   | $299.99 → $249.99 |
+| Mechanical Keyboard     | Electronics   | $89.99            |
+| Classic White T-Shirt   | Clothing      | $29.99            |
+| Slim Fit Jeans          | Clothing      | $79.99 → $59.99   |
+| Running Sneakers        | Clothing      | $119.99 → $99.99  |
+| Coffee Maker Deluxe     | Home & Garden | $69.99            |
+| Indoor Plant Kit        | Home & Garden | $34.99            |
+| Clean Code (Book)       | Books         | $44.99            |
+| Design Patterns (Book)  | Books         | $54.99            |
 
 ### Coupons
-| Code | Type | Value | Minimum |
-|------|------|-------|---------|
-| WELCOME10 | Percentage | 10% off | $20 |
-| SAVE20 | Fixed | $20 off | $100 |
+
+| Code      | Type       | Value   | Minimum |
+| --------- | ---------- | ------- | ------- |
+| WELCOME10 | Percentage | 10% off | $20     |
+| SAVE20    | Fixed      | $20 off | $100    |
 
 ### Accounts
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | admin@shoptaj.com | Admin123! |
-| Customer | user@shoptaj.com | User1234! |
+
+| Role     | Email             | Password  |
+| -------- | ----------------- | --------- |
+| Admin    | admin@shoptaj.com | Admin123! |
+| Customer | user@shoptaj.com  | User1234! |
 
 ---
 
@@ -252,21 +263,21 @@ After running the seed, these are already set up:
 
 All admin API calls require the Authorization header with an admin JWT token.
 
-| Method | Endpoint | Action |
-|--------|----------|--------|
-| GET | /api/admin/analytics | Dashboard stats |
-| POST | /api/admin/products | Create product |
-| PATCH | /api/admin/products/:id | Update product |
-| DELETE | /api/admin/products/:id | Delete product |
-| POST | /api/admin/products/:id/images | Upload product images |
-| POST | /api/admin/categories | Create category |
-| GET | /api/admin/orders | List all orders |
-| PATCH | /api/admin/orders/:id/status | Update order status |
-| GET | /api/admin/users | List all users |
-| PATCH | /api/admin/users/:id/ban | Ban user |
-| PATCH | /api/admin/users/:id/unban | Unban user |
-| GET | /api/admin/coupons | List coupons |
-| POST | /api/admin/coupons | Create coupon |
-| PATCH | /api/admin/coupons/:id/toggle | Enable/disable coupon |
+| Method | Endpoint                       | Action                |
+| ------ | ------------------------------ | --------------------- |
+| GET    | /api/admin/analytics           | Dashboard stats       |
+| POST   | /api/admin/products            | Create product        |
+| PATCH  | /api/admin/products/:id        | Update product        |
+| DELETE | /api/admin/products/:id        | Delete product        |
+| POST   | /api/admin/products/:id/images | Upload product images |
+| POST   | /api/admin/categories          | Create category       |
+| GET    | /api/admin/orders              | List all orders       |
+| PATCH  | /api/admin/orders/:id/status   | Update order status   |
+| GET    | /api/admin/users               | List all users        |
+| PATCH  | /api/admin/users/:id/ban       | Ban user              |
+| PATCH  | /api/admin/users/:id/unban     | Unban user            |
+| GET    | /api/admin/coupons             | List coupons          |
+| POST   | /api/admin/coupons             | Create coupon         |
+| PATCH  | /api/admin/coupons/:id/toggle  | Enable/disable coupon |
 
 Full interactive API docs: **http://localhost:3001/api/docs**

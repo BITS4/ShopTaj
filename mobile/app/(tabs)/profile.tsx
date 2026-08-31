@@ -8,9 +8,45 @@ import api from '../../lib/api'
 import type { Order, PaginatedResponse } from '../../types/api'
 
 const LABELS = {
-  en: { signIn: 'Sign In to Continue', signInSub: 'Access your orders, wishlist, and more', signInBtn: 'Sign In', createBtn: 'Create Account', orders: 'My Orders', wishlist: 'Wishlist', addresses: 'Saved Addresses', editProfile: 'Edit Profile', recentOrders: 'Recent Orders', logout: 'Logout', language: 'Language' },
-  ru: { signIn: 'Войдите, чтобы продолжить', signInSub: 'Ваши заказы, избранное и многое другое', signInBtn: 'Войти', createBtn: 'Создать аккаунт', orders: 'Мои заказы', wishlist: 'Избранное', addresses: 'Адреса', editProfile: 'Редактировать профиль', recentOrders: 'Последние заказы', logout: 'Выйти', language: 'Язык' },
-  tg: { signIn: 'Ворид шавед', signInSub: 'Фармоишҳо ва дигарҳо', signInBtn: 'Даромадан', createBtn: 'Аккаунт созед', orders: 'Фармоишҳоям', wishlist: 'Дӯстдоштаҳо', addresses: 'Суроғаҳо', editProfile: 'Вироиш', recentOrders: 'Фармоишҳои охир', logout: 'Баромадан', language: 'Забон' },
+  en: {
+    signIn: 'Sign In to Continue',
+    signInSub: 'Access your orders, wishlist, and more',
+    signInBtn: 'Sign In',
+    createBtn: 'Create Account',
+    orders: 'My Orders',
+    wishlist: 'Wishlist',
+    addresses: 'Saved Addresses',
+    editProfile: 'Edit Profile',
+    recentOrders: 'Recent Orders',
+    logout: 'Logout',
+    language: 'Language',
+  },
+  ru: {
+    signIn: 'Войдите, чтобы продолжить',
+    signInSub: 'Ваши заказы, избранное и многое другое',
+    signInBtn: 'Войти',
+    createBtn: 'Создать аккаунт',
+    orders: 'Мои заказы',
+    wishlist: 'Избранное',
+    addresses: 'Адреса',
+    editProfile: 'Редактировать профиль',
+    recentOrders: 'Последние заказы',
+    logout: 'Выйти',
+    language: 'Язык',
+  },
+  tg: {
+    signIn: 'Ворид шавед',
+    signInSub: 'Фармоишҳо ва дигарҳо',
+    signInBtn: 'Даромадан',
+    createBtn: 'Аккаунт созед',
+    orders: 'Фармоишҳоям',
+    wishlist: 'Дӯстдоштаҳо',
+    addresses: 'Суроғаҳо',
+    editProfile: 'Вироиш',
+    recentOrders: 'Фармоишҳои охир',
+    logout: 'Баромадан',
+    language: 'Забон',
+  },
 }
 
 export default function ProfileTab() {
@@ -82,7 +118,9 @@ export default function ProfileTab() {
               onPress={() => setLocale(l.key)}
             >
               <Text style={styles.langFlag}>{l.flag}</Text>
-              <Text style={[styles.langText, locale === l.key && styles.langTextActive]}>{l.label}</Text>
+              <Text style={[styles.langText, locale === l.key && styles.langTextActive]}>
+                {l.label}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -92,15 +130,33 @@ export default function ProfileTab() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{L.recentOrders}</Text>
           {orders.data.slice(0, 3).map((order) => (
-            <TouchableOpacity key={order.id} style={styles.orderRow} onPress={() => router.push(`/order/${order.id}`)}>
+            <TouchableOpacity
+              key={order.id}
+              style={styles.orderRow}
+              onPress={() => router.push(`/order/${order.id}`)}
+            >
               <View>
                 <Text style={styles.orderId}>#{order.id.slice(0, 8).toUpperCase()}</Text>
-                <Text style={styles.orderDate}>{new Date(order.createdAt).toLocaleDateString()}</Text>
+                <Text style={styles.orderDate}>
+                  {new Date(order.createdAt).toLocaleDateString()}
+                </Text>
               </View>
               <View style={styles.orderRight}>
                 <Text style={styles.orderAmount}>${Number(order.totalAmount).toFixed(2)}</Text>
-                <View style={[styles.badge, { backgroundColor: order.status === 'DELIVERED' ? '#d1fae5' : '#e0e7ff' }]}>
-                  <Text style={{ fontSize: 11, color: order.status === 'DELIVERED' ? '#065f46' : '#4338ca' }}>{order.status}</Text>
+                <View
+                  style={[
+                    styles.badge,
+                    { backgroundColor: order.status === 'DELIVERED' ? '#d1fae5' : '#e0e7ff' },
+                  ]}
+                >
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      color: order.status === 'DELIVERED' ? '#065f46' : '#4338ca',
+                    }}
+                  >
+                    {order.status}
+                  </Text>
                 </View>
               </View>
             </TouchableOpacity>
@@ -108,7 +164,15 @@ export default function ProfileTab() {
         </View>
       )}
 
-      <TouchableOpacity style={styles.logoutBtn} onPress={() => Alert.alert(L.logout, 'Are you sure?', [{ text: 'Cancel' }, { text: L.logout, onPress: logout, style: 'destructive' }])}>
+      <TouchableOpacity
+        style={styles.logoutBtn}
+        onPress={() =>
+          Alert.alert(L.logout, 'Are you sure?', [
+            { text: 'Cancel' },
+            { text: L.logout, onPress: logout, style: 'destructive' },
+          ])
+        }
+      >
         <Text style={styles.logoutText}>{L.logout}</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -126,38 +190,123 @@ function MenuItem({ label, onPress }: { label: string; onPress: () => void }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  centerScroll: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12 },
+  centerScroll: {
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+    gap: 12,
+  },
   title: { fontSize: 22, fontWeight: 'bold', textAlign: 'center' },
   sub: { color: '#6b7280', textAlign: 'center', marginBottom: 8 },
-  btn: { backgroundColor: '#6366f1', paddingHorizontal: 32, paddingVertical: 14, borderRadius: 10, width: '100%', alignItems: 'center' },
+  btn: {
+    backgroundColor: '#6366f1',
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 10,
+    width: '100%',
+    alignItems: 'center',
+  },
   btnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  btnOutline: { borderWidth: 1.5, borderColor: '#6366f1', paddingHorizontal: 32, paddingVertical: 14, borderRadius: 10, width: '100%', alignItems: 'center' },
+  btnOutline: {
+    borderWidth: 1.5,
+    borderColor: '#6366f1',
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 10,
+    width: '100%',
+    alignItems: 'center',
+  },
   btnOutlineText: { color: '#6366f1', fontWeight: 'bold', fontSize: 16 },
-  header: { paddingTop: 60, paddingBottom: 24, alignItems: 'center', backgroundColor: '#f5f3ff', gap: 4 },
-  avatar: { width: 72, height: 72, borderRadius: 36, backgroundColor: '#6366f1', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  header: {
+    paddingTop: 60,
+    paddingBottom: 24,
+    alignItems: 'center',
+    backgroundColor: '#f5f3ff',
+    gap: 4,
+  },
+  avatar: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#6366f1',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
   avatarText: { color: '#fff', fontSize: 28, fontWeight: 'bold' },
   name: { fontSize: 20, fontWeight: 'bold' },
   email: { color: '#6b7280', fontSize: 14 },
-  menu: { marginTop: 16, marginHorizontal: 16, borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: '#e5e7eb' },
-  menuItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
+  menu: {
+    marginTop: 16,
+    marginHorizontal: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  menuItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
   menuLabel: { fontSize: 15, color: '#111827' },
   menuArrow: { fontSize: 20, color: '#9ca3af' },
   langSection: { marginHorizontal: 16, marginTop: 20, marginBottom: 4 },
-  langLabel: { fontSize: 13, fontWeight: '600', color: '#6b7280', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
+  langLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6b7280',
+    marginBottom: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   langRow: { flexDirection: 'row', gap: 8 },
-  langBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 10, borderWidth: 1.5, borderColor: '#e5e7eb', backgroundColor: '#f9fafb' },
+  langBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#e5e7eb',
+    backgroundColor: '#f9fafb',
+  },
   langBtnActive: { borderColor: '#6366f1', backgroundColor: '#eef2ff' },
   langFlag: { fontSize: 18 },
   langText: { fontSize: 13, color: '#374151', fontWeight: '500' },
   langTextActive: { color: '#6366f1', fontWeight: '700' },
   section: { margin: 16 },
   sectionTitle: { fontSize: 17, fontWeight: 'bold', marginBottom: 12 },
-  orderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#e5e7eb', marginBottom: 8 },
+  orderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    marginBottom: 8,
+  },
   orderId: { fontWeight: '600', fontSize: 14 },
   orderDate: { color: '#6b7280', fontSize: 12, marginTop: 2 },
   orderRight: { alignItems: 'flex-end', gap: 4 },
   orderAmount: { fontWeight: 'bold', color: '#6366f1' },
   badge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
-  logoutBtn: { margin: 16, padding: 16, borderRadius: 10, borderWidth: 1.5, borderColor: '#ef4444', alignItems: 'center', marginBottom: 40 },
+  logoutBtn: {
+    margin: 16,
+    padding: 16,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#ef4444',
+    alignItems: 'center',
+    marginBottom: 40,
+  },
   logoutText: { color: '#ef4444', fontWeight: '600' },
 })

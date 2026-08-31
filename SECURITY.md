@@ -6,9 +6,9 @@ Security fixes are applied to the current `1.x` line. Earlier development
 snapshots are not supported.
 
 | Version | Supported |
-| --- | --- |
-| 1.x | Yes |
-| < 1.0 | No |
+| ------- | --------- |
+| 1.x     | Yes       |
+| < 1.0   | No        |
 
 ## Report a vulnerability privately
 

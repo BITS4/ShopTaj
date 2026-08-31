@@ -23,7 +23,11 @@ function LoginPage() {
   const t = useT()
   const searchParams = useSearchParams()
   const next = searchParams.get('next') || '/'
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) })
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormData>({ resolver: zodResolver(schema) })
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-muted/30">
@@ -43,7 +47,9 @@ function LoginPage() {
             <div className="space-y-1">
               <div className="flex justify-between">
                 <label className="text-sm font-medium">{t.auth.password}</label>
-                <Link href="/forgot-password" className="text-xs text-primary hover:underline">{t.auth.forgot}</Link>
+                <Link href="/forgot-password" className="text-xs text-primary hover:underline">
+                  {t.auth.forgot}
+                </Link>
               </div>
               <Input type="password" placeholder="••••••••" {...register('password')} />
             </div>
@@ -52,7 +58,9 @@ function LoginPage() {
             </Button>
             <p className="text-center text-sm text-muted-foreground">
               {t.auth.no_account}{' '}
-              <Link href="/register" className="text-primary hover:underline font-medium">{t.auth.sign_up_link}</Link>
+              <Link href="/register" className="text-primary hover:underline font-medium">
+                {t.auth.sign_up_link}
+              </Link>
             </p>
           </form>
         </CardContent>
@@ -62,5 +70,9 @@ function LoginPage() {
 }
 
 export default function LoginPageWithSuspense() {
-  return <Suspense fallback={null}><LoginPage /></Suspense>
+  return (
+    <Suspense fallback={null}>
+      <LoginPage />
+    </Suspense>
+  )
 }

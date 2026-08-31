@@ -12,7 +12,6 @@ export default function Footer() {
       {/* Main footer */}
       <div className="container mx-auto px-4 py-14">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
-
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
@@ -40,7 +39,9 @@ export default function Footer() {
 
           {/* Shop */}
           <div>
-            <h4 className="font-bold text-white mb-4 text-sm uppercase tracking-wide">{t.footer.shop}</h4>
+            <h4 className="font-bold text-white mb-4 text-sm uppercase tracking-wide">
+              {t.footer.shop}
+            </h4>
             <ul className="space-y-2.5 text-sm">
               {[
                 { href: '/products', label: t.footer.all_products },
@@ -48,7 +49,10 @@ export default function Footer() {
                 { href: '/products', label: t.footer.featured },
               ].map(({ href, label }) => (
                 <li key={label}>
-                  <Link href={href} className="text-gray-400 hover:text-primary transition-colors duration-200">
+                  <Link
+                    href={href}
+                    className="text-gray-400 hover:text-primary transition-colors duration-200"
+                  >
                     {label}
                   </Link>
                 </li>
@@ -58,19 +62,26 @@ export default function Footer() {
 
           {/* Account */}
           <div>
-            <h4 className="font-bold text-white mb-4 text-sm uppercase tracking-wide">{t.footer.account}</h4>
+            <h4 className="font-bold text-white mb-4 text-sm uppercase tracking-wide">
+              {t.footer.account}
+            </h4>
             <ul className="space-y-2.5 text-sm">
               {[
                 { href: '/profile', label: t.footer.my_profile },
                 { href: '/profile/orders', label: t.footer.my_orders },
                 { href: '/profile/wishlist', label: t.footer.wishlist },
-                ...(!user ? [
-                  { href: '/login', label: t.nav.login },
-                  { href: '/register', label: t.nav.signup },
-                ] : []),
+                ...(!user
+                  ? [
+                      { href: '/login', label: t.nav.login },
+                      { href: '/register', label: t.nav.signup },
+                    ]
+                  : []),
               ].map(({ href, label }) => (
                 <li key={label}>
-                  <Link href={href} className="text-gray-400 hover:text-primary transition-colors duration-200">
+                  <Link
+                    href={href}
+                    className="text-gray-400 hover:text-primary transition-colors duration-200"
+                  >
                     {label}
                   </Link>
                 </li>
@@ -83,7 +94,11 @@ export default function Footer() {
             <h4 className="font-bold text-white mb-4 text-sm uppercase tracking-wide">Follow Us</h4>
             <div className="flex gap-3 mb-8">
               {[
-                { icon: Camera, href: 'https://www.instagram.com/asilabeauty.tj?igsh=MWZsZjJ1N2JnYjBicQ==', label: 'Instagram' },
+                {
+                  icon: Camera,
+                  href: 'https://www.instagram.com/asilabeauty.tj?igsh=MWZsZjJ1N2JnYjBicQ==',
+                  label: 'Instagram',
+                },
                 { icon: Send, href: 'https://t.me/vip_2601', label: 'Telegram' },
               ].map(({ icon: Icon, href, label }) => (
                 <a
@@ -115,10 +130,16 @@ export default function Footer() {
       {/* Bottom bar */}
       <div className="border-t border-white/10">
         <div className="container mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-500">
-          <span>© {new Date().getFullYear()} ShopTaj. {t.footer.rights}</span>
+          <span>
+            © {new Date().getFullYear()} ShopTaj. {t.footer.rights}
+          </span>
           <div className="flex gap-4">
-            <Link href="#" className="hover:text-gray-300 transition-colors">Privacy Policy</Link>
-            <Link href="#" className="hover:text-gray-300 transition-colors">Terms of Service</Link>
+            <Link href="#" className="hover:text-gray-300 transition-colors">
+              Privacy Policy
+            </Link>
+            <Link href="#" className="hover:text-gray-300 transition-colors">
+              Terms of Service
+            </Link>
           </div>
         </div>
       </div>

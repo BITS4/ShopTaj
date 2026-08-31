@@ -1,8 +1,4 @@
-import {
-  ConflictException,
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { validate } from 'class-validator';
 import { CloudinaryService } from '../common/cloudinary/cloudinary.service';
@@ -80,9 +76,9 @@ describe('SellerService', () => {
         status: 'PENDING',
       });
 
-      await expect(
-        service.apply('user-1', { shopName: 'Second Shop' }),
-      ).rejects.toBeInstanceOf(ConflictException);
+      await expect(service.apply('user-1', { shopName: 'Second Shop' })).rejects.toBeInstanceOf(
+        ConflictException,
+      );
       expect(prisma.sellerProfile.create).not.toHaveBeenCalled();
     });
 
@@ -126,9 +122,9 @@ describe('SellerService', () => {
     it('requires an existing seller profile', async () => {
       prisma.sellerProfile.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.uploadDocuments('user-1', files),
-      ).rejects.toThrow('Seller profile not found');
+      await expect(service.uploadDocuments('user-1', files)).rejects.toThrow(
+        'Seller profile not found',
+      );
       expect(cloudinary.uploadDocument).not.toHaveBeenCalled();
       expect(prisma.sellerProfile.update).not.toHaveBeenCalled();
     });
@@ -148,24 +144,13 @@ describe('SellerService', () => {
 
       await service.uploadDocuments('user-1', files);
 
-      expect(cloudinary.uploadDocument).toHaveBeenNthCalledWith(
-        1,
-        files[0],
-        'seller-docs',
-      );
-      expect(cloudinary.uploadDocument).toHaveBeenNthCalledWith(
-        2,
-        files[1],
-        'seller-docs',
-      );
+      expect(cloudinary.uploadDocument).toHaveBeenNthCalledWith(1, files[0], 'seller-docs');
+      expect(cloudinary.uploadDocument).toHaveBeenNthCalledWith(2, files[1], 'seller-docs');
       expect(prisma.sellerProfile.update).toHaveBeenCalledWith({
         where: { userId: 'user-1' },
         data: {
           documents: {
-            push: [
-              'https://cdn.test/passport.pdf',
-              'https://cdn.test/license.png',
-            ],
+            push: ['https://cdn.test/passport.pdf', 'https://cdn.test/license.png'],
           },
         },
       });
@@ -176,9 +161,7 @@ describe('SellerService', () => {
     it('rejects users who have not completed seller onboarding', async () => {
       prisma.sellerProfile.findUnique.mockResolvedValue(null);
 
-      await expect(service.getProducts('user-1')).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      await expect(service.getProducts('user-1')).rejects.toBeInstanceOf(NotFoundException);
       expect(prisma.product.findMany).not.toHaveBeenCalled();
     });
 
@@ -284,7 +267,7 @@ describe('SellerService', () => {
       });
     });
 
-    it('rejects mutation of another seller\'s product before uploading', async () => {
+    it("rejects mutation of another seller's product before uploading", async () => {
       prisma.sellerProfile.findUnique.mockResolvedValue(approvedProfile);
       prisma.product.findUnique.mockResolvedValue({
         id: 'product-2',
@@ -304,9 +287,9 @@ describe('SellerService', () => {
       prisma.sellerProfile.findUnique.mockResolvedValue(approvedProfile);
       prisma.product.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.deleteProduct('user-1', 'missing-product'),
-      ).rejects.toThrow('Product not found');
+      await expect(service.deleteProduct('user-1', 'missing-product')).rejects.toThrow(
+        'Product not found',
+      );
       expect(prisma.product.delete).not.toHaveBeenCalled();
     });
 

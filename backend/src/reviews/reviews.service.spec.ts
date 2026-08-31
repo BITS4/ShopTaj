@@ -1,7 +1,4 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../prisma/prisma.service';
 import { ReviewsService } from './reviews.service';
@@ -23,10 +20,7 @@ describe('ReviewsService', () => {
     jest.resetAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ReviewsService,
-        { provide: PrismaService, useValue: prisma },
-      ],
+      providers: [ReviewsService, { provide: PrismaService, useValue: prisma }],
     }).compile();
 
     service = module.get(ReviewsService);
@@ -71,9 +65,9 @@ describe('ReviewsService', () => {
   it('forbids reviews from users without a paid order', async () => {
     prisma.orderItem.findFirst.mockResolvedValue(null);
 
-    await expect(
-      service.create('user-1', 'product-1', { rating: 5 }),
-    ).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(service.create('user-1', 'product-1', { rating: 5 })).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
 
     expect(prisma.orderItem.findFirst).toHaveBeenCalledWith({
       where: {
@@ -89,9 +83,9 @@ describe('ReviewsService', () => {
     prisma.orderItem.findFirst.mockResolvedValue({ id: 'order-item-1' });
     prisma.review.findUnique.mockResolvedValue({ id: 'review-1' });
 
-    await expect(
-      service.create('user-1', 'product-1', { rating: 4 }),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.create('user-1', 'product-1', { rating: 4 })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
 
     expect(prisma.review.findUnique).toHaveBeenCalledWith({
       where: {

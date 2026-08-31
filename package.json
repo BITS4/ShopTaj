@@ -1,6 +1,6 @@
 {
   "name": "shoptaj",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "workspaces": [
     "backend",
@@ -14,6 +14,8 @@
     "build": "npm run build:backend && npm run build:web",
     "build:backend": "npm run build --workspace=backend",
     "build:web": "npm run build --workspace=web",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "lint": "npm run lint:backend && npm run lint:web && npm run lint:mobile",
     "lint:backend": "npm run lint --workspace=backend",
     "lint:web": "npm run lint --workspace=web",
@@ -31,7 +33,7 @@
     "audit:backend": "npm audit --prefix backend --omit=dev --audit-level=high",
     "audit:web": "npm audit --prefix web --omit=dev --audit-level=high",
     "audit:mobile": "npm audit --prefix mobile --omit=dev --audit-level=high",
-    "verify": "npm run lint && npm run typecheck && npm test && npm run build",
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build",
     "prisma:generate": "npm run prisma:generate --workspace=backend",
     "prisma:migrate": "npm run prisma:migrate --workspace=backend",
     "prisma:seed": "npm run prisma:seed --workspace=backend",
@@ -43,6 +45,7 @@
   "devDependencies": {
     "@types/react": "~19.1.0",
     "@types/react-dom": "~19.1.0",
+    "prettier": "3.9.6",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   }

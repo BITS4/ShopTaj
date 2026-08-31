@@ -44,32 +44,53 @@ export default function ProfilePage() {
 
   const { data: profile } = useQuery<ProfileResponse>({
     queryKey: ['profile'],
-    queryFn: async () => { const { data } = await api.get<ProfileResponse>('/users/me'); return data },
+    queryFn: async () => {
+      const { data } = await api.get<ProfileResponse>('/users/me')
+      return data
+    },
   })
 
   const { data: addresses } = useQuery<ProfileAddress[]>({
     queryKey: ['addresses'],
-    queryFn: async () => { const { data } = await api.get<ProfileAddress[]>('/users/me/addresses'); return data },
+    queryFn: async () => {
+      const { data } = await api.get<ProfileAddress[]>('/users/me/addresses')
+      return data
+    },
   })
 
   const { register: regProfile, handleSubmit: handleProfile } = useForm<ProfileFormValues>({
     values: profile ? { fullName: profile.fullName, phone: profile.phone ?? '' } : undefined,
   })
-  const { register: regAddr, handleSubmit: handleAddr, reset: resetAddr } = useForm<AddressFormValues>()
+  const {
+    register: regAddr,
+    handleSubmit: handleAddr,
+    reset: resetAddr,
+  } = useForm<AddressFormValues>()
 
   const updateProfile = useMutation({
     mutationFn: (data: ProfileFormValues) => api.patch('/users/me', data),
-    onSuccess: () => { toast.success(t.profile.save); qc.invalidateQueries({ queryKey: ['profile'] }) },
+    onSuccess: () => {
+      toast.success(t.profile.save)
+      qc.invalidateQueries({ queryKey: ['profile'] })
+    },
   })
 
   const createAddress = useMutation({
     mutationFn: (data: AddressFormValues) => api.post('/users/me/addresses', data),
-    onSuccess: () => { toast.success('Address added'); qc.invalidateQueries({ queryKey: ['addresses'] }); setAddingAddress(false); resetAddr() },
+    onSuccess: () => {
+      toast.success('Address added')
+      qc.invalidateQueries({ queryKey: ['addresses'] })
+      setAddingAddress(false)
+      resetAddr()
+    },
   })
 
   const deleteAddress = useMutation({
     mutationFn: (id: string) => api.delete(`/users/me/addresses/${id}`),
-    onSuccess: () => { toast.success('Address removed'); qc.invalidateQueries({ queryKey: ['addresses'] }) },
+    onSuccess: () => {
+      toast.success('Address removed')
+      qc.invalidateQueries({ queryKey: ['addresses'] })
+    },
   })
 
   return (
@@ -77,7 +98,9 @@ export default function ProfilePage() {
       <h1 className="text-3xl font-bold">{t.profile.title}</h1>
 
       <Card>
-        <CardHeader><CardTitle>{t.profile.personal_info}</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>{t.profile.personal_info}</CardTitle>
+        </CardHeader>
         <CardContent>
           <form onSubmit={handleProfile((d) => updateProfile.mutate(d))} className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-4">
@@ -113,30 +136,76 @@ export default function ProfilePage() {
         </CardHeader>
         <CardContent className="space-y-3">
           {addingAddress && (
-            <form onSubmit={handleAddr((d) => createAddress.mutate(d))} className="border rounded-lg p-4 space-y-3">
+            <form
+              onSubmit={handleAddr((d) => createAddress.mutate(d))}
+              className="border rounded-lg p-4 space-y-3"
+            >
               <div className="grid sm:grid-cols-2 gap-3">
-                <div><label className="text-xs font-medium">{t.profile.label}</label><Input {...regAddr('label', { required: true })} placeholder="Home / Work / Office" /></div>
-                <div><label className="text-xs font-medium">{t.profile.street} *</label><Input {...regAddr('street', { required: true })} placeholder="Street name" /></div>
-                <div><label className="text-xs font-medium">House / Building No.</label><Input {...regAddr('houseNumber')} placeholder="e.g. 25, 12A" /></div>
-                <div><label className="text-xs font-medium">Apartment / Floor</label><Input {...regAddr('apartment')} placeholder="e.g. Apt 3, Floor 2" /></div>
-                <div><label className="text-xs font-medium">{t.profile.city} *</label><Input {...regAddr('city', { required: true })} /></div>
-                <div><label className="text-xs font-medium">{t.profile.state}</label><Input {...regAddr('state')} placeholder="District / Region" /></div>
-                <div><label className="text-xs font-medium">{t.profile.country} *</label><Input {...regAddr('country', { required: true })} defaultValue="Tajikistan" /></div>
-                <div><label className="text-xs font-medium">{t.profile.zip}</label><Input {...regAddr('zip')} placeholder="e.g. 734000" /></div>
+                <div>
+                  <label className="text-xs font-medium">{t.profile.label}</label>
+                  <Input
+                    {...regAddr('label', { required: true })}
+                    placeholder="Home / Work / Office"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium">{t.profile.street} *</label>
+                  <Input {...regAddr('street', { required: true })} placeholder="Street name" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium">House / Building No.</label>
+                  <Input {...regAddr('houseNumber')} placeholder="e.g. 25, 12A" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium">Apartment / Floor</label>
+                  <Input {...regAddr('apartment')} placeholder="e.g. Apt 3, Floor 2" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium">{t.profile.city} *</label>
+                  <Input {...regAddr('city', { required: true })} />
+                </div>
+                <div>
+                  <label className="text-xs font-medium">{t.profile.state}</label>
+                  <Input {...regAddr('state')} placeholder="District / Region" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium">{t.profile.country} *</label>
+                  <Input {...regAddr('country', { required: true })} defaultValue="Tajikistan" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium">{t.profile.zip}</label>
+                  <Input {...regAddr('zip')} placeholder="e.g. 734000" />
+                </div>
               </div>
-              <Button type="submit" size="sm" disabled={createAddress.isPending}>{t.profile.add_btn}</Button>
+              <Button type="submit" size="sm" disabled={createAddress.isPending}>
+                {t.profile.add_btn}
+              </Button>
             </form>
           )}
           {addresses?.map((addr) => (
             <div key={addr.id} className="flex items-center justify-between border rounded-lg p-3">
               <div className="text-sm">
-                <p className="font-semibold">{addr.label} {addr.isDefault && <span className="text-xs text-primary">({t.profile.default})</span>}</p>
+                <p className="font-semibold">
+                  {addr.label}{' '}
+                  {addr.isDefault && (
+                    <span className="text-xs text-primary">({t.profile.default})</span>
+                  )}
+                </p>
                 <p className="text-muted-foreground text-xs">
                   {[addr.street, addr.houseNumber, addr.apartment].filter(Boolean).join(', ')}
-                  {addr.houseNumber || addr.street ? ' — ' : ''}{addr.city}{addr.state ? `, ${addr.state}` : ''}, {addr.country} {addr.zip}
+                  {addr.houseNumber || addr.street ? ' — ' : ''}
+                  {addr.city}
+                  {addr.state ? `, ${addr.state}` : ''}, {addr.country} {addr.zip}
                 </p>
               </div>
-              <Button variant="ghost" size="sm" className="text-destructive" onClick={() => deleteAddress.mutate(addr.id)}>{t.profile.remove}</Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive"
+                onClick={() => deleteAddress.mutate(addr.id)}
+              >
+                {t.profile.remove}
+              </Button>
             </div>
           ))}
           {!addresses?.length && !addingAddress && (

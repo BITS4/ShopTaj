@@ -1,7 +1,15 @@
 import {
-  Controller, Get, Post, Patch, Delete,
-  Body, Param, Query, UseGuards,
-  UploadedFiles, UseInterceptors,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -50,8 +58,13 @@ export class AdminController {
     @Param('id') id: string,
     @UploadedFiles() files: Express.Multer.File[],
   ) {
-    const uploaded = await Promise.all(files.map((f) => this.cloudinary.uploadImage(f, 'products')));
-    return this.productsService.addImages(id, uploaded.map((u) => ({ url: u.secure_url, publicId: u.public_id })));
+    const uploaded = await Promise.all(
+      files.map((f) => this.cloudinary.uploadImage(f, 'products')),
+    );
+    return this.productsService.addImages(
+      id,
+      uploaded.map((u) => ({ url: u.secure_url, publicId: u.public_id })),
+    );
   }
 
   @Patch('products/:id')

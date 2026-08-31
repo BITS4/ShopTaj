@@ -54,13 +54,15 @@ export class CloudinaryService {
     if (this.isConfigured) {
       // ── Upload to Cloudinary ─────────────────────────────────────────────
       return new Promise((resolve, reject) => {
-        cloudinary.uploader.upload_stream(
-          { folder: `shoptaj/${folder}`, resource_type: 'image' },
-          (error, result) => {
-            if (error) return reject(error);
-            resolve({ secure_url: result.secure_url, public_id: result.public_id });
-          },
-        ).end(file.buffer);
+        cloudinary.uploader
+          .upload_stream(
+            { folder: `shoptaj/${folder}`, resource_type: 'image' },
+            (error, result) => {
+              if (error) return reject(error);
+              resolve({ secure_url: result.secure_url, public_id: result.public_id });
+            },
+          )
+          .end(file.buffer);
       });
     } else {
       // ── Save locally as fallback ─────────────────────────────────────────
@@ -88,10 +90,7 @@ export class CloudinaryService {
   ): Promise<{ secure_url: string; public_id: string }> {
     if (!file) throw new BadRequestException('No file provided');
 
-    const allowedMimes = [
-      'image/jpeg', 'image/png', 'image/webp',
-      'application/pdf',
-    ];
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
     if (!allowedMimes.includes(file.mimetype)) {
       throw new BadRequestException('Invalid file type. Only JPEG, PNG, PDF allowed');
     }
@@ -101,13 +100,15 @@ export class CloudinaryService {
 
     if (this.isConfigured) {
       return new Promise((resolve, reject) => {
-        cloudinary.uploader.upload_stream(
-          { folder: `shoptaj/${folder}`, resource_type: 'auto' },
-          (error, result) => {
-            if (error) return reject(error);
-            resolve({ secure_url: result.secure_url, public_id: result.public_id });
-          },
-        ).end(file.buffer);
+        cloudinary.uploader
+          .upload_stream(
+            { folder: `shoptaj/${folder}`, resource_type: 'auto' },
+            (error, result) => {
+              if (error) return reject(error);
+              resolve({ secure_url: result.secure_url, public_id: result.public_id });
+            },
+          )
+          .end(file.buffer);
       });
     } else {
       const ext = file.originalname.split('.').pop() || 'pdf';

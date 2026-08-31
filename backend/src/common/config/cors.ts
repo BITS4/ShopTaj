@@ -7,9 +7,7 @@ function normalizeOrigin(origin: string): string {
   return origin.trim().replace(/\/+$/, '');
 }
 
-export function resolveCorsOrigins(
-  environment: CorsEnvironment = process.env,
-): string[] {
+export function resolveCorsOrigins(environment: CorsEnvironment = process.env): string[] {
   const configured = (environment.CORS_ORIGINS ?? '')
     .split(',')
     .map(normalizeOrigin)

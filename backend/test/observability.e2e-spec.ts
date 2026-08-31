@@ -12,10 +12,7 @@ describe('Observability endpoints (e2e)', () => {
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [ObservabilityController],
-      providers: [
-        MetricsService,
-        { provide: PrismaService, useValue: prisma },
-      ],
+      providers: [MetricsService, { provide: PrismaService, useValue: prisma }],
     }).compile();
 
     app = moduleFixture.createNestApplication();

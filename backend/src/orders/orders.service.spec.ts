@@ -19,10 +19,7 @@ describe('OrdersService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        OrdersService,
-        { provide: PrismaService, useValue: prisma },
-      ],
+      providers: [OrdersService, { provide: PrismaService, useValue: prisma }],
     }).compile();
 
     service = module.get(OrdersService);
@@ -120,9 +117,9 @@ describe('OrdersService', () => {
     it('does not reveal an order that is missing or owned by someone else', async () => {
       prisma.order.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.findOne('user-1', 'foreign-order'),
-      ).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.findOne('user-1', 'foreign-order')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
   });
 
@@ -130,9 +127,9 @@ describe('OrdersService', () => {
     it('rejects a missing or foreign order without attempting an update', async () => {
       prisma.order.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.cancel('user-1', 'foreign-order'),
-      ).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.cancel('user-1', 'foreign-order')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
       expect(prisma.order.findFirst).toHaveBeenCalledWith({
         where: { id: 'foreign-order', userId: 'user-1' },
       });
@@ -146,9 +143,7 @@ describe('OrdersService', () => {
         status: 'CANCELLED',
       });
 
-      await expect(service.cancel('user-1', 'order-1')).rejects.toBeInstanceOf(
-        ForbiddenException,
-      );
+      await expect(service.cancel('user-1', 'order-1')).rejects.toBeInstanceOf(ForbiddenException);
       expect(prisma.order.update).not.toHaveBeenCalled();
     });
 

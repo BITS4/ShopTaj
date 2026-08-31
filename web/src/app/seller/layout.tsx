@@ -7,8 +7,8 @@ import { LayoutDashboard, Package, Plus, LogOut, Loader2, Store } from 'lucide-r
 import { useAuth } from '@/hooks/useAuth'
 
 const NAV = [
-  { href: '/seller/dashboard', label: 'Dashboard',    icon: LayoutDashboard },
-  { href: '/seller/products',  label: 'My Products',  icon: Package },
+  { href: '/seller/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/seller/products', label: 'My Products', icon: Package },
   { href: '/seller/products/new', label: 'Add Product', icon: Plus },
 ]
 
@@ -18,7 +18,9 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
   const router = useRouter()
   const pathname = usePathname()
   const [hydrated, setHydrated] = useState(false)
-  useEffect(() => { setHydrated(true) }, [])
+  useEffect(() => {
+    setHydrated(true)
+  }, [])
 
   useEffect(() => {
     if (!hydrated) return
@@ -49,7 +51,9 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
     <div className="flex min-h-screen bg-muted/30">
       <aside className="w-56 shrink-0 bg-background border-r flex flex-col">
         <div className="px-5 py-5 border-b">
-          <Link href="/" className="font-bold text-primary text-lg hover:opacity-80">ShopTaj</Link>
+          <Link href="/" className="font-bold text-primary text-lg hover:opacity-80">
+            ShopTaj
+          </Link>
           <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
             <Store className="h-3 w-3" /> Seller Panel
           </p>

@@ -20,10 +20,7 @@ describe('CategoriesService', () => {
     jest.resetAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        CategoriesService,
-        { provide: PrismaService, useValue: prisma },
-      ],
+      providers: [CategoriesService, { provide: PrismaService, useValue: prisma }],
     }).compile();
 
     service = module.get(CategoriesService);
@@ -65,9 +62,7 @@ describe('CategoriesService', () => {
   it('rejects an unknown category slug', async () => {
     prisma.category.findUnique.mockResolvedValue(null);
 
-    await expect(service.findBySlug('missing')).rejects.toBeInstanceOf(
-      NotFoundException,
-    );
+    await expect(service.findBySlug('missing')).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it('creates a strict lowercase slug while preserving translated fields', async () => {
@@ -90,9 +85,7 @@ describe('CategoriesService', () => {
     const updated = { id: 'category-1', nameTg: 'Чой' };
     prisma.category.update.mockResolvedValue(updated);
 
-    await expect(
-      service.update('category-1', { nameTg: 'Чой' }),
-    ).resolves.toBe(updated);
+    await expect(service.update('category-1', { nameTg: 'Чой' })).resolves.toBe(updated);
     expect(prisma.category.update).toHaveBeenCalledWith({
       where: { id: 'category-1' },
       data: { nameTg: 'Чой' },

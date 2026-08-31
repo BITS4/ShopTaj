@@ -66,7 +66,12 @@ export class CartService {
     }
 
     return this.prisma.cartItem.create({
-      data: { cartId: cart.id, productId: dto.productId, variantId: dto.variantId, quantity: dto.quantity },
+      data: {
+        cartId: cart.id,
+        productId: dto.productId,
+        variantId: dto.variantId,
+        quantity: dto.quantity,
+      },
     });
   }
 
@@ -105,8 +110,10 @@ export class CartService {
   async applyCoupon(userId: string, code: string) {
     const coupon = await this.prisma.coupon.findUnique({ where: { code } });
     if (!coupon || !coupon.isActive) throw new BadRequestException('Invalid coupon');
-    if (coupon.expiresAt && coupon.expiresAt < new Date()) throw new BadRequestException('Coupon expired');
-    if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) throw new BadRequestException('Coupon exhausted');
+    if (coupon.expiresAt && coupon.expiresAt < new Date())
+      throw new BadRequestException('Coupon expired');
+    if (coupon.maxUses && coupon.usedCount >= coupon.maxUses)
+      throw new BadRequestException('Coupon exhausted');
 
     const used = await this.prisma.couponUsage.findUnique({
       where: { couponId_userId: { couponId: coupon.id, userId } },
