@@ -1,5 +1,14 @@
 import type { Locale } from '@/i18n'
 
+interface LocalisableProduct {
+  name: string
+  nameRu?: string | null
+  nameTg?: string | null
+  description?: string | null
+  descriptionRu?: string | null
+  descriptionTg?: string | null
+}
+
 /**
  * Picks the localised version of a product field.
  * Falls back to the English original if the translation is empty.
@@ -7,9 +16,9 @@ import type { Locale } from '@/i18n'
  * in the translated strings by the seed — no special handling needed here.
  */
 export function localiseProduct(
-  product: any,
+  product: LocalisableProduct,
   locale: Locale,
-): { name: string; description: string | null } {
+): { name: string; description: string | null | undefined } {
   if (locale === 'ru') {
     return {
       name: product.nameRu || product.name,

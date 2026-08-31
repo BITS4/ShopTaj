@@ -8,6 +8,13 @@ import { useT, useLanguageStore } from '@/store/language.store'
 import { ShoppingBag, Truck, Shield, RefreshCw, Star, ArrowRight, Zap } from 'lucide-react'
 import { useAuthStore } from '@/store/auth.store'
 import api from '@/lib/api'
+import type { Category, Product } from '@/types'
+
+type LocalisedCategory = Category & {
+  nameRu?: string | null
+  nameTg?: string | null
+  parentId?: string | null
+}
 
 const CATEGORY_ICONS: Record<string, string> = {
   electronics: '💻', clothing: '👗', 'home-garden': '🏠', books: '📚',
@@ -21,22 +28,28 @@ export default function HomePage() {
   const locale = useLanguageStore((s) => s.locale)
   const { user } = useAuthStore()
 
-  const catName = (cat: any) =>
+  const catName = (cat: LocalisedCategory) =>
     (locale === 'ru' && cat.nameRu) ? cat.nameRu :
     (locale === 'tg' && cat.nameTg) ? cat.nameTg :
     cat.name
 
-  const { data: products, isLoading } = useQuery({
+  const { data: products, isLoading } = useQuery<Product[]>({
     queryKey: ['featured'],
-    queryFn: async () => { const { data } = await api.get('/products?limit=8&sortBy=newest'); return data.data },
+    queryFn: async () => {
+      const { data } = await api.get<{ data: Product[] }>('/products?limit=8&sortBy=newest')
+      return data.data
+    },
   })
 
-  const { data: categories } = useQuery({
+  const { data: categories } = useQuery<LocalisedCategory[]>({
     queryKey: ['categories'],
-    queryFn: async () => { const { data } = await api.get('/categories'); return data },
+    queryFn: async () => {
+      const { data } = await api.get<LocalisedCategory[]>('/categories')
+      return data
+    },
   })
 
-  const topCategories = categories?.filter((c: any) => !c.parentId).slice(0, 6) ?? []
+  const topCategories = categories?.filter((category) => !category.parentId).slice(0, 6) ?? []
 
   return (
     <div className="min-h-screen">
@@ -102,7 +115,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
-            {topCategories.map((cat: any) => (
+            {topCategories.map((cat) => (
               <Link
                 key={cat.id}
                 href={`/products?categoryId=${cat.id}`}
@@ -153,7 +166,7 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
-            {products.map((p: any) => <ProductCard key={p.id} product={p} />)}
+            {products.map((product) => <ProductCard key={product.id} product={product} />)}
           </div>
         )}
       </section>

@@ -10,39 +10,63 @@ import { Badge } from '@/components/ui/badge'
 import api from '@/lib/api'
 import { toast } from 'sonner'
 
+interface Category {
+  id: string
+  name: string
+  nameRu?: string | null
+  nameTg?: string | null
+  parentId?: string | null
+  imageUrl?: string | null
+  children?: Category[]
+}
+
+interface CategoryFormValues {
+  name: string
+  nameRu?: string
+  nameTg?: string
+  parentId?: string
+  imageUrl?: string
+}
+
+interface ApiError {
+  response?: { data?: { message?: string | string[] } }
+}
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  const message = (error as ApiError).response?.data?.message
+  return Array.isArray(message) ? message.join(', ') : message || fallback
+}
+
 export default function AdminCategoriesPage() {
   const qc = useQueryClient()
   const [showForm, setShowForm] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
-  const { register, handleSubmit, reset, setValue } = useForm()
+  const { register, handleSubmit, reset, setValue } = useForm<CategoryFormValues>()
 
   const { data: categories, isLoading } = useQuery({
     queryKey: ['categories'],
-    queryFn: async () => { const { data } = await api.get('/categories'); return data },
+    queryFn: async () => { const { data } = await api.get<Category[]>('/categories'); return data },
   })
 
   const create = useMutation({
-    mutationFn: (body: any) => api.post('/admin/categories', body),
+    mutationFn: (body: CategoryFormValues) => api.post('/admin/categories', body),
     onSuccess: () => { toast.success('Category created'); qc.invalidateQueries({ queryKey: ['categories'] }); setShowForm(false); reset() },
-    onError: (err: any) => {
-      const msg = err?.response?.data?.message
-      toast.error(Array.isArray(msg) ? msg.join(', ') : msg || 'Failed to create category')
-    },
+    onError: (error: unknown) => toast.error(getErrorMessage(error, 'Failed to create category')),
   })
 
   const update = useMutation({
-    mutationFn: ({ id, ...body }: any) => api.patch(`/admin/categories/${id}`, body),
+    mutationFn: ({ id, ...body }: CategoryFormValues & { id: string }) => api.patch(`/admin/categories/${id}`, body),
     onSuccess: () => { toast.success('Category updated'); qc.invalidateQueries({ queryKey: ['categories'] }); setEditId(null); reset() },
-    onError: (err: any) => toast.error(err?.response?.data?.message || 'Failed to update'),
+    onError: (error: unknown) => toast.error(getErrorMessage(error, 'Failed to update')),
   })
 
   const remove = useMutation({
     mutationFn: (id: string) => api.delete(`/admin/categories/${id}`),
     onSuccess: () => { toast.success('Category deleted'); qc.invalidateQueries({ queryKey: ['categories'] }) },
-    onError: (err: any) => toast.error(err?.response?.data?.message || 'Cannot delete — category may have products'),
+    onError: (error: unknown) => toast.error(getErrorMessage(error, 'Cannot delete — category may have products')),
   })
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: CategoryFormValues) => {
     const payload = {
       name: data.name,
       nameRu: data.nameRu || undefined,
@@ -54,7 +78,7 @@ export default function AdminCategoriesPage() {
     else create.mutate(payload)
   }
 
-  const startEdit = (cat: any) => {
+  const startEdit = (cat: Category) => {
     setEditId(cat.id)
     setShowForm(false)
     setValue('name', cat.name)
@@ -64,9 +88,6 @@ export default function AdminCategoriesPage() {
   }
 
   const cancel = () => { setShowForm(false); setEditId(null); reset() }
-
-  // Flatten categories for parent selector
-  const allFlat = categories?.flatMap((c: any) => [c, ...(c.children || [])]) || []
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -98,7 +119,7 @@ export default function AdminCategoriesPage() {
                 <label className="text-xs font-medium">Parent Category <span className="text-muted-foreground">(for sub-categories)</span></label>
                 <select className="w-full h-10 border rounded-md px-3 text-sm bg-background" {...register('parentId')}>
                   <option value="">None (top-level)</option>
-                  {categories?.map((c: any) => (
+                  {categories?.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
@@ -127,14 +148,14 @@ export default function AdminCategoriesPage() {
         </div>
       ) : (
         <div className="border rounded-xl overflow-hidden">
-          {categories.map((cat: any) => (
+          {categories.map((cat) => (
             <div key={cat.id}>
               {/* Parent category row */}
               <div className="flex items-center justify-between px-4 py-3 border-b hover:bg-muted/20 bg-muted/5">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold">{cat.name}</span>
-                  {cat.children?.length > 0 && (
-                    <Badge variant="secondary">{cat.children.length} sub</Badge>
+                  {(cat.children?.length ?? 0) > 0 && (
+                    <Badge variant="secondary">{cat.children?.length} sub</Badge>
                   )}
                 </div>
                 <div className="flex gap-2">
@@ -150,7 +171,7 @@ export default function AdminCategoriesPage() {
                 </div>
               </div>
               {/* Sub-categories */}
-              {cat.children?.map((child: any) => (
+              {cat.children?.map((child) => (
                 <div key={child.id} className="flex items-center justify-between px-4 py-2.5 border-b hover:bg-muted/20 pl-10">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <ChevronRight className="h-3 w-3" />

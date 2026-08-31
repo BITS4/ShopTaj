@@ -12,23 +12,55 @@ import { formatDate } from '@/lib/utils'
 import api from '@/lib/api'
 import { toast } from 'sonner'
 
+interface CouponFormValues {
+  code: string
+  discountType: 'PERCENTAGE' | 'FIXED'
+  discountValue: string
+  minOrderValue?: string
+  maxUses?: string
+  expiresAt?: string
+}
+
+interface CouponPayload extends Omit<CouponFormValues, 'discountValue' | 'minOrderValue' | 'maxUses'> {
+  discountValue: number
+  minOrderValue?: string | number
+  maxUses?: string | number
+}
+
+interface Coupon {
+  id: string
+  code: string
+  discountType: 'PERCENTAGE' | 'FIXED'
+  discountValue: number | string
+  maxUses: number | null
+  usedCount: number
+  isActive: boolean
+  expiresAt: string | null
+}
+
+interface ApiError {
+  response?: { data?: { message?: string | string[] } }
+}
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  const message = (error as ApiError).response?.data?.message
+  return Array.isArray(message) ? message.join(', ') : message || fallback
+}
+
 export default function AdminCouponsPage() {
   const qc = useQueryClient()
   const [showForm, setShowForm] = useState(false)
-  const { register, handleSubmit, reset } = useForm()
+  const { register, handleSubmit, reset } = useForm<CouponFormValues>()
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-coupons'],
-    queryFn: async () => { const { data } = await api.get('/admin/coupons'); return data },
+    queryFn: async () => { const { data } = await api.get<Coupon[]>('/admin/coupons'); return data },
   })
 
   const create = useMutation({
-    mutationFn: (body: any) => api.post('/admin/coupons', body),
+    mutationFn: (body: CouponPayload) => api.post('/admin/coupons', body),
     onSuccess: () => { toast.success('Coupon created'); qc.invalidateQueries({ queryKey: ['admin-coupons'] }); setShowForm(false); reset() },
-    onError: (err: any) => {
-      const msg = err?.response?.data?.message
-      toast.error(Array.isArray(msg) ? msg.join(', ') : msg || 'Failed to create coupon')
-    },
+    onError: (error: unknown) => toast.error(getErrorMessage(error, 'Failed to create coupon')),
   })
 
   const toggle = useMutation({
@@ -36,11 +68,13 @@ export default function AdminCouponsPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-coupons'] }),
   })
 
-  const onSubmit = (d: any) => {
-    d.discountValue = Number(d.discountValue)
-    if (d.minOrderValue) d.minOrderValue = Number(d.minOrderValue)
-    if (d.maxUses) d.maxUses = Number(d.maxUses)
-    create.mutate(d)
+  const onSubmit = (data: CouponFormValues) => {
+    create.mutate({
+      ...data,
+      discountValue: Number(data.discountValue),
+      minOrderValue: data.minOrderValue ? Number(data.minOrderValue) : data.minOrderValue,
+      maxUses: data.maxUses ? Number(data.maxUses) : data.maxUses,
+    })
   }
 
   return (
@@ -94,7 +128,7 @@ export default function AdminCouponsPage() {
               </tr>
             </thead>
             <tbody>
-              {data?.map((c: any) => (
+              {data?.map((c) => (
                 <tr key={c.id} className="border-t hover:bg-muted/20">
                   <td className="px-4 py-3 font-mono font-semibold">{c.code}</td>
                   <td className="px-4 py-3">

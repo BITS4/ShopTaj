@@ -12,7 +12,7 @@ import { toast } from 'sonner'
 function ResetPasswordPage() {
   const token = useSearchParams().get('token') ?? ''
   const router = useRouter()
-  const { register, handleSubmit, watch } = useForm<{ password: string; confirm: string }>()
+  const { register, handleSubmit } = useForm<{ password: string; confirm: string }>()
 
   const onSubmit = async ({ password }: { password: string; confirm: string }) => {
     try {

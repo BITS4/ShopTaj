@@ -10,21 +10,58 @@ import { toast } from 'sonner'
 import api from '@/lib/api'
 import { Upload } from 'lucide-react'
 
+interface ProductFormValues {
+  name: string
+  price: string | number
+  discountPrice?: string | number
+  stock: string | number
+  categoryId: string
+  description?: string
+  brand?: string
+  tags?: string
+  isActive: boolean
+}
+
+interface CreateProductPayload extends Omit<ProductFormValues, 'price' | 'discountPrice' | 'stock' | 'tags'> {
+  price: number
+  discountPrice?: number
+  stock: number
+  tags: string[]
+}
+
+interface CreatedProduct {
+  id: string
+}
+
+interface CategoryOption {
+  id: string
+  name: string
+}
+
+interface ApiError {
+  response?: { data?: { message?: string | string[] } }
+}
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  const message = (error as ApiError).response?.data?.message
+  return Array.isArray(message) ? message.join(', ') : message || fallback
+}
+
 export default function NewSellerProductPage() {
   const router = useRouter()
   const [imageFiles, setImageFiles] = useState<FileList | null>(null)
-  const { register, handleSubmit, formState: { errors } } = useForm<any>({
+  const { register, handleSubmit } = useForm<ProductFormValues>({
     defaultValues: { isActive: true, stock: 0 },
   })
 
   const { data: categories } = useQuery({
     queryKey: ['categories'],
-    queryFn: async () => { const { data } = await api.get('/categories'); return data },
+    queryFn: async () => { const { data } = await api.get<CategoryOption[]>('/categories'); return data },
   })
 
   const createProduct = useMutation({
-    mutationFn: async (data: any) => {
-      const { data: product } = await api.post('/seller/products', data)
+    mutationFn: async (data: CreateProductPayload) => {
+      const { data: product } = await api.post<CreatedProduct>('/seller/products', data)
       if (imageFiles?.length) {
         const fd = new FormData()
         Array.from(imageFiles).forEach((f) => fd.append('files', f))
@@ -38,15 +75,15 @@ export default function NewSellerProductPage() {
       toast.success('Product created!')
       router.push('/seller/products')
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || 'Failed to create product'),
+    onError: (error: unknown) => toast.error(getErrorMessage(error, 'Failed to create product')),
   })
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: ProductFormValues) => {
     createProduct.mutate({
       ...data,
-      price: parseFloat(data.price),
-      stock: parseInt(data.stock),
-      discountPrice: data.discountPrice ? parseFloat(data.discountPrice) : undefined,
+      price: parseFloat(String(data.price)),
+      stock: parseInt(String(data.stock), 10),
+      discountPrice: data.discountPrice ? parseFloat(String(data.discountPrice)) : undefined,
       tags: data.tags ? data.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],
     })
   }
@@ -84,7 +121,7 @@ export default function NewSellerProductPage() {
                   {...register('categoryId', { required: true })}
                 >
                   <option value="">Select category</option>
-                  {categories?.map((c: any) => (
+                  {categories?.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>

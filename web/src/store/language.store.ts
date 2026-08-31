@@ -10,7 +10,7 @@ interface LanguageState {
 
 export const useLanguageStore = create<LanguageState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       locale: 'ru',
       setLocale: (locale) => set({ locale, t: locales[locale].translations }),
       t: locales.ru.translations,

@@ -2,13 +2,36 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatPrice, formatDateTime } from '@/lib/utils'
 import api from '@/lib/api'
 import { toast } from 'sonner'
 
 const STATUSES = ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']
+
+interface AdminOrder {
+  id: string
+  totalAmount: number | string
+  createdAt: string
+  status: string
+  paymentStatus: string
+  items?: unknown[]
+  user?: { fullName: string; email: string } | null
+}
+
+interface OrdersResponse {
+  data: AdminOrder[]
+  meta: { total: number; page: number; limit: number }
+}
+
+interface ApiError {
+  response?: { data?: { message?: string | string[] } }
+}
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  const message = (error as ApiError).response?.data?.message
+  return Array.isArray(message) ? message.join(', ') : message || fallback
+}
 
 export default function AdminOrdersPage() {
   const qc = useQueryClient()
@@ -18,7 +41,7 @@ export default function AdminOrdersPage() {
     queryKey: ['admin-orders', filter],
     queryFn: async () => {
       const params = filter ? `?status=${filter}` : ''
-      const { data } = await api.get(`/admin/orders${params}`)
+      const { data } = await api.get<OrdersResponse>(`/admin/orders${params}`)
       return data
     },
     retry: 1,
@@ -33,7 +56,7 @@ export default function AdminOrdersPage() {
   const confirmPayment = useMutation({
     mutationFn: (id: string) => api.patch(`/admin/orders/${id}/payment`, { paymentStatus: 'PAID' }),
     onSuccess: () => { toast.success('Payment confirmed!'); qc.invalidateQueries({ queryKey: ['admin-orders'] }) },
-    onError: (err: any) => toast.error(err?.response?.data?.message || 'Failed'),
+    onError: (error: unknown) => toast.error(getErrorMessage(error, 'Failed')),
   })
 
   return (
@@ -73,7 +96,7 @@ export default function AdminOrdersPage() {
               </tr>
             </thead>
             <tbody>
-              {data?.data.map((order: any) => (
+              {data?.data.map((order) => (
                 <tr key={order.id} className="border-t hover:bg-muted/20">
                   <td className="px-4 py-3 font-mono text-xs">{order.id.slice(0, 8).toUpperCase()}</td>
                   <td className="px-4 py-3 hidden md:table-cell">{order.user?.fullName}<br /><span className="text-muted-foreground text-xs">{order.user?.email}</span></td>

@@ -3,7 +3,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { useParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
-import { Heart, ShoppingCart, Star, Truck } from 'lucide-react'
+import { Heart, ShoppingCart, Truck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -15,6 +15,15 @@ import { localiseProduct } from '@/lib/localise'
 import api from '@/lib/api'
 import { useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import type { Product, Review } from '@/types'
+
+type ProductDetail = Product & {
+  nameRu?: string | null
+  nameTg?: string | null
+  descriptionRu?: string | null
+  descriptionTg?: string | null
+  reviews: Review[]
+}
 
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -25,13 +34,16 @@ export default function ProductDetailPage() {
   const [activeImage, setActiveImage] = useState(0)
   const [qty, setQty] = useState(1)
 
-  const { data: product, isLoading } = useQuery({
+  const { data: product, isLoading } = useQuery<ProductDetail>({
     queryKey: ['product', slug],
-    queryFn: async () => { const { data } = await api.get(`/products/${slug}`); return data },
+    queryFn: async () => {
+      const { data } = await api.get<ProductDetail>(`/products/${slug}`)
+      return data
+    },
   })
 
   const addToWishlist = useMutation({
-    mutationFn: () => api.post(`/wishlist/${product.id}`),
+    mutationFn: (productId: string) => api.post(`/wishlist/${productId}`),
     onSuccess: () => toast.success('Added to wishlist'),
     onError: () => toast.error('Already in wishlist or login required'),
   })
@@ -52,8 +64,8 @@ export default function ProductDetailPage() {
   const { name: productName, description: productDescription } = localiseProduct(product, locale)
   const price = Number(product.price)
   const discount = product.discountPrice ? Number(product.discountPrice) : null
-  const sizes = [...new Set(product.variants.map((v: any) => v.size).filter(Boolean))]
-  const colors = [...new Set(product.variants.map((v: any) => v.color).filter(Boolean))]
+  const sizes = [...new Set(product.variants.flatMap(({ size }) => size ? [size] : []))]
+  const colors = [...new Set(product.variants.flatMap(({ color }) => color ? [color] : []))]
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -75,7 +87,7 @@ export default function ProductDetailPage() {
           </div>
           {product.images.length > 1 && (
             <div className="flex gap-2 overflow-x-auto">
-              {product.images.map((img: any, i: number) => (
+              {product.images.map((img, i) => (
                 <button
                   key={img.id}
                   onClick={() => setActiveImage(i)}
@@ -124,11 +136,11 @@ export default function ProductDetailPage() {
             <div>
               <p className="text-sm font-semibold mb-2">{t.product.size}</p>
               <div className="flex gap-2 flex-wrap">
-                {sizes.map((size: any) => (
+                {sizes.map((size) => (
                   <button
                     key={size}
-                    onClick={() => setSelectedVariant(product.variants.find((v: any) => v.size === size)?.id)}
-                    className={`px-4 py-2 border rounded-md text-sm transition ${selectedVariant === product.variants.find((v: any) => v.size === size)?.id ? 'border-primary bg-primary/10 font-semibold' : 'hover:border-primary'}`}
+                    onClick={() => setSelectedVariant(product.variants.find((variant) => variant.size === size)?.id)}
+                    className={`px-4 py-2 border rounded-md text-sm transition ${selectedVariant === product.variants.find((variant) => variant.size === size)?.id ? 'border-primary bg-primary/10 font-semibold' : 'hover:border-primary'}`}
                   >{size}</button>
                 ))}
               </div>
@@ -139,7 +151,7 @@ export default function ProductDetailPage() {
             <div>
               <p className="text-sm font-semibold mb-2">{t.product.color}</p>
               <div className="flex gap-2 flex-wrap">
-                {colors.map((color: any) => (
+                {colors.map((color) => (
                   <button key={color} className="px-4 py-2 border rounded-md text-sm hover:border-primary transition">{color}</button>
                 ))}
               </div>
@@ -167,7 +179,7 @@ export default function ProductDetailPage() {
             >
               <ShoppingCart className="h-5 w-5 mr-2" />{t.product.add_to_cart}
             </Button>
-            <Button size="lg" variant="outline" onClick={() => addToWishlist.mutate()}>
+            <Button size="lg" variant="outline" onClick={() => addToWishlist.mutate(product.id)}>
               <Heart className="h-5 w-5" />
             </Button>
           </div>
@@ -192,7 +204,7 @@ export default function ProductDetailPage() {
         <div className="mt-16">
           <h2 className="text-2xl font-bold mb-6">{t.product.customer_reviews}</h2>
           <div className="space-y-4">
-            {product.reviews.map((review: any) => (
+            {product.reviews.map((review) => (
               <div key={review.id} className="border rounded-lg p-4">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold">

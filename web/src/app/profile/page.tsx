@@ -9,31 +9,61 @@ import { useT } from '@/store/language.store'
 import { toast } from 'sonner'
 import api from '@/lib/api'
 
+interface ProfileResponse {
+  id: string
+  email: string
+  fullName: string
+  phone: string | null
+}
+
+interface ProfileFormValues {
+  fullName: string
+  phone: string
+}
+
+interface AddressFormValues {
+  label: string
+  street: string
+  houseNumber?: string
+  apartment?: string
+  city: string
+  state?: string
+  country: string
+  zip?: string
+}
+
+interface ProfileAddress extends AddressFormValues {
+  id: string
+  isDefault: boolean
+}
+
 export default function ProfilePage() {
   const qc = useQueryClient()
   const t = useT()
   const [addingAddress, setAddingAddress] = useState(false)
 
-  const { data: profile } = useQuery({
+  const { data: profile } = useQuery<ProfileResponse>({
     queryKey: ['profile'],
-    queryFn: async () => { const { data } = await api.get('/users/me'); return data },
+    queryFn: async () => { const { data } = await api.get<ProfileResponse>('/users/me'); return data },
   })
 
-  const { data: addresses } = useQuery({
+  const { data: addresses } = useQuery<ProfileAddress[]>({
     queryKey: ['addresses'],
-    queryFn: async () => { const { data } = await api.get('/users/me/addresses'); return data },
+    queryFn: async () => { const { data } = await api.get<ProfileAddress[]>('/users/me/addresses'); return data },
   })
 
-  const { register: regProfile, handleSubmit: handleProfile } = useForm({ values: profile })
-  const { register: regAddr, handleSubmit: handleAddr, reset: resetAddr } = useForm()
+  const { register: regProfile, handleSubmit: handleProfile } = useForm<ProfileFormValues>({
+    values: profile ? { fullName: profile.fullName, phone: profile.phone ?? '' } : undefined,
+  })
+  const { register: regAddr, handleSubmit: handleAddr, reset: resetAddr } = useForm<AddressFormValues>()
 
   const updateProfile = useMutation({
-    mutationFn: (data: any) => api.patch('/users/me', data),
+    mutationFn: (data: ProfileFormValues) => api.patch('/users/me', data),
     onSuccess: () => { toast.success(t.profile.save); qc.invalidateQueries({ queryKey: ['profile'] }) },
   })
 
   const createAddress = useMutation({
-    mutationFn: (data: any) => api.post('/users/me/addresses', data),
+    mutationFn: (data: AddressFormValues) => api.post('/users/me/addresses', data),
     onSuccess: () => { toast.success('Address added'); qc.invalidateQueries({ queryKey: ['addresses'] }); setAddingAddress(false); resetAddr() },
   })
 
@@ -97,7 +127,7 @@ export default function ProfilePage() {
               <Button type="submit" size="sm" disabled={createAddress.isPending}>{t.profile.add_btn}</Button>
             </form>
           )}
-          {addresses?.map((addr: any) => (
+          {addresses?.map((addr) => (
             <div key={addr.id} className="flex items-center justify-between border rounded-lg p-3">
               <div className="text-sm">
                 <p className="font-semibold">{addr.label} {addr.isDefault && <span className="text-xs text-primary">({t.profile.default})</span>}</p>

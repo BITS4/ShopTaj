@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import { Sparkles, Mail, Phone, MapPin, Instagram, Send } from 'lucide-react'
+import { Sparkles, Mail, Phone, MapPin, Camera, Send } from 'lucide-react'
 import { useT } from '@/store/language.store'
 import { useAuthStore } from '@/store/auth.store'
 
@@ -83,7 +83,7 @@ export default function Footer() {
             <h4 className="font-bold text-white mb-4 text-sm uppercase tracking-wide">Follow Us</h4>
             <div className="flex gap-3 mb-8">
               {[
-                { icon: Instagram, href: 'https://www.instagram.com/asilabeauty.tj?igsh=MWZsZjJ1N2JnYjBicQ==', label: 'Instagram' },
+                { icon: Camera, href: 'https://www.instagram.com/asilabeauty.tj?igsh=MWZsZjJ1N2JnYjBicQ==', label: 'Instagram' },
                 { icon: Send, href: 'https://t.me/vip_2601', label: 'Telegram' },
               ].map(({ icon: Icon, href, label }) => (
                 <a

@@ -4,7 +4,7 @@ export interface User {
   fullName: string
   phone?: string
   avatarUrl?: string
-  role: 'USER' | 'ADMIN'
+  role: 'USER' | 'SELLER' | 'ADMIN'
   isEmailVerified: boolean
 }
 
@@ -71,6 +71,56 @@ export interface Address {
   country: string
   zip: string
   isDefault: boolean
+}
+
+export type PaymentMethod = 'card' | 'korti_milli' | 'dc_bank'
+
+export interface CheckoutPaymentData {
+  clientSecret: string
+  paymentIntentId: string
+  subtotal: number
+  shippingAmount: number
+  discountAmount: number
+  totalAmount: number
+}
+
+export interface ProductFormValues {
+  name: string
+  brand: string
+  description: string
+  price: string | number
+  discountPrice: string | number
+  stock: string | number
+  categoryId: string
+  tags: string
+  isActive: boolean
+  isFeatured: boolean
+  nameRu: string
+  nameTg: string
+  descriptionRu: string
+  descriptionTg: string
+}
+
+export interface ProductPayload {
+  name: string
+  description?: string
+  brand?: string
+  price: number
+  discountPrice: number | null
+  stock: number
+  categoryId: string
+  tags: string[]
+  isActive: boolean
+  isFeatured: boolean
+  nameRu?: string
+  nameTg?: string
+  descriptionRu?: string
+  descriptionTg?: string
+}
+
+export interface AdminProduct extends ProductPayload {
+  id: string
+  category?: Pick<Category, 'id' | 'name'>
 }
 
 export interface Order {

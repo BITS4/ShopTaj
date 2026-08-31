@@ -9,6 +9,23 @@ import { Card, CardContent } from '@/components/ui/card'
 import api from '@/lib/api'
 import { useAuthStore } from '@/store/auth.store'
 import { toast } from 'sonner'
+import { isAxiosError } from 'axios'
+import type { User } from '@/types'
+
+interface ApiErrorBody {
+  message?: string | string[]
+}
+
+interface VerifyCodeResponse {
+  accessToken: string
+  user: User
+}
+
+function getApiErrorMessage(error: unknown): string {
+  if (!isAxiosError<ApiErrorBody>(error)) return 'Invalid code'
+  const message = error.response?.data?.message
+  return (Array.isArray(message) ? message[0] : message) || 'Invalid code'
+}
 
 function VerifyEmailNoticePage() {
   const searchParams = useSearchParams()
@@ -61,7 +78,7 @@ function VerifyEmailNoticePage() {
     if (!email) { toast.error('Enter your email first'); return }
     setVerifying(true)
     try {
-      const { data } = await api.post('/auth/verify-code', { email, code: fullCode })
+      const { data } = await api.post<VerifyCodeResponse>('/auth/verify-code', { email, code: fullCode })
       // Backend auto-logs in after verification
       if (data.accessToken) {
         setAuth(data.user, data.accessToken)
@@ -71,9 +88,8 @@ function VerifyEmailNoticePage() {
         toast.success('Email verified! You can now log in.')
         router.push('/login')
       }
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Invalid code'
-      toast.error(msg)
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error))
       setCode(['', '', '', '', '', ''])
       inputRefs.current[0]?.focus()
     }

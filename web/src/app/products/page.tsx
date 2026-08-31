@@ -11,6 +11,22 @@ import { Skeleton } from '@/components/ui/skeleton'
 import ProductCard from '@/components/product/ProductCard'
 import { useT, useLanguageStore } from '@/store/language.store'
 import api from '@/lib/api'
+import type { Category, Product } from '@/types'
+
+type LocalisedCategory = Category & {
+  nameRu?: string | null
+  nameTg?: string | null
+}
+
+interface CatalogResponse {
+  data: Product[]
+  meta: {
+    total: number
+    page: number
+    limit: number
+    totalPages: number
+  }
+}
 
 function ProductsPage() {
   const searchParams = useSearchParams()
@@ -19,7 +35,7 @@ function ProductsPage() {
   const locale = useLanguageStore((s) => s.locale)
   const [showFilters, setShowFilters] = useState(false)
 
-  const catName = (cat: any) =>
+  const catName = (cat: LocalisedCategory) =>
     (locale === 'ru' && cat.nameRu) ? cat.nameRu :
     (locale === 'tg' && cat.nameTg) ? cat.nameTg :
     cat.name
@@ -48,7 +64,7 @@ function ProductsPage() {
     { label: t.products.sort_rating, value: 'rating' },
   ]
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<CatalogResponse>({
     queryKey: ['products', search, categoryId, sortBy, page, minPrice, maxPrice],
     queryFn: async () => {
       const params = new URLSearchParams()
@@ -59,14 +75,17 @@ function ProductsPage() {
       if (maxPrice) params.set('maxPrice', maxPrice)
       params.set('page', String(page))
       params.set('limit', '20')
-      const { data } = await api.get(`/products?${params}`)
+      const { data } = await api.get<CatalogResponse>(`/products?${params}`)
       return data
     },
   })
 
-  const { data: categories } = useQuery({
+  const { data: categories } = useQuery<LocalisedCategory[]>({
     queryKey: ['categories'],
-    queryFn: async () => { const { data } = await api.get('/categories'); return data },
+    queryFn: async () => {
+      const { data } = await api.get<LocalisedCategory[]>('/categories')
+      return data
+    },
   })
 
   const applyPriceFilter = () => {
@@ -110,7 +129,7 @@ function ProductsPage() {
                   onClick={() => setParam('categoryId', '')}
                   className={`block text-sm w-full text-left px-2 py-1 rounded hover:bg-muted ${!categoryId ? 'font-semibold text-primary' : ''}`}
                 >{t.products.all}</button>
-                {categories?.map((cat: any) => (
+                {categories?.map((cat) => (
                   <button
                     key={cat.id}
                     onClick={() => setParam('categoryId', cat.id)}
@@ -150,11 +169,11 @@ function ProductsPage() {
           ) : (
             <>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {data?.data.map((p: any) => <ProductCard key={p.id} product={p} />)}
+                {data?.data.map((product) => <ProductCard key={product.id} product={product} />)}
               </div>
-              {data?.meta.totalPages > 1 && (
+              {(data?.meta.totalPages ?? 0) > 1 && (
                 <div className="flex justify-center gap-2 mt-8">
-                  {Array.from({ length: data.meta.totalPages }, (_, i) => i + 1).map((p) => (
+                  {Array.from({ length: data?.meta.totalPages ?? 0 }, (_, i) => i + 1).map((p) => (
                     <Button key={p} size="sm" variant={p === page ? 'default' : 'outline'} onClick={() => setParam('page', String(p))}>{p}</Button>
                   ))}
                 </div>

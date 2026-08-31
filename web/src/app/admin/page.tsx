@@ -15,10 +15,24 @@ const NAV = [
   { href: '/admin/coupons', label: 'Coupons', icon: Tag },
 ]
 
+interface TopProduct {
+  productId: string
+  _sum: { quantity: number | null }
+  product?: { name: string; price: number | string }
+}
+
+interface AdminAnalytics {
+  totalRevenue: number | string
+  totalOrders: number
+  totalUsers: number
+  ordersToday: number
+  topProducts: TopProduct[]
+}
+
 export default function AdminDashboard() {
   const { data: analytics, isLoading } = useQuery({
     queryKey: ['analytics'],
-    queryFn: async () => { const { data } = await api.get('/admin/analytics'); return data },
+    queryFn: async () => { const { data } = await api.get<AdminAnalytics>('/admin/analytics'); return data },
   })
 
   const stats = [
@@ -64,12 +78,12 @@ export default function AdminDashboard() {
       </div>
 
       {/* Top Products */}
-      {analytics?.topProducts?.length > 0 && (
+      {analytics && analytics.topProducts.length > 0 && (
         <Card>
           <CardHeader><CardTitle>Top Selling Products</CardTitle></CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {analytics.topProducts.map((tp: any, i: number) => (
+              {analytics.topProducts.map((tp, i) => (
                 <div key={tp.productId} className="flex items-center gap-3 text-sm">
                   <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-xs">{i + 1}</span>
                   <span className="flex-1 font-medium">{tp.product?.name ?? 'Unknown'}</span>

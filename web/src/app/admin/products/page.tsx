@@ -1,16 +1,23 @@
 'use client'
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Pencil, Trash2, Upload, AlertCircle } from 'lucide-react'
+import { Plus, Pencil, Trash2, AlertCircle } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { getApiErrorMessage, getApiErrorStatus } from '@/lib/api-error'
 import { formatPrice } from '@/lib/utils'
 import api from '@/lib/api'
 import { toast } from 'sonner'
+import type {
+  AdminProduct,
+  Category,
+  ProductFormValues,
+  ProductPayload,
+} from '@/types'
 
 export default function AdminProductsPage() {
   const qc = useQueryClient()
@@ -18,11 +25,11 @@ export default function AdminProductsPage() {
   const [editId, setEditId] = useState<string | null>(null)
   const [mainImageFile, setMainImageFile] = useState<FileList | null>(null)
   const [imageFiles, setImageFiles] = useState<FileList | null>(null)
-  const { register, handleSubmit, reset, setValue, watch } = useForm<any>({
+  const { register, handleSubmit, reset, setValue } = useForm<ProductFormValues>({
     defaultValues: { isActive: true, isFeatured: true },
   })
 
-  const { data, isLoading, isError, error } = useQuery({
+  const { data, isLoading, isError, error } = useQuery<AdminProduct[]>({
     queryKey: ['admin-products'],
     queryFn: async () => {
       const { data } = await api.get('/admin/products-list')
@@ -30,13 +37,13 @@ export default function AdminProductsPage() {
     },
   })
 
-  const { data: categories } = useQuery({
+  const { data: categories } = useQuery<Category[]>({
     queryKey: ['categories'],
     queryFn: async () => { const { data } = await api.get('/categories'); return data },
   })
 
   const create = useMutation({
-    mutationFn: async (body: any) => {
+    mutationFn: async (body: ProductPayload) => {
       const { data: product } = await api.post('/admin/products', body)
       await uploadImages(product.id)
       return product
@@ -50,19 +57,17 @@ export default function AdminProductsPage() {
       setImageFiles(null)
       reset({ isActive: true, isFeatured: true })
     },
-    onError: (err: any) => {
-      const status = err?.response?.status
-      const msg = err?.response?.data?.message
-      if (status === 403) {
+    onError: (error: unknown) => {
+      if (getApiErrorStatus(error) === 403) {
         toast.error('Access denied. You must be logged in as Admin.')
       } else {
-        toast.error(Array.isArray(msg) ? msg.join(', ') : msg || 'Failed to create product')
+        toast.error(getApiErrorMessage(error, 'Failed to create product'))
       }
     },
   })
 
   const update = useMutation({
-    mutationFn: async ({ id, ...body }: any) => {
+    mutationFn: async ({ id, ...body }: ProductPayload & { id: string }) => {
       await api.patch(`/admin/products/${id}`, body)
       await uploadImages(id)
     },
@@ -75,7 +80,9 @@ export default function AdminProductsPage() {
       setImageFiles(null)
       reset({ isActive: true, isFeatured: true })
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || 'Failed to update'),
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Failed to update'))
+    },
   })
 
   const remove = useMutation({
@@ -85,7 +92,9 @@ export default function AdminProductsPage() {
       qc.invalidateQueries({ queryKey: ['admin-products'] })
       qc.invalidateQueries({ queryKey: ['products'] })
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || 'Failed to delete product'),
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Failed to delete product'))
+    },
   })
 
   const uploadImages = async (productId: string) => {
@@ -100,19 +109,27 @@ export default function AdminProductsPage() {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       toast.success(`${allFiles.length} image(s) uploaded!`)
-    } catch (err: any) {
-      toast.warning('Product saved, but image upload failed: ' + (err?.response?.data?.message || 'unknown error'))
+    } catch (error: unknown) {
+      toast.warning(
+        `Product saved, but image upload failed: ${getApiErrorMessage(error, 'unknown error')}`,
+      )
     }
   }
 
-  const onSubmit = (formData: any) => {
-    const payload: any = {
+  const onSubmit = (formData: ProductFormValues) => {
+    const discountPrice = Number(formData.discountPrice)
+    const payload: ProductPayload = {
       name: formData.name,
       description: formData.description || undefined,
       brand: formData.brand || undefined,
-      price: parseFloat(formData.price),
-      stock: parseInt(formData.stock, 10),
+      price: Number(formData.price),
+      discountPrice: discountPrice > 0 ? discountPrice : null,
+      stock: Number.parseInt(String(formData.stock), 10),
       categoryId: formData.categoryId,
+      tags: (formData.tags ?? '')
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter(Boolean),
       isActive: Boolean(formData.isActive),
       isFeatured: Boolean(formData.isFeatured),
       nameRu: formData.nameRu || undefined,
@@ -120,21 +137,11 @@ export default function AdminProductsPage() {
       descriptionRu: formData.descriptionRu || undefined,
       descriptionTg: formData.descriptionTg || undefined,
     }
-    if (formData.discountPrice && parseFloat(formData.discountPrice) > 0) {
-      payload.discountPrice = parseFloat(formData.discountPrice)
-    } else {
-      payload.discountPrice = null
-    }
-    if (formData.tags && formData.tags.trim()) {
-      payload.tags = formData.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
-    } else {
-      payload.tags = []
-    }
     if (editId) update.mutate({ id: editId, ...payload })
     else create.mutate(payload)
   }
 
-  const startEdit = (product: any) => {
+  const startEdit = (product: AdminProduct) => {
     setEditId(product.id)
     setShowForm(false)
     setValue('name', product.name)
@@ -217,8 +224,8 @@ export default function AdminProductsPage() {
                     {...register('categoryId', { required: 'Category is required' })}
                   >
                     <option value="">-- Select category --</option>
-                    {categories?.map((c: any) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
+                    {categories?.map((category) => (
+                      <option key={category.id} value={category.id}>{category.name}</option>
                     ))}
                     {!categories?.length && <option disabled>No categories yet — create one first</option>}
                   </select>
@@ -330,7 +337,7 @@ export default function AdminProductsPage() {
         <div className="text-center py-16 border rounded-xl text-destructive">
           <p className="font-medium">Failed to load products</p>
           <p className="text-sm text-muted-foreground mt-1">
-            {(error as any)?.response?.status === 403
+            {getApiErrorStatus(error) === 403
               ? 'You are not logged in as Admin. Use admin@shoptaj.com'
               : 'Check that the backend is running'}
           </p>
@@ -354,7 +361,7 @@ export default function AdminProductsPage() {
               </tr>
             </thead>
             <tbody>
-              {data.map((product: any) => (
+              {data.map((product) => (
                 <tr key={product.id} className="border-t hover:bg-muted/20">
                   <td className="px-4 py-3">
                     <p className="font-medium">{product.name}</p>

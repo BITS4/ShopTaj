@@ -8,6 +8,22 @@ import api from '@/lib/api'
 import { CheckCircle2, XCircle, Clock, FileText, ExternalLink } from 'lucide-react'
 
 const STATUS_TABS = ['ALL', 'PENDING', 'APPROVED', 'REJECTED'] as const
+type SellerStatus = Exclude<typeof STATUS_TABS[number], 'ALL'>
+
+interface AdminSeller {
+  id: string
+  shopName: string
+  description: string | null
+  status: SellerStatus
+  documents: string[]
+  rejectionReason: string | null
+  createdAt: string
+  user: {
+    fullName: string
+    email: string
+    phone: string | null
+  }
+}
 
 export default function AdminSellersPage() {
   const qc = useQueryClient()
@@ -18,7 +34,7 @@ export default function AdminSellersPage() {
   const { data: sellers, isLoading } = useQuery({
     queryKey: ['admin-sellers', tab],
     queryFn: async () => {
-      const { data } = await api.get('/admin/sellers', { params: tab !== 'ALL' ? { status: tab } : {} })
+      const { data } = await api.get<AdminSeller[]>('/admin/sellers', { params: tab !== 'ALL' ? { status: tab } : {} })
       return data
     },
   })
@@ -39,7 +55,7 @@ export default function AdminSellersPage() {
     },
   })
 
-  const statusIcon = (status: string) => {
+  const statusIcon = (status: SellerStatus) => {
     if (status === 'APPROVED') return <CheckCircle2 className="h-4 w-4 text-green-600" />
     if (status === 'REJECTED') return <XCircle className="h-4 w-4 text-red-500" />
     return <Clock className="h-4 w-4 text-yellow-500" />
@@ -74,7 +90,7 @@ export default function AdminSellersPage() {
       )}
 
       <div className="space-y-4">
-        {sellers?.map((seller: any) => (
+        {sellers?.map((seller) => (
           <Card key={seller.id}>
             <CardContent className="pt-5 pb-5 space-y-3">
               <div className="flex items-start justify-between gap-4">

@@ -28,7 +28,7 @@ export default function RegisterPage() {
   const t = useT()
   const [accountType, setAccountType] = useState<'USER' | 'SELLER'>('USER')
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) })
-  const onSubmit = ({ confirmPassword, ...data }: FormData) =>
+  const onSubmit = ({ confirmPassword: _confirmPassword, ...data }: FormData) =>
     registerUser.mutate({ ...data, accountType })
 
   return (

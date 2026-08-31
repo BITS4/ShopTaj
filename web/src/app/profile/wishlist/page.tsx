@@ -8,14 +8,21 @@ import ProductCard from '@/components/product/ProductCard'
 import { useT } from '@/store/language.store'
 import api from '@/lib/api'
 import { toast } from 'sonner'
+import type { Product } from '@/types'
+
+interface WishlistItem {
+  id: string
+  productId: string
+  product: Product
+}
 
 export default function WishlistPage() {
   const qc = useQueryClient()
   const t = useT()
 
-  const { data: wishlist, isLoading } = useQuery({
+  const { data: wishlist, isLoading } = useQuery<WishlistItem[]>({
     queryKey: ['wishlist'],
-    queryFn: async () => { const { data } = await api.get('/wishlist'); return data },
+    queryFn: async () => { const { data } = await api.get<WishlistItem[]>('/wishlist'); return data },
   })
 
   const remove = useMutation({
@@ -40,7 +47,7 @@ export default function WishlistPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {wishlist.map((item: any) => (
+          {wishlist.map((item) => (
             <div key={item.id} className="relative">
               <ProductCard product={item.product} />
               <Button

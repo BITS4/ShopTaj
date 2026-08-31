@@ -16,6 +16,8 @@ type BankInfo = {
   contact: string
 }
 
+type Translations = ReturnType<typeof useT>
+
 const ALIF: Record<string, BankInfo> = {
   en: {
     title: 'Order Placed! Pay via Alif Bank',
@@ -76,7 +78,7 @@ const DC: Record<string, BankInfo> = {
   },
 }
 
-function BankSuccessPage({ info, orderId, t }: { info: BankInfo; orderId: string | null; t: any }) {
+function BankSuccessPage({ info, orderId, t }: { info: BankInfo; orderId: string | null; t: Translations }) {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="text-left space-y-5 max-w-lg w-full">

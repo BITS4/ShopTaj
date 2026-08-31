@@ -17,6 +17,7 @@ import api from '@/lib/api'
 import type { Product } from '@/types'
 
 interface Props { product: Product }
+interface WishlistItem { productId: string }
 
 export default function ProductCard({ product }: Props) {
   const { addItem } = useCart()
@@ -35,8 +36,8 @@ export default function ProductCard({ product }: Props) {
   const { data: wishlistIds } = useQuery<string[]>({
     queryKey: ['wishlist-ids'],
     queryFn: async () => {
-      const { data } = await api.get('/wishlist')
-      return data.map((item: any) => item.productId)
+      const { data } = await api.get<WishlistItem[]>('/wishlist')
+      return data.map((item) => item.productId)
     },
     enabled: !!user,
     staleTime: 30_000,

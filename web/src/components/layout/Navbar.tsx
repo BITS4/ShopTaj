@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ShoppingBag, Search, User, Menu, X, Heart, Package, Sparkles, Store } from 'lucide-react'
+import { ShoppingBag, Search, Menu, X, Heart, Package, Sparkles, Store } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'

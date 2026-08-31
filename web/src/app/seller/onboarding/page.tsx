@@ -9,6 +9,15 @@ import { toast } from 'sonner'
 import api from '@/lib/api'
 import { Store, Upload, FileText, CheckCircle2 } from 'lucide-react'
 
+interface ApiError {
+  response?: { data?: { message?: string | string[] } }
+}
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  const message = (error as ApiError).response?.data?.message
+  return Array.isArray(message) ? message.join(', ') : message || fallback
+}
+
 export default function SellerOnboardingPage() {
   const router = useRouter()
   const [step, setStep] = useState<'info' | 'documents' | 'done'>('info')
@@ -24,8 +33,8 @@ export default function SellerOnboardingPage() {
     try {
       await api.post('/seller/apply', data)
       setStep('documents')
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to submit')
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to submit'))
     }
   }
 
@@ -39,8 +48,8 @@ export default function SellerOnboardingPage() {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       setStep('done')
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Upload failed')
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Upload failed'))
     }
     setUploading(false)
   }

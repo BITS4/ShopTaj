@@ -3,19 +3,22 @@ export const dynamic = 'force-dynamic'
 import { useState, Suspense } from 'react'
 import dynamicImport from 'next/dynamic'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { loadStripe } from '@stripe/stripe-js'
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
+import { Elements } from '@stripe/react-stripe-js'
 import { CheckCircle, Lock, MapPin, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { CheckoutPaymentForm } from '@/components/checkout/CheckoutPaymentForm'
+import { PaymentMethodSelector } from '@/components/checkout/PaymentMethodSelector'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { formatPrice } from '@/lib/utils'
 import { useT } from '@/store/language.store'
-import { useCartStore } from '@/store/cart.store'
 import api from '@/lib/api'
 import { toast } from 'sonner'
 import type { MapLocation } from '@/components/map/DeliveryMap'
+import type { Address, Cart, CheckoutPaymentData, PaymentMethod } from '@/types'
 
 // Dynamic import — Leaflet cannot run on server
 const DeliveryMap = dynamicImport(() => import('@/components/map/DeliveryMap'), {
@@ -23,88 +26,10 @@ const DeliveryMap = dynamicImport(() => import('@/components/map/DeliveryMap'), 
   loading: () => <div className="h-[340px] rounded-xl bg-muted flex items-center justify-center text-sm text-muted-foreground">Loading map…</div>,
 })
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PK || '')
+const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PK
+const stripePromise = stripeKey ? loadStripe(stripeKey) : null
 
 // ─── Payment form ────────────────────────────────────────────────────────────
-function CheckoutForm({
-  clientSecret, total, paymentIntentId, addressId, shippingAmount, discountAmount, totalAmount,
-}: {
-  clientSecret: string; total: number; paymentIntentId: string
-  addressId: string; shippingAmount: number; discountAmount: number; totalAmount: number
-}) {
-  const stripe = useStripe()
-  const elements = useElements()
-  const router = useRouter()
-  const t = useT()
-  const qc = useQueryClient()
-  const { setCart } = useCartStore()
-  const [paying, setPaying] = useState(false)
-  const [cardReady, setCardReady] = useState(false)
-  const [status, setStatus] = useState<'idle' | 'paying' | 'creating' | 'done'>('idle')
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!stripe || !elements || !cardReady) return
-    setPaying(true)
-    try {
-      const cardEl = elements.getElement(CardElement)
-      if (!cardEl) { toast.error('Card element not ready'); setPaying(false); return }
-
-      setStatus('paying')
-      const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: { card: cardEl },
-      })
-
-      if (error) { toast.error(error.message); setPaying(false); setStatus('idle'); return }
-
-      if (paymentIntent?.status === 'succeeded') {
-        setStatus('creating')
-        await api.post('/payments/confirm-order', {
-          paymentIntentId,
-          addressId,
-          shippingAmount: Number(shippingAmount),
-          discountAmount: Number(discountAmount),
-          totalAmount: Number(totalAmount),
-        })
-        setCart({ id: '', items: [], total: 0 })
-        qc.removeQueries({ queryKey: ['cart'] })
-        qc.invalidateQueries({ queryKey: ['orders'] })
-        setStatus('done')
-        toast.success('Payment successful! 🎉')
-        router.push('/checkout/success')
-      }
-    } catch (err: any) {
-      console.error('Checkout error:', err?.response?.data || err?.message || err)
-      toast.error(err?.response?.data?.message || 'Order creation failed. Please contact support.', { duration: 8000 })
-      setStatus('idle')
-      setPaying(false)
-    }
-  }
-
-  const btnLabel = { idle: `${t.checkout.pay} ${formatPrice(total)}`, paying: 'Verifying payment…', creating: 'Creating your order…', done: 'Redirecting…' }[status]
-  const isReady = !!stripe && !!elements && cardReady
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="border rounded-md p-4 bg-white min-h-[44px]">
-        <CardElement
-          onReady={() => setCardReady(true)}
-          options={{ style: { base: { fontSize: '16px', color: '#374151', '::placeholder': { color: '#9ca3af' } }, invalid: { color: '#ef4444' } } }}
-        />
-      </div>
-      {!cardReady && <p className="text-xs text-center text-muted-foreground">Loading payment form…</p>}
-      <Button type="submit" className="w-full" size="lg" disabled={paying || !isReady}>
-        {!isReady ? 'Loading…' : btnLabel}
-      </Button>
-      <p className="text-xs text-center text-muted-foreground">
-        {process.env.NODE_ENV === 'production'
-          ? '🔒 Secured by Stripe'
-          : t.checkout.test_card}
-      </p>
-    </form>
-  )
-}
-
 // ─── Main checkout page ───────────────────────────────────────────────────────
 function CheckoutPage() {
   const searchParams = useSearchParams()
@@ -112,29 +37,27 @@ function CheckoutPage() {
   const couponCode = searchParams.get('coupon') ?? ''
   const t = useT()
 
-  // Address state
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null)
   const [mapLocation, setMapLocation] = useState<MapLocation | null>(null)
   const [showMap, setShowMap] = useState(false)
   const [newAddrForm, setNewAddrForm] = useState({ label: 'Home', street: '', city: '', country: 'Tajikistan', zip: '', houseNumber: '' })
   const [savingAddr, setSavingAddr] = useState(false)
 
-  // Shipping state
   const [shippingMethod, setShippingMethod] = useState('standard')
 
   // Payment state — once set, address & shipping are LOCKED
-  const [paymentData, setPaymentData] = useState<any>(null)
+  const [paymentData, setPaymentData] = useState<CheckoutPaymentData | null>(null)
   const [loading, setLoading] = useState(false)
-  const [payMethod, setPayMethod] = useState<'card' | 'korti_milli' | 'dc_bank'>('card')
+  const [payMethod, setPayMethod] = useState<PaymentMethod>('card')
 
   const locked = !!paymentData // true after "Continue to Payment" is clicked
 
-  const { data: addresses, refetch: refetchAddresses } = useQuery({
+  const { data: addresses = [], refetch: refetchAddresses } = useQuery<Address[]>({
     queryKey: ['addresses'],
     queryFn: async () => { const { data } = await api.get('/users/me/addresses'); return data },
   })
 
-  const { data: cart, isLoading: cartLoading } = useQuery({
+  const { data: cart, isLoading: cartLoading } = useQuery<Cart>({
     queryKey: ['cart'],
     queryFn: async () => { const { data } = await api.get('/cart'); return data },
     staleTime: 0,
@@ -204,9 +127,8 @@ function CheckoutPage() {
         couponCode: couponCode || undefined,
       })
       router.push(`/checkout/success?orderId=${data.orderId}&method=${payMethod}`)
-    } catch (err: any) {
-      const msg = err?.response?.data?.message
-      toast.error(Array.isArray(msg) ? msg.join(', ') : msg || 'Failed to place order')
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, 'Failed to place order'))
       setLoading(false)
     }
   }
@@ -253,14 +175,11 @@ function CheckoutPage() {
         shippingMethod,
       })
       setPaymentData(data)
-    } catch (err: any) {
-      const msg = err?.response?.data?.message
-      toast.error(Array.isArray(msg) ? msg.join(', ') : msg || t.common.error)
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, t.common.error))
     }
     setLoading(false)
   }
-
-  const selectedAddrData = addresses?.find((a: any) => a.id === selectedAddress)
 
   if (!cartLoading && cart && cart.items?.length === 0) {
     return (
@@ -299,7 +218,7 @@ function CheckoutPage() {
             {/* Saved addresses */}
             {addresses?.length > 0 && (
               <div className="space-y-2">
-                {addresses.map((addr: any) => (
+                {addresses.map((addr) => (
                   <label
                     key={addr.id}
                     className={`flex gap-3 border rounded-lg p-3 transition ${
@@ -500,7 +419,7 @@ function CheckoutPage() {
           <Card>
             <CardHeader><CardTitle>{t.checkout.order_summary}</CardTitle></CardHeader>
             <CardContent className="space-y-2 text-sm">
-              {cart.items.map((item: any) => (
+              {cart.items.map((item) => (
                 <div key={item.id} className="flex justify-between">
                   <span>{item.product.name} × {item.quantity}</span>
                   <span>{formatPrice(Number(item.variant?.price ?? item.product.discountPrice ?? item.product.price) * item.quantity)}</span>
@@ -515,27 +434,8 @@ function CheckoutPage() {
         )}
 
         {/* ── Continue to Payment / Payment form ── */}
-        {/* Payment method selector */}
         {!locked && (
-          <Card>
-            <CardHeader><CardTitle>Payment Method</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              {[
-                { id: 'card', label: 'Credit / Debit Card', sub: 'Visa, Mastercard — online card payment', icon: '💳' },
-                { id: 'korti_milli', label: 'Корти Миллӣ — Alif Bank', sub: 'Pay via Alif Mobi app or Alif Bank transfer', icon: '🟢' },
-                { id: 'dc_bank', label: 'Корти Миллӣ — DC Bank (Dushanbe City)', sub: 'Pay via DC Next app or DC Bank transfer — 1.2% commission', icon: '🔵' },
-              ].map((m) => (
-                <label key={m.id} className={`flex items-center gap-3 border rounded-lg p-3 cursor-pointer transition ${payMethod === m.id ? 'border-primary bg-primary/5' : 'hover:border-muted-foreground'}`}>
-                  <input type="radio" name="payMethod" value={m.id} checked={payMethod === m.id} onChange={() => setPayMethod(m.id as any)} />
-                  <span className="text-xl">{m.icon}</span>
-                  <div className="text-sm flex-1">
-                    <p className="font-semibold">{m.label}</p>
-                    <p className="text-muted-foreground text-xs">{m.sub}</p>
-                  </div>
-                </label>
-              ))}
-            </CardContent>
-          </Card>
+          <PaymentMethodSelector value={payMethod} onChange={setPayMethod} />
         )}
 
         {!paymentData ? (
@@ -574,7 +474,7 @@ function CheckoutPage() {
                 </div>
               </div>
               <Elements stripe={stripePromise} options={{ clientSecret: paymentData.clientSecret }}>
-                <CheckoutForm
+                <CheckoutPaymentForm
                   clientSecret={paymentData.clientSecret}
                   total={paymentData.totalAmount}
                   paymentIntentId={paymentData.paymentIntentId}

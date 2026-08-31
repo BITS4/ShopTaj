@@ -7,12 +7,26 @@ import { formatDate } from '@/lib/utils'
 import api from '@/lib/api'
 import { toast } from 'sonner'
 
+interface AdminUser {
+  id: string
+  email: string
+  fullName: string
+  role: string
+  isBanned: boolean
+  createdAt: string
+}
+
+interface UsersResponse {
+  data: AdminUser[]
+  meta: { total: number; page: number; limit: number }
+}
+
 export default function AdminUsersPage() {
   const qc = useQueryClient()
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['admin-users'],
-    queryFn: async () => { const { data } = await api.get('/admin/users'); return data },
+    queryFn: async () => { const { data } = await api.get<UsersResponse>('/admin/users'); return data },
     retry: 1,
   })
 
@@ -52,7 +66,7 @@ export default function AdminUsersPage() {
               </tr>
             </thead>
             <tbody>
-              {data?.data.map((user: any) => (
+              {data?.data.map((user) => (
                 <tr key={user.id} className="border-t hover:bg-muted/20">
                   <td className="px-4 py-3">
                     <p className="font-medium">{user.fullName}</p>

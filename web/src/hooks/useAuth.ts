@@ -2,8 +2,25 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { isAxiosError } from 'axios'
 import api from '@/lib/api'
 import { useAuthStore } from '@/store/auth.store'
+
+interface ApiErrorBody {
+  message?: string | string[]
+}
+
+interface LoginVariables {
+  email: string
+  password: string
+  next?: string
+}
+
+function getApiErrorMessage(error: unknown): string {
+  if (!isAxiosError<ApiErrorBody>(error)) return ''
+  const message = error.response?.data?.message
+  return Array.isArray(message) ? (message[0] ?? '') : (message ?? '')
+}
 
 export function useAuth() {
   const { setAuth, clearAuth, user } = useAuthStore()
@@ -11,16 +28,16 @@ export function useAuth() {
   const qc = useQueryClient()
 
   const login = useMutation({
-    mutationFn: ({ next: _next, ...body }: { email: string; password: string; next?: string }) =>
+    mutationFn: ({ next: _next, ...body }: LoginVariables) =>
       api.post('/auth/login', body),
     onSuccess: ({ data }, variables) => {
       setAuth(data.user, data.accessToken)
       toast.success(`Welcome back, ${data.user.fullName}!`)
-      const next = (variables as any).next || '/'
+      const next = variables.next || '/'
       router.push(data.user.role === 'ADMIN' && next === '/' ? '/admin' : next)
     },
-    onError: (err: any) => {
-      const msg: string = err?.response?.data?.message || ''
+    onError: (error: unknown) => {
+      const msg = getApiErrorMessage(error)
       if (msg.startsWith('EMAIL_NOT_VERIFIED:')) {
         const parts = msg.split(':')
         const email = parts[1] || ''
@@ -39,9 +56,8 @@ export function useAuth() {
       toast.success('Account created! Enter the 6-digit code sent to your email.')
       router.push(`/verify-email-notice?email=${encodeURIComponent(variables.email)}`)
     },
-    onError: (err: any) => {
-      const msg = err?.response?.data?.message
-      toast.error(Array.isArray(msg) ? msg[0] : msg || 'Registration failed')
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error) || 'Registration failed')
     },
   })
 

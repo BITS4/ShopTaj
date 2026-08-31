@@ -8,22 +8,30 @@ import { Input } from '@/components/ui/input'
 import { useCart } from '@/hooks/useCart'
 import { useT } from '@/store/language.store'
 import { formatPrice } from '@/lib/utils'
+import type { CartItem } from '@/types'
+
+interface AppliedCoupon {
+  couponId: string
+  discountType: 'PERCENTAGE' | 'FIXED'
+  discountValue: number | string
+  minOrderValue: number | string | null
+}
 
 export default function CartPage() {
   const { cart, isLoading, updateItem, removeItem, applyCoupon } = useCart()
   const t = useT()
   const [couponCode, setCouponCode] = useState('')
-  const [couponData, setCouponData] = useState<any>(null)
+  const [couponData, setCouponData] = useState<AppliedCoupon | null>(null)
 
   const handleCoupon = async () => {
     const result = await applyCoupon.mutateAsync(couponCode)
-    setCouponData(result.data)
+    setCouponData(result.data as AppliedCoupon)
   }
 
   const discount = couponData
     ? couponData.discountType === 'PERCENTAGE'
-      ? ((cart?.total ?? 0) * couponData.discountValue) / 100
-      : couponData.discountValue
+      ? ((cart?.total ?? 0) * Number(couponData.discountValue)) / 100
+      : Number(couponData.discountValue)
     : 0
 
   const finalTotal = (cart?.total ?? 0) - discount
@@ -44,7 +52,7 @@ export default function CartPage() {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Items */}
           <div className="lg:col-span-2 space-y-4">
-            {cart.items.map((item: any) => (
+            {cart.items.map((item: CartItem) => (
               <div key={item.id} className="flex gap-4 p-4 border rounded-xl">
                 <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-muted">
                   {item.product.images[0] && (

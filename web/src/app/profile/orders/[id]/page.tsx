@@ -11,6 +11,33 @@ import OrderTracker from '@/components/order/OrderTracker'
 import api from '@/lib/api'
 import { toast } from 'sonner'
 
+interface OrderDetailItem {
+  id: string
+  productName: string
+  quantity: number
+  priceAtPurchase: number | string
+  product?: { images?: Array<{ url: string }> } | null
+  variant?: { size?: string | null; color?: string | null } | null
+}
+
+interface ShippingAddress {
+  street: string
+  city: string
+  country: string
+  zip?: string | null
+}
+
+interface OrderDetail {
+  id: string
+  status: string
+  createdAt: string
+  items: OrderDetailItem[]
+  shippingAddress?: ShippingAddress | null
+  shippingAmount: number | string
+  discountAmount: number | string
+  totalAmount: number | string
+}
+
 const STATUS_COLOR: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   PENDING: 'secondary', PROCESSING: 'default', SHIPPED: 'default',
   DELIVERED: 'outline', CANCELLED: 'destructive',
@@ -21,9 +48,9 @@ export default function OrderDetailPage() {
   const qc = useQueryClient()
   const t = useT()
 
-  const { data: order, isLoading } = useQuery({
+  const { data: order, isLoading } = useQuery<OrderDetail>({
     queryKey: ['order', id],
-    queryFn: async () => { const { data } = await api.get(`/orders/${id}`); return data },
+    queryFn: async () => { const { data } = await api.get<OrderDetail>(`/orders/${id}`); return data },
     refetchOnWindowFocus: true,
   })
 
@@ -48,7 +75,7 @@ export default function OrderDetailPage() {
 
       <div className="border rounded-xl overflow-hidden">
         <h2 className="font-semibold px-4 py-3 border-b bg-muted/30">{t.orders.items}</h2>
-        {order.items.map((item: any) => (
+        {order.items.map((item) => (
           <div key={item.id} className="flex gap-4 px-4 py-3 border-b last:border-0">
             <div className="relative h-16 w-16 shrink-0 rounded-md overflow-hidden bg-muted">
               {item.product?.images?.[0] && (

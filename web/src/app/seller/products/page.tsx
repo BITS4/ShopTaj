@@ -7,12 +7,27 @@ import api from '@/lib/api'
 import Link from 'next/link'
 import { Package, Pencil, Trash2, Plus } from 'lucide-react'
 
+interface SellerProduct {
+  id: string
+  name: string
+  price: number | string
+  stock: number
+  isActive: boolean
+  images?: Array<{ url: string }>
+  category?: { name: string } | null
+}
+
+interface SellerProductsResponse {
+  data: SellerProduct[]
+  meta: { total: number; page: number; limit: number }
+}
+
 export default function SellerProductsPage() {
   const qc = useQueryClient()
 
   const { data, isLoading } = useQuery({
     queryKey: ['seller-products'],
-    queryFn: async () => { const { data } = await api.get('/seller/products'); return data },
+    queryFn: async () => { const { data } = await api.get<SellerProductsResponse>('/seller/products'); return data },
   })
 
   const deleteProduct = useMutation({
@@ -45,7 +60,7 @@ export default function SellerProductsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {products.map((p: any) => (
+          {products.map((p) => (
             <Card key={p.id}>
               <CardContent className="py-4 flex items-center gap-4">
                 {p.images?.[0] && (

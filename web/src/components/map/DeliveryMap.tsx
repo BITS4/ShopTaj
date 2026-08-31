@@ -2,6 +2,44 @@
 import { useEffect, useRef, useState } from 'react'
 import { MapPin, Locate, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import type { LeafletEvent, LeafletMouseEvent, Map as LeafletMap, Marker } from 'leaflet'
+
+type LeafletContainer = HTMLDivElement & { _leaflet_id?: number }
+type DefaultIconPrototype = typeof import('leaflet').Icon.Default.prototype & {
+  _getIconUrl?: () => string
+}
+
+interface NominatimAddress {
+  house_number?: string
+  'addr:housenumber'?: string
+  house?: string
+  road?: string
+  pedestrian?: string
+  path?: string
+  footway?: string
+  residential?: string
+  hamlet?: string
+  neighbourhood?: string
+  suburb?: string
+  quarter?: string
+  allotments?: string
+  city_district?: string
+  district?: string
+  state_district?: string
+  city?: string
+  town?: string
+  village?: string
+  county?: string
+  municipality?: string
+  state?: string
+  region?: string
+  postcode?: string
+}
+
+interface NominatimResponse {
+  address?: NominatimAddress
+  display_name?: string
+}
 
 export interface MapLocation {
   lat: number
@@ -25,8 +63,8 @@ const TJ_CENTER: [number, number] = [38.861, 71.276]
 const TJ_ZOOM = 7
 
 export default function DeliveryMap({ onSelect, selected, disabled = false }: Props) {
-  const mapRef = useRef<any>(null)
-  const markerRef = useRef<any>(null)
+  const mapRef = useRef<LeafletMap | null>(null)
+  const markerRef = useRef<Marker | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const initializedRef = useRef(false)
   const [loading, setLoading] = useState(false)
@@ -39,9 +77,9 @@ export default function DeliveryMap({ onSelect, selected, disabled = false }: Pr
 
     import('leaflet').then((L) => {
       // Guard against double-init (React StrictMode / hot reload)
-      if ((containerRef.current as any)?._leaflet_id) return
+      if ((containerRef.current as LeafletContainer | null)?._leaflet_id) return
 
-      delete (L.Icon.Default.prototype as any)._getIconUrl
+      delete (L.Icon.Default.prototype as DefaultIconPrototype)._getIconUrl
       L.Icon.Default.mergeOptions({
         iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
         iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -63,26 +101,27 @@ export default function DeliveryMap({ onSelect, selected, disabled = false }: Pr
         const marker = L.marker([selected.lat, selected.lng], { draggable: !disabled }).addTo(map)
         markerRef.current = marker
         if (!disabled) {
-          marker.on('dragend', (e: any) => {
-            const pos = e.target.getLatLng()
-            reverseGeocode(L, map, pos.lat, pos.lng)
+          marker.on('dragend', (event: LeafletEvent) => {
+            const pos = (event.target as Marker).getLatLng()
+            reverseGeocode(pos.lat, pos.lng)
           })
         }
       }
 
       if (!disabled) {
-        map.on('click', (e: any) => {
-          const { lat, lng } = e.latlng
+        map.on('click', (event: LeafletMouseEvent) => {
+          const { lat, lng } = event.latlng
           if (markerRef.current) {
             markerRef.current.setLatLng([lat, lng])
           } else {
-            markerRef.current = L.marker([lat, lng], { draggable: true }).addTo(map)
-            markerRef.current.on('dragend', (ev: any) => {
-              const pos = ev.target.getLatLng()
-              reverseGeocode(L, map, pos.lat, pos.lng)
+            const marker = L.marker([lat, lng], { draggable: true }).addTo(map)
+            markerRef.current = marker
+            marker.on('dragend', (dragEvent: LeafletEvent) => {
+              const pos = (dragEvent.target as Marker).getLatLng()
+              reverseGeocode(pos.lat, pos.lng)
             })
           }
-          reverseGeocode(L, map, lat, lng)
+          reverseGeocode(lat, lng)
         })
       }
 
@@ -100,14 +139,14 @@ export default function DeliveryMap({ onSelect, selected, disabled = false }: Pr
     }
   }, [])
 
-  const reverseGeocode = async (L: any, map: any, lat: number, lng: number) => {
+  const reverseGeocode = async (lat: number, lng: number) => {
     setLoading(true)
     try {
       const res = await fetch(
         `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&namedetails=1&zoom=19`,
         { headers: { 'Accept-Language': 'ru,tg;q=0.9,en;q=0.8' } },
       )
-      const data = await res.json()
+      const data = await res.json() as NominatimResponse
       const a = data.address || {}
 
       // Extract all available components
@@ -183,13 +222,14 @@ export default function DeliveryMap({ onSelect, selected, disabled = false }: Pr
           if (markerRef.current) {
             markerRef.current.setLatLng([lat, lng])
           } else if (mapRef.current) {
-            markerRef.current = L.marker([lat, lng], { draggable: true }).addTo(mapRef.current)
-            markerRef.current.on('dragend', (e: any) => {
-              const p = e.target.getLatLng()
-              reverseGeocode(L, mapRef.current, p.lat, p.lng)
+            const marker = L.marker([lat, lng], { draggable: true }).addTo(mapRef.current)
+            markerRef.current = marker
+            marker.on('dragend', (event: LeafletEvent) => {
+              const point = (event.target as Marker).getLatLng()
+              reverseGeocode(point.lat, point.lng)
             })
           }
-          reverseGeocode(L, mapRef.current, lat, lng)
+          reverseGeocode(lat, lng)
         })
       },
       () => {
