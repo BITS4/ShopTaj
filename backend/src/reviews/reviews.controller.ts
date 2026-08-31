@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/co
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
 import { ReviewsService, CreateReviewDto } from './reviews.service';
 
 @ApiTags('reviews')
@@ -22,7 +23,7 @@ export class ReviewsController {
   @UseGuards(JwtAuthGuard)
   @Post('product/:productId')
   create(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('productId') productId: string,
     @Body() dto: CreateReviewDto,
   ) {

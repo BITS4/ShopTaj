@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ProductQueryDto, SortBy } from './dto/product-query.dto';
 import slugify from 'slugify';
@@ -11,11 +12,14 @@ export class ProductsService {
   async findAll(query: ProductQueryDto) {
     const {
       search, categoryId, brand, minPrice, maxPrice,
-      minRating, inStock, sortBy, page = 1, limit = 20,
+      minRating: _minRating, inStock, sortBy, page = 1, limit = 20,
     } = query;
     const skip = (page - 1) * limit;
 
-    const where: any = (query as any).isActive === 'all' ? {} : { isActive: true };
+    const visibilityQuery = query as ProductQueryDto & { isActive?: string };
+    const where: Prisma.ProductWhereInput = visibilityQuery.isActive === 'all'
+      ? {}
+      : { isActive: true };
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
@@ -33,7 +37,7 @@ export class ProductsService {
     }
     if (inStock) where.stock = { gt: 0 };
 
-    let orderBy: any = { createdAt: 'desc' };
+    let orderBy: Prisma.ProductOrderByWithRelationInput = { createdAt: 'desc' };
     if (sortBy === SortBy.PRICE_ASC) orderBy = { price: 'asc' };
     if (sortBy === SortBy.PRICE_DESC) orderBy = { price: 'desc' };
     if (sortBy === SortBy.NEWEST) orderBy = { createdAt: 'desc' };
@@ -136,7 +140,7 @@ export class ProductsService {
     const product = await this.prisma.product.findUnique({ where: { id } });
     if (!product) throw new NotFoundException('Product not found');
 
-    const { variants, ...rest } = dto;
+    const { variants: _variants, ...rest } = dto;
     return this.prisma.product.update({
       where: { id },
       data: rest,

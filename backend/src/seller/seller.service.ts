@@ -82,7 +82,7 @@ export class SellerService {
 
   async createProduct(userId: string, dto: CreateProductDto) {
     const profile = await this.requireApprovedProfile(userId);
-    const { variants, ...productData } = dto as any;
+    const { variants, ...productData } = dto;
 
     const slug = await this.generateSlug(dto.name);
     const product = await this.prisma.product.create({
@@ -118,7 +118,7 @@ export class SellerService {
 
   async updateProduct(userId: string, productId: string, dto: Partial<CreateProductDto>) {
     await this.requireOwnProduct(userId, productId);
-    const { variants, ...data } = dto as any;
+    const { variants: _variants, ...data } = dto;
     return this.prisma.product.update({ where: { id: productId }, data });
   }
 

@@ -1,7 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { IsString, IsBoolean, IsOptional, IsEnum, IsNumber, IsPositive } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsNumber, IsPositive } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { DiscountType } from '@prisma/client';
+import {
+  DiscountType,
+  OrderStatus,
+  PaymentStatus,
+  Prisma,
+  SellerStatus,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from '../products/dto/create-product.dto';
 import { ProductsService } from '../products/products.service';
@@ -67,12 +73,12 @@ export class AdminService {
     };
   }
 
-  async getOrders(page?: any, limit?: any, status?: string) {
-    const p = Math.max(1, parseInt(page) || 1);
-    const l = Math.min(100, parseInt(limit) || 20);
+  async getOrders(page?: string | number, limit?: string | number, status?: string) {
+    const p = Math.max(1, parseInt(String(page), 10) || 1);
+    const l = Math.min(100, parseInt(String(limit), 10) || 20);
     const skip = (p - 1) * l;
-    const where: any = {};
-    if (status) where.status = status;
+    const where: Prisma.OrderWhereInput = {};
+    if (status) where.status = status as OrderStatus;
     const [orders, total] = await Promise.all([
       this.prisma.order.findMany({
         where,
@@ -95,7 +101,10 @@ export class AdminService {
       include: { user: { select: { phone: true, isPhoneVerified: true } } },
     });
     if (!order) throw new NotFoundException('Order not found');
-    const updated = await this.prisma.order.update({ where: { id: orderId }, data: { status: dto.status as any } });
+    const updated = await this.prisma.order.update({
+      where: { id: orderId },
+      data: { status: dto.status as OrderStatus },
+    });
 
     if (order.user?.phone && order.user.isPhoneVerified) {
       this.whatsapp.sendOrderStatusUpdate(order.user.phone, orderId, dto.status).catch(() => {});
@@ -106,14 +115,18 @@ export class AdminService {
   async confirmPayment(orderId: string, paymentStatus: string) {
     const order = await this.prisma.order.findUnique({ where: { id: orderId } });
     if (!order) throw new NotFoundException('Order not found');
-    const data: any = { paymentStatus: paymentStatus as any };
-    if (paymentStatus === 'PAID' && order.status === 'PENDING') data.status = 'PROCESSING';
+    const data: Prisma.OrderUpdateInput = {
+      paymentStatus: paymentStatus as PaymentStatus,
+    };
+    if (paymentStatus === PaymentStatus.PAID && order.status === OrderStatus.PENDING) {
+      data.status = OrderStatus.PROCESSING;
+    }
     return this.prisma.order.update({ where: { id: orderId }, data });
   }
 
-  async getUsers(page?: any, limit?: any) {
-    const p = Math.max(1, parseInt(page) || 1);
-    const l = Math.min(100, parseInt(limit) || 20);
+  async getUsers(page?: string | number, limit?: string | number) {
+    const p = Math.max(1, parseInt(String(page), 10) || 1);
+    const l = Math.min(100, parseInt(String(limit), 10) || 20);
     const skip = (p - 1) * l;
     const where = { isEmailVerified: true };
     const [users, total] = await Promise.all([
@@ -144,11 +157,11 @@ export class AdminService {
   }
 
   createProduct(dto: CreateProductDto) { return this.productsService.create(dto); }
-  updateProduct(id: string, dto: any) { return this.productsService.update(id, dto); }
+  updateProduct(id: string, dto: Partial<CreateProductDto>) { return this.productsService.update(id, dto); }
   deleteProduct(id: string) { return this.productsService.delete(id); }
 
   createCategory(dto: CreateCategoryDto) { return this.categoriesService.create(dto); }
-  updateCategory(id: string, dto: any) { return this.categoriesService.update(id, dto); }
+  updateCategory(id: string, dto: Partial<CreateCategoryDto>) { return this.categoriesService.update(id, dto); }
   deleteCategory(id: string) { return this.categoriesService.delete(id); }
 
   async getCoupons() {
@@ -156,7 +169,7 @@ export class AdminService {
   }
 
   async createCoupon(dto: CreateCouponDto) {
-    return this.prisma.coupon.create({ data: dto as any });
+    return this.prisma.coupon.create({ data: dto });
   }
 
   async toggleCoupon(id: string) {
@@ -169,7 +182,7 @@ export class AdminService {
 
   async getSellers(status?: string) {
     return this.prisma.sellerProfile.findMany({
-      where: status ? { status: status as any } : undefined,
+      where: status ? { status: status as SellerStatus } : undefined,
       include: {
         user: { select: { id: true, fullName: true, email: true, phone: true, createdAt: true } },
       },
