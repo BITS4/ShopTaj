@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CI: "true"
+  CI: 'true'
   DATABASE_URL: postgresql://shoptaj:shoptaj_pass@localhost:5432/shoptaj_db
 
 jobs:
@@ -36,8 +36,14 @@ jobs:
             mobile/package-lock.json
       - name: Install locked dependencies
         run: npm ci
-      - name: Lint all applications
-        run: npm run lint
+      - name: Check formatting
+        run: npm run format:check
+      - name: Lint backend
+        run: npm run lint --prefix backend
+      - name: Lint web
+        run: npm run lint --prefix web
+      - name: Lint mobile
+        run: npm run lint --prefix mobile
 
   typecheck:
     name: Typecheck
@@ -60,8 +66,12 @@ jobs:
         run: npm ci
       - name: Generate Prisma client
         run: npm run prisma:generate
-      - name: Typecheck all applications
-        run: npm run typecheck
+      - name: Typecheck backend
+        run: npm run typecheck --prefix backend
+      - name: Typecheck web
+        run: npm run typecheck --prefix web
+      - name: Typecheck mobile
+        run: npm run typecheck --prefix mobile
 
   test:
     name: Test
@@ -69,7 +79,7 @@ jobs:
     timeout-minutes: 20
     env:
       NODE_ENV: test
-      TEST_MODE: "true"
+      TEST_MODE: 'true'
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -87,10 +97,16 @@ jobs:
         run: npm ci
       - name: Generate Prisma client
         run: npm run prisma:generate
-      - name: Run isolated test suites
-        run: npm test
-      - name: Enforce backend and web coverage thresholds
-        run: npm run test:coverage
+      - name: Test backend
+        run: npm test --prefix backend
+      - name: Test web
+        run: npm test --prefix web
+      - name: Test mobile
+        run: npm test --prefix mobile
+      - name: Enforce backend coverage threshold
+        run: npm run test:cov --prefix backend
+      - name: Enforce web coverage threshold
+        run: npm run test:coverage --prefix web
 
   build:
     name: Build
