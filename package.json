@@ -2,17 +2,48 @@
   "name": "shoptaj",
   "version": "1.0.0",
   "private": true,
+  "workspaces": [
+    "backend",
+    "web",
+    "mobile"
+  ],
   "scripts": {
     "dev:backend": "npm run dev --prefix backend",
     "dev:web": "npm run dev --prefix web",
     "dev:mobile": "npm run start --prefix mobile",
-    "build:backend": "npm run build --prefix backend",
-    "build:web": "npm run build --prefix web",
-    "prisma:generate": "npm run prisma:generate --prefix backend",
-    "prisma:migrate": "npm run prisma:migrate --prefix backend",
-    "prisma:studio": "npm run prisma:studio --prefix backend"
+    "build": "npm run build:backend && npm run build:web",
+    "build:backend": "npm run build --workspace=backend",
+    "build:web": "npm run build --workspace=web",
+    "lint": "npm run lint:backend && npm run lint:web && npm run lint:mobile",
+    "lint:backend": "npm run lint --workspace=backend",
+    "lint:web": "npm run lint --workspace=web",
+    "lint:mobile": "npm run lint --workspace=mobile",
+    "typecheck": "npm run typecheck:backend && npm run typecheck:web && npm run typecheck:mobile",
+    "typecheck:backend": "npm run typecheck --workspace=backend",
+    "typecheck:web": "npm run typecheck --workspace=web",
+    "typecheck:mobile": "npm run typecheck --workspace=mobile",
+    "test": "npm run test:backend && npm run test:web && npm run test:mobile",
+    "test:backend": "npm test --workspace=backend",
+    "test:web": "npm test --workspace=web",
+    "test:mobile": "npm test --workspace=mobile",
+    "test:coverage": "npm run test:cov --workspace=backend && npm run test:coverage --workspace=web",
+    "audit": "node scripts/check-audit-baseline.mjs",
+    "audit:backend": "npm audit --prefix backend --omit=dev --audit-level=high",
+    "audit:web": "npm audit --prefix web --omit=dev --audit-level=high",
+    "audit:mobile": "npm audit --prefix mobile --omit=dev --audit-level=high",
+    "verify": "npm run lint && npm run typecheck && npm test && npm run build",
+    "prisma:generate": "npm run prisma:generate --workspace=backend",
+    "prisma:migrate": "npm run prisma:migrate --workspace=backend",
+    "prisma:seed": "npm run prisma:seed --workspace=backend",
+    "prisma:studio": "npm run prisma:studio --workspace=backend"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=20.9.0"
+  },
+  "devDependencies": {
+    "@types/react": "~19.1.0",
+    "@types/react-dom": "~19.1.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
   }
 }

@@ -1,0 +1,14 @@
+{
+  "backend": {
+    "high": 0,
+    "critical": 0
+  },
+  "web": {
+    "high": 0,
+    "critical": 0
+  },
+  "mobile": {
+    "high": 9,
+    "critical": 0
+  }
+}

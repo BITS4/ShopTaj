@@ -5,9 +5,12 @@ build/
 .expo/
 *.log
 .env
-.env.local
-.env.production
+.env.*
+!.env.example
+!**/.env.example
 .DS_Store
 coverage/
+test-results/
+.nyc_output/
 # migrations must be tracked for Railway/Render deployment — do NOT ignore
 *.tsbuildinfo
