@@ -1,0 +1,13 @@
+.git
+.github
+.claude
+**/node_modules
+**/.next
+**/.expo
+**/dist
+**/build
+**/coverage
+**/*.log
+**/.env*
+*.tar
+*.tar.gz
