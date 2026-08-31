@@ -9,11 +9,11 @@ reviews, wishlists, seller workflows, and role-based administration.
 
 ## Applications
 
-| Application | Stack | Local URL |
-| --- | --- | --- |
-| `backend/` | NestJS, Prisma, PostgreSQL | `http://localhost:3001` |
-| `web/` | Next.js, React, Tailwind CSS, Zustand | `http://localhost:3000` |
-| `mobile/` | Expo Router, React Native | Expo development server |
+| Application | Stack                                 | Local URL               |
+| ----------- | ------------------------------------- | ----------------------- |
+| `backend/`  | NestJS, Prisma, PostgreSQL            | `http://localhost:3001` |
+| `web/`      | Next.js, React, Tailwind CSS, Zustand | `http://localhost:3000` |
+| `mobile/`   | Expo Router, React Native             | Expo development server |
 
 Optional integrations include Stripe and bePaid payments, Cloudinary storage,
 Gmail or Resend email, Google OAuth, and WhatsApp Business notifications. The
@@ -74,10 +74,10 @@ npm run prisma:seed
 
 The seed creates demo catalog data plus these local accounts:
 
-| Role | Email | Password |
-| --- | --- | --- |
+| Role  | Email               | Password    |
+| ----- | ------------------- | ----------- |
 | Admin | `admin@shoptaj.com` | `Admin123!` |
-| User | `user@shoptaj.com` | `User1234!` |
+| User  | `user@shoptaj.com`  | `User1234!` |
 
 Demo coupons are `WELCOME10` (10% off orders over $20) and `SAVE20` ($20 off
 orders over $100). Stripe's standard test card is `4242 4242 4242 4242` with
@@ -103,17 +103,17 @@ address when automatic Metro host detection is not sufficient.
 
 Every value below is present in `.env.example` with a safe placeholder.
 
-| Area | Variables | Required for |
-| --- | --- | --- |
-| Core | `DATABASE_URL`, `PORT`, `NODE_ENV`, `LOG_LEVEL`, `FRONTEND_URL`, `BACKEND_URL`, `CORS_ORIGINS` | API and database |
-| Auth | `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, expiry settings | Login and tokens |
-| Web | `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_DOMAIN`, `NEXT_PUBLIC_STRIPE_PK`, `VERCEL_URL` | Browser API/payment configuration and hosted origins |
-| Mobile | `EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_DEV_HOST` | Expo builds and physical-device development |
-| Stripe | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Stripe checkout/webhooks |
-| Storage | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Hosted uploads; blank uses local uploads |
-| Email | Gmail or Resend variables | Delivery; blank logs local verification codes |
-| Optional | Google OAuth, WhatsApp, bePaid, `SENTRY_DSN`, `SENTRY_TRACES_SAMPLE_RATE` | Corresponding integration |
-| Tests | `TEST_MODE` | Optional deterministic provider adapters |
+| Area     | Variables                                                                                      | Required for                                         |
+| -------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| Core     | `DATABASE_URL`, `PORT`, `NODE_ENV`, `LOG_LEVEL`, `FRONTEND_URL`, `BACKEND_URL`, `CORS_ORIGINS` | API and database                                     |
+| Auth     | `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, expiry settings                                     | Login and tokens                                     |
+| Web      | `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_DOMAIN`, `NEXT_PUBLIC_STRIPE_PK`, `VERCEL_URL`             | Browser API/payment configuration and hosted origins |
+| Mobile   | `EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_DEV_HOST`                                                  | Expo builds and physical-device development          |
+| Stripe   | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`                                                   | Stripe checkout/webhooks                             |
+| Storage  | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`                         | Hosted uploads; blank uses local uploads             |
+| Email    | Gmail or Resend variables                                                                      | Delivery; blank logs local verification codes        |
+| Optional | Google OAuth, WhatsApp, bePaid, `SENTRY_DSN`, `SENTRY_TRACES_SAMPLE_RATE`                      | Corresponding integration                            |
+| Tests    | `TEST_MODE`                                                                                    | Optional deterministic provider adapters             |
 
 Never commit populated `.env` files. See [SECURITY.md](SECURITY.md) for private
 vulnerability reporting and credential-handling guidance.
@@ -124,12 +124,13 @@ All commands run from the repository root and fail on errors:
 
 ```bash
 npm run lint          # backend + web + mobile lint rules
+npm run format:check  # Prettier formatting gate for the entire repository
 npm run typecheck     # TypeScript checks for all three apps
 npm test              # isolated unit/component suites for all three apps
 npm run test:coverage # backend and web coverage reports
 npm run build         # production backend and web builds
 npm run audit         # production dependency audit baseline
-npm run verify        # lint + typecheck + test + build
+npm run verify        # format + lint + typecheck + test + build
 ```
 
 Tests do not require Docker, a database, or live provider credentials. For
@@ -146,13 +147,33 @@ docker compose -f docker-compose.test.yml down --volumes
 
 `.github/workflows/ci.yml` runs independent lint, typecheck, test, build, and
 dependency-audit jobs on every push and pull request. CI uses `npm ci`, generates
-the Prisma client, enforces backend/web coverage thresholds, and supplies
-non-secret build placeholders; no third-party accounts are needed.
+the Prisma client, enforces explicit numeric coverage thresholds, and supplies
+non-secret build placeholders; no third-party accounts are needed. Backend
+coverage must remain at or above 65% for lines/statements, 60% for functions,
+and 44% for branches. Web coverage must remain at or above 90% for
+lines/statements/functions and 85% for branches.
 
 The audit job compares production high/critical advisories with an explicit
 checked-in baseline and fails if the count increases. Existing debt can only
 stay level or decrease. Dependabot checks the root, backend, web, mobile, and
-GitHub Actions dependency graphs every week.
+GitHub Actions dependency graphs every week. See
+[DEPENDENCIES.md](DEPENDENCIES.md) for manifest counts, lockfile topology, the
+upgrade policy, and the reproducible freshness command.
+
+## Observability
+
+The backend uses `nestjs-pino`/Pino for structured request and application
+logging. Authentication and payment events record stable context fields such as
+`userId`, `orderId`, and payment status while authorization headers, cookies,
+passwords, verification codes, and tokens are redacted. Request query strings
+are stripped before logging or error reporting so URL-carried credentials are
+not retained. Set `LOG_LEVEL` to one of `fatal`, `error`, `warn`, `info`,
+`debug`, `trace`, or `silent`.
+
+Unhandled server errors are reported through `@sentry/node` when `SENTRY_DSN`
+is configured. Expected 4xx responses are not reported, and Sentry is disabled
+when the DSN is blank. Health and Prometheus-compatible metrics remain available
+at `/api/health` and `/api/metrics` without external accounts.
 
 ## Containers
 
@@ -168,15 +189,22 @@ Run Prisma migrations as a deployment step, then start the image with a
 network-reachable `DATABASE_URL` and the backend environment values. The image
 exposes port `3001` and includes an API health check.
 
+Pushing a reviewed Semantic Versioning tag such as `v1.1.0` runs the separate
+release workflow. It accepts only commits contained in `main`, repeats the
+install, verification, coverage, and audit gates for that exact commit, and then
+publishes a provenance-enabled, SBOM-attested production image to
+`ghcr.io/bits4/shoptaj-api`. Ordinary branches and pull requests never publish
+packages.
+
 ## Repository layout
 
 ```text
 ShopTaj/
 ├── backend/
 │   ├── prisma/             # schema, migrations, and deterministic seed
-│   └── src/                # auth, catalog, cart, orders, payments, admin
+│   └── src/                # auth, catalog, payments, observability, admin
 ├── web/
-│   └── src/                # App Router pages, UI components, hooks, stores
+│   └── src/                # pages, UI, stores, and typed external services
 ├── mobile/
 │   ├── app/                # Expo Router screens
 │   ├── lib/                # API and URL helpers

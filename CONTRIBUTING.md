@@ -32,3 +32,10 @@ Use a targeted app command while iterating, such as `npm run test:backend` or
 Describe the user-visible outcome, note any schema or configuration changes,
 and include screenshots or request/response examples when they make the review
 easier. The pull-request template contains the final checklist.
+
+## Releases
+
+Release tags describe genuine, reviewed milestones. After the complete CI gate
+passes on the default branch, move the entries from `Unreleased` into a dated
+Semantic Versioning section in `CHANGELOG.md`, then create an annotated tag such
+as `v1.1.0`. Do not backdate tags or create synthetic contributor identities.
