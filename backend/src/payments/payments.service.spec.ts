@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
+import { getLoggerToken } from 'nestjs-pino';
 import { BePaidService } from '../common/bepaid/bepaid.service';
 import { EmailService } from '../common/email/email.service';
 import { STRIPE_GATEWAY } from '../common/stripe/stripe.provider';
@@ -67,6 +68,11 @@ describe('PaymentsService', () => {
   const config = {
     get: jest.fn((key: string) => configValues[key]),
   };
+  const logger = {
+    error: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+  };
 
   let service: PaymentsService;
 
@@ -100,6 +106,7 @@ describe('PaymentsService', () => {
         { provide: WhatsAppService, useValue: whatsapp },
         { provide: BePaidService, useValue: bepaid },
         { provide: STRIPE_GATEWAY, useValue: stripe },
+        { provide: getLoggerToken(PaymentsService.name), useValue: logger },
       ],
     }).compile();
 
@@ -144,6 +151,14 @@ describe('PaymentsService', () => {
           couponId: 'coupon-1',
         },
       });
+      expect(logger.info).toHaveBeenCalledWith(
+        {
+          userId: 'user-1',
+          paymentIntentId: 'pi_1',
+          amountMinor: 3750,
+        },
+        'Stripe payment intent created',
+      );
     });
 
     it('rejects an empty cart before contacting Stripe', async () => {
@@ -170,11 +185,13 @@ describe('PaymentsService', () => {
         couponCode: 'DISABLED',
       });
 
-      expect(result).toEqual(expect.objectContaining({
-        discountAmount: 0,
-        couponId: null,
-        totalAmount: 30,
-      }));
+      expect(result).toEqual(
+        expect.objectContaining({
+          discountAmount: 0,
+          couponId: null,
+          totalAmount: 30,
+        }),
+      );
     });
   });
 
@@ -271,14 +288,22 @@ describe('PaymentsService', () => {
         data: { stock: { decrement: 2 } },
       });
       expect(prisma.cartItem.deleteMany).toHaveBeenCalledTimes(1);
+      expect(logger.info).toHaveBeenCalledWith(
+        {
+          userId: 'user-1',
+          orderId: 'order-1',
+          paymentIntentId: 'pi_success',
+        },
+        'Paid order created',
+      );
     });
   });
 
   describe('webhooks', () => {
     it('skips Stripe signature work when no webhook secret is configured', async () => {
-      await expect(
-        service.handleWebhook(Buffer.from('{}'), 'signature'),
-      ).resolves.toEqual({ received: true });
+      await expect(service.handleWebhook(Buffer.from('{}'), 'signature')).resolves.toEqual({
+        received: true,
+      });
       expect(stripe.constructWebhookEvent).not.toHaveBeenCalled();
     });
 
@@ -288,9 +313,9 @@ describe('PaymentsService', () => {
         throw new Error('bad signature');
       });
 
-      await expect(
-        service.handleWebhook(Buffer.from('{}'), 'bad-signature'),
-      ).rejects.toThrow('Invalid webhook signature');
+      await expect(service.handleWebhook(Buffer.from('{}'), 'bad-signature')).rejects.toThrow(
+        'Invalid webhook signature',
+      );
     });
 
     it('processes a successful bePaid notification only once', async () => {

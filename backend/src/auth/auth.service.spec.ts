@@ -1,11 +1,8 @@
-import {
-  BadRequestException,
-  ConflictException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
+import { getLoggerToken } from 'nestjs-pino';
 import * as bcrypt from 'bcrypt';
 import { EmailService } from '../common/email/email.service';
 import { WhatsAppService } from '../common/whatsapp/whatsapp.service';
@@ -62,6 +59,11 @@ describe('AuthService', () => {
     sendVerificationCode: jest.fn(),
   };
   const whatsapp = { sendOtp: jest.fn() };
+  const logger = {
+    error: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+  };
   const response = {
     clearCookie: jest.fn(),
     cookie: jest.fn(),
@@ -93,6 +95,7 @@ describe('AuthService', () => {
         { provide: ConfigService, useValue: config },
         { provide: EmailService, useValue: email },
         { provide: WhatsAppService, useValue: whatsapp },
+        { provide: getLoggerToken(AuthService.name), useValue: logger },
       ],
     }).compile();
 
@@ -121,8 +124,7 @@ describe('AuthService', () => {
       }));
 
       await expect(service.register(dto)).resolves.toEqual({
-        message:
-          'Registration successful. Enter the 6-digit code to verify your account.',
+        message: 'Registration successful. Enter the 6-digit code to verify your account.',
       });
 
       expect(bcrypt.hash).toHaveBeenCalledWith(dto.password, 12);
@@ -139,15 +141,42 @@ describe('AuthService', () => {
         dto.fullName,
         expect.stringMatching(/^\d{6}$/),
       );
+      expect(logger.info).toHaveBeenCalledWith(
+        { userId: 'new-user', role: 'SELLER' },
+        'User registration created',
+      );
     });
 
     it('rejects an email that already belongs to a verified account', async () => {
       prisma.user.findUnique.mockResolvedValue(user);
 
-      await expect(service.register(dto)).rejects.toBeInstanceOf(
-        ConflictException,
-      );
+      await expect(service.register(dto)).rejects.toBeInstanceOf(ConflictException);
       expect(prisma.user.create).not.toHaveBeenCalled();
+    });
+
+    it('records asynchronous delivery failures with structured user context', async () => {
+      const deliveryError = new Error('mail provider unavailable');
+      prisma.user.findUnique.mockResolvedValue(null);
+      prisma.user.create.mockResolvedValue({
+        ...user,
+        id: 'new-user',
+        role: 'SELLER',
+      });
+      email.sendVerificationCode.mockRejectedValueOnce(deliveryError);
+
+      await expect(service.register(dto)).resolves.toEqual(
+        expect.objectContaining({ message: expect.any(String) }),
+      );
+      await Promise.resolve();
+
+      expect(logger.error).toHaveBeenCalledWith(
+        {
+          err: deliveryError,
+          userId: 'new-user',
+          notification: 'verification',
+        },
+        'Email delivery failed',
+      );
     });
 
     it('refreshes verification for an existing unverified account', async () => {
@@ -178,10 +207,7 @@ describe('AuthService', () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       await expect(
-        service.login(
-          { email: user.email, password: 'WrongPassword' },
-          response,
-        ),
+        service.login({ email: user.email, password: 'WrongPassword' }, response),
       ).rejects.toBeInstanceOf(UnauthorizedException);
       expect(prisma.refreshToken.create).not.toHaveBeenCalled();
     });
@@ -194,10 +220,7 @@ describe('AuthService', () => {
       prisma.user.update.mockResolvedValue({});
 
       await expect(
-        service.login(
-          { email: user.email, password: 'StrongPass123!' },
-          response,
-        ),
+        service.login({ email: user.email, password: 'StrongPass123!' }, response),
       ).rejects.toThrow('EMAIL_NOT_VERIFIED');
       expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: user.id },
@@ -212,10 +235,7 @@ describe('AuthService', () => {
       prisma.user.findUnique.mockResolvedValue(user);
 
       await expect(
-        service.login(
-          { email: user.email, password: 'StrongPass123!' },
-          response,
-        ),
+        service.login({ email: user.email, password: 'StrongPass123!' }, response),
       ).resolves.toEqual({
         accessToken: 'signed-access-token',
         user: expect.objectContaining({ id: user.id, email: user.email }),
@@ -231,6 +251,7 @@ describe('AuthService', () => {
           token: expect.any(String),
         }),
       });
+      expect(logger.info).toHaveBeenCalledWith({ userId: user.id }, 'User authenticated');
       expect(response.cookie).toHaveBeenCalledWith(
         'refresh_token',
         expect.any(String),
@@ -249,9 +270,7 @@ describe('AuthService', () => {
       });
       prisma.user.update.mockResolvedValue({});
 
-      await expect(
-        service.verifyCode(user.email, ' 123456 ', response),
-      ).resolves.toEqual(
+      await expect(service.verifyCode(user.email, ' 123456 ', response)).resolves.toEqual(
         expect.objectContaining({ accessToken: 'signed-access-token' }),
       );
       expect(prisma.user.update).toHaveBeenCalledWith({
@@ -272,9 +291,9 @@ describe('AuthService', () => {
         verifyCodeExpiry: new Date(now.getTime() + 60_000),
       });
 
-      await expect(
-        service.verifyCode(user.email, '999999', response),
-      ).rejects.toThrow('Incorrect code');
+      await expect(service.verifyCode(user.email, '999999', response)).rejects.toThrow(
+        'Incorrect code',
+      );
       expect(prisma.user.update).not.toHaveBeenCalled();
     });
 
@@ -286,9 +305,9 @@ describe('AuthService', () => {
         verifyCodeExpiry: new Date(now.getTime() - 1),
       });
 
-      await expect(
-        service.verifyCode(user.email, '123456', response),
-      ).rejects.toThrow('Code has expired');
+      await expect(service.verifyCode(user.email, '123456', response)).rejects.toThrow(
+        'Code has expired',
+      );
     });
   });
 
@@ -327,9 +346,9 @@ describe('AuthService', () => {
   it('normalizes a phone number before sending an OTP', async () => {
     prisma.user.update.mockResolvedValue({});
 
-    await expect(service.sendPhoneOtp(user.id, '992900000001')).resolves.toEqual(
-      { message: 'OTP sent' },
-    );
+    await expect(service.sendPhoneOtp(user.id, '992900000001')).resolves.toEqual({
+      message: 'OTP sent',
+    });
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: user.id },
       data: expect.objectContaining({

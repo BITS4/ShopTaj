@@ -3,7 +3,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { CacheModule } from '@nestjs/cache-manager';
 import { APP_FILTER } from '@nestjs/core';
-import { SentryGlobalFilter } from '@sentry/nestjs/setup';
 import { LoggerModule } from 'nestjs-pino';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
@@ -18,6 +17,8 @@ import { WishlistModule } from './wishlist/wishlist.module';
 import { AdminModule } from './admin/admin.module';
 import { SellerModule } from './seller/seller.module';
 import { ObservabilityModule } from './observability/observability.module';
+import { SentryExceptionFilter } from './observability/sentry-exception.filter';
+import { sanitizeRequestPath } from './observability/request-path';
 
 @Module({
   imports: [
@@ -56,19 +57,27 @@ import { ObservabilityModule } from './observability/observability.module';
               ],
               censor: '[REDACTED]',
             },
+            serializers: {
+              req: (request) => ({
+                id: request.id,
+                method: request.method,
+                url: sanitizeRequestPath(request.url),
+                remoteAddress: request.remoteAddress,
+                remotePort: request.remotePort,
+              }),
+            },
             autoLogging: {
-              ignore: (request) =>
-                request.url === '/api/health' ||
-                request.url === '/api/metrics',
+              ignore: (request) => {
+                const path = sanitizeRequestPath(request.url);
+                return path === '/api/health' || path === '/api/metrics';
+              },
             },
             customProps: () => ({ service: 'shoptaj-backend' }),
           },
         };
       },
     }),
-    ThrottlerModule.forRoot([
-      { name: 'global', ttl: 60000 * 15, limit: 100 },
-    ]),
+    ThrottlerModule.forRoot([{ name: 'global', ttl: 60000 * 15, limit: 100 }]),
     CacheModule.register({ isGlobal: true, ttl: 60 }),
     PrismaModule,
     AuthModule,
@@ -87,7 +96,7 @@ import { ObservabilityModule } from './observability/observability.module';
   providers: [
     {
       provide: APP_FILTER,
-      useClass: SentryGlobalFilter,
+      useClass: SentryExceptionFilter,
     },
   ],
 })

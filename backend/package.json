@@ -34,7 +34,7 @@
     "@nestjs/throttler": "^5.1.1",
     "@prisma/client": "^5.10.0",
     "@sendgrid/mail": "^8.1.1",
-    "@sentry/nestjs": "^10.72.0",
+    "@sentry/node": "^10.72.0",
     "bcrypt": "^6.0.0",
     "cache-manager": "^5.4.0",
     "cache-manager-redis-yet": "^5.1.3",

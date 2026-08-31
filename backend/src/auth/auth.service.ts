@@ -3,10 +3,10 @@ import {
   BadRequestException,
   UnauthorizedException,
   ConflictException,
-  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import type { CookieOptions } from 'express';
 import type { SellerProfile, User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
@@ -39,22 +39,27 @@ function generateCode(): string {
 
 @Injectable()
 export class AuthService {
-  private readonly logger = new Logger(AuthService.name);
-
   constructor(
     private prisma: PrismaService,
     private jwt: JwtService,
     private config: ConfigService,
     private email: EmailService,
     private whatsapp: WhatsAppService,
+    @InjectPinoLogger(AuthService.name)
+    private readonly logger: PinoLogger,
   ) {}
 
   // ─── Register ─────────────────────────────────────────────────────────────
   async register(dto: RegisterDto) {
     // Purge stale unverified accounts (older than 24 h) in the background
-    this.prisma.user.deleteMany({
-      where: { isEmailVerified: false, createdAt: { lt: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
-    }).catch(() => {});
+    this.prisma.user
+      .deleteMany({
+        where: {
+          isEmailVerified: false,
+          createdAt: { lt: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+        },
+      })
+      .catch(() => {});
 
     const exists = await this.prisma.user.findUnique({ where: { email: dto.email } });
 
@@ -68,7 +73,7 @@ export class AuthService {
       });
       this.email
         .sendVerificationCode(exists.email, exists.fullName, code)
-        .catch((error) => this.logEmailError(error));
+        .catch((error) => this.logEmailError(error, exists.id, 'verification'));
       return { message: 'A new verification code has been sent to your email.' };
     }
 
@@ -92,7 +97,8 @@ export class AuthService {
     // Fire-and-forget — never block the response waiting for email
     this.email
       .sendVerificationCode(user.email, user.fullName, code)
-      .catch((error) => this.logEmailError(error));
+      .catch((error) => this.logEmailError(error, user.id, 'verification'));
+    this.logger.info({ userId: user.id, role: user.role }, 'User registration created');
     return { message: 'Registration successful. Enter the 6-digit code to verify your account.' };
   }
 
@@ -109,7 +115,7 @@ export class AuthService {
     });
     this.email
       .sendVerificationCode(user.email, user.fullName, code)
-      .catch((error) => this.logEmailError(error));
+      .catch((error) => this.logEmailError(error, user.id, 'verification'));
     return { message: 'New code sent.' };
   }
 
@@ -129,6 +135,7 @@ export class AuthService {
       where: { id: user.id },
       data: { isEmailVerified: true, verifyCode: null, verifyCodeExpiry: null },
     });
+    this.logger.info({ userId: user.id }, 'Email verification completed');
 
     // Auto-login after verification
     return this.generateTokens(user, res);
@@ -151,12 +158,13 @@ export class AuthService {
       });
       this.email
         .sendVerificationCode(user.email, user.fullName, code)
-        .catch((error) => this.logEmailError(error));
+        .catch((error) => this.logEmailError(error, user.id, 'verification'));
       throw new UnauthorizedException(
         `EMAIL_NOT_VERIFIED:${user.email}:A 6-digit code has been sent to your email. Please enter it to continue.`,
       );
     }
 
+    this.logger.info({ userId: user.id }, 'User authenticated');
     return this.generateTokens(user, res);
   }
 
@@ -225,7 +233,7 @@ export class AuthService {
     });
     this.email
       .sendPasswordResetCode(user.email, user.fullName, code)
-      .catch((error) => this.logEmailError(error));
+      .catch((error) => this.logEmailError(error, user.id, 'password_reset'));
     return { message: 'If that email exists, a reset code was sent.' };
   }
 
@@ -255,7 +263,9 @@ export class AuthService {
 
     const rawRefresh = uuidv4();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    await this.prisma.refreshToken.create({ data: { userId: user.id, token: rawRefresh, expiresAt } });
+    await this.prisma.refreshToken.create({
+      data: { userId: user.id, token: rawRefresh, expiresAt },
+    });
 
     res.cookie('refresh_token', rawRefresh, {
       httpOnly: true,
@@ -297,12 +307,9 @@ export class AuthService {
 
   async verifyPhoneOtp(userId: string, otp: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user?.phoneOtp || !user.phoneOtpExpiry)
-      throw new BadRequestException('No OTP requested');
-    if (user.phoneOtpExpiry < new Date())
-      throw new BadRequestException('OTP expired');
-    if (user.phoneOtp !== otp)
-      throw new BadRequestException('Invalid OTP');
+    if (!user?.phoneOtp || !user.phoneOtpExpiry) throw new BadRequestException('No OTP requested');
+    if (user.phoneOtpExpiry < new Date()) throw new BadRequestException('OTP expired');
+    if (user.phoneOtp !== otp) throw new BadRequestException('Invalid OTP');
 
     await this.prisma.user.update({
       where: { id: userId },
@@ -311,9 +318,13 @@ export class AuthService {
     return { message: 'Phone verified' };
   }
 
-  private logEmailError(error: unknown): void {
-    const message = error instanceof Error ? error.message : String(error);
-    this.logger.error(`Email delivery failed: ${message}`);
+  private logEmailError(
+    error: unknown,
+    userId: string,
+    notification: 'verification' | 'password_reset',
+  ): void {
+    const normalizedError = error instanceof Error ? error : new Error(String(error));
+    this.logger.error({ err: normalizedError, userId, notification }, 'Email delivery failed');
   }
 
   private isGoogleAuthUser(value: unknown): value is GoogleAuthUser {

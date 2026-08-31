@@ -1,16 +1,14 @@
-import { Inject, Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IsString, IsOptional, IsUUID, IsNumber } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import Stripe from 'stripe';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../common/email/email.service';
 import { WhatsAppService } from '../common/whatsapp/whatsapp.service';
 import { BePaidService } from '../common/bepaid/bepaid.service';
-import {
-  STRIPE_GATEWAY,
-  StripeGateway,
-} from '../common/stripe/stripe.provider';
+import { STRIPE_GATEWAY, StripeGateway } from '../common/stripe/stripe.provider';
 
 export class CreatePaymentIntentDto {
   @ApiProperty() @IsUUID() addressId: string;
@@ -50,8 +48,6 @@ interface BePaidWebhookPayload {
 
 @Injectable()
 export class PaymentsService {
-  private readonly logger = new Logger(PaymentsService.name);
-
   constructor(
     private config: ConfigService,
     private prisma: PrismaService,
@@ -59,6 +55,8 @@ export class PaymentsService {
     private whatsapp: WhatsAppService,
     private bepaid: BePaidService,
     @Inject(STRIPE_GATEWAY) private stripe: StripeGateway,
+    @InjectPinoLogger(PaymentsService.name)
+    private readonly logger: PinoLogger,
   ) {}
 
   async createPaymentIntent(userId: string, dto: CreatePaymentIntentDto) {
@@ -80,9 +78,10 @@ export class PaymentsService {
     if (dto.couponCode) {
       const coupon = await this.prisma.coupon.findUnique({ where: { code: dto.couponCode } });
       if (coupon && coupon.isActive) {
-        discountAmount = coupon.discountType === 'PERCENTAGE'
-          ? (subtotal * Number(coupon.discountValue)) / 100
-          : Number(coupon.discountValue);
+        discountAmount =
+          coupon.discountType === 'PERCENTAGE'
+            ? (subtotal * Number(coupon.discountValue)) / 100
+            : Number(coupon.discountValue);
         couponId = coupon.id;
       }
     }
@@ -95,6 +94,14 @@ export class PaymentsService {
       currency: 'usd',
       metadata: { userId, addressId: dto.addressId, couponId: couponId || '' },
     });
+    this.logger.info(
+      {
+        userId,
+        paymentIntentId: paymentIntent.id,
+        amountMinor: Math.round(totalAmount * 100),
+      },
+      'Stripe payment intent created',
+    );
 
     return {
       clientSecret: paymentIntent.client_secret,
@@ -108,11 +115,17 @@ export class PaymentsService {
   }
 
   async confirmOrder(userId: string, dto: ConfirmOrderDto) {
-    this.logger.log(`confirmOrder called for user=${userId} pi=${dto.paymentIntentId}`);
+    this.logger.info(
+      { userId, paymentIntentId: dto.paymentIntentId },
+      'Stripe order confirmation started',
+    );
 
     // Verify payment with Stripe
     const pi = await this.stripe.retrievePaymentIntent(dto.paymentIntentId);
-    this.logger.log(`PaymentIntent status: ${pi.status}`);
+    this.logger.info(
+      { userId, paymentIntentId: pi.id, paymentStatus: pi.status },
+      'Stripe payment intent retrieved',
+    );
 
     if (pi.status !== 'succeeded') {
       throw new BadRequestException(`Payment not completed. Status: ${pi.status}`);
@@ -124,7 +137,14 @@ export class PaymentsService {
       include: { items: true },
     });
     if (existing) {
-      this.logger.log(`Order already exists: ${existing.id}`);
+      this.logger.info(
+        {
+          userId,
+          orderId: existing.id,
+          paymentIntentId: dto.paymentIntentId,
+        },
+        'Existing order returned for idempotent payment confirmation',
+      );
       // Still clear cart in case previous run failed mid-way
       const cart = await this.prisma.cart.findUnique({ where: { userId } });
       if (cart) await this.prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
@@ -156,7 +176,8 @@ export class PaymentsService {
             productId: item.productId,
             variantId: item.variantId,
             quantity: item.quantity,
-            priceAtPurchase: item.variant?.price ?? item.product.discountPrice ?? item.product.price,
+            priceAtPurchase:
+              item.variant?.price ?? item.product.discountPrice ?? item.product.price,
             productName: item.product.name,
             productImage: null,
           })),
@@ -165,7 +186,10 @@ export class PaymentsService {
       include: { items: true },
     });
 
-    this.logger.log(`Order created: ${order.id}`);
+    this.logger.info(
+      { userId, orderId: order.id, paymentIntentId: dto.paymentIntentId },
+      'Paid order created',
+    );
 
     // Reduce stock
     for (const item of cartItems) {
@@ -189,7 +213,9 @@ export class PaymentsService {
     this.prisma.user.findUnique({ where: { id: userId } }).then((user) => {
       if (!user) return;
       this.email.sendOrderConfirmationEmail(user.email, user.fullName, order.id).catch(() => {});
-      this.whatsapp.sendOrderConfirmation(user.phone, order.id, `${Number(order.totalAmount).toFixed(2)} сом`).catch(() => {});
+      this.whatsapp
+        .sendOrderConfirmation(user.phone, order.id, `${Number(order.totalAmount).toFixed(2)} сом`)
+        .catch(() => {});
     });
 
     return order;
@@ -211,9 +237,10 @@ export class PaymentsService {
     if (dto.couponCode) {
       const coupon = await this.prisma.coupon.findUnique({ where: { code: dto.couponCode } });
       if (coupon && coupon.isActive) {
-        discountAmount = coupon.discountType === 'PERCENTAGE'
-          ? (subtotal * Number(coupon.discountValue)) / 100
-          : Number(coupon.discountValue);
+        discountAmount =
+          coupon.discountType === 'PERCENTAGE'
+            ? (subtotal * Number(coupon.discountValue)) / 100
+            : Number(coupon.discountValue);
       }
     }
 
@@ -234,7 +261,8 @@ export class PaymentsService {
             productId: item.productId,
             variantId: item.variantId,
             quantity: item.quantity,
-            priceAtPurchase: item.variant?.price ?? item.product.discountPrice ?? item.product.price,
+            priceAtPurchase:
+              item.variant?.price ?? item.product.discountPrice ?? item.product.price,
             productName: item.product.name,
             productImage: null,
           })),
@@ -247,7 +275,9 @@ export class PaymentsService {
     this.prisma.user.findUnique({ where: { id: userId } }).then((user) => {
       if (!user) return;
       this.email.sendOrderConfirmationEmail(user.email, user.fullName, order.id).catch(() => {});
-      this.whatsapp.sendOrderConfirmation(user.phone, order.id, `${Number(order.totalAmount).toFixed(2)} сом`).catch(() => {});
+      this.whatsapp
+        .sendOrderConfirmation(user.phone, order.id, `${Number(order.totalAmount).toFixed(2)} сом`)
+        .catch(() => {});
     });
 
     return { orderId: order.id, totalAmount, status: 'PENDING', paymentStatus: 'UNPAID' };
@@ -255,7 +285,9 @@ export class PaymentsService {
 
   async createBePaidOrder(userId: string, dto: BePaidCreateDto) {
     if (!this.bepaid.isConfigured) {
-      throw new BadRequestException('bePaid is not configured yet. Please contact the store admin.');
+      throw new BadRequestException(
+        'bePaid is not configured yet. Please contact the store admin.',
+      );
     }
 
     const cart = await this.prisma.cart.findUnique({
@@ -273,9 +305,10 @@ export class PaymentsService {
     if (dto.couponCode) {
       const coupon = await this.prisma.coupon.findUnique({ where: { code: dto.couponCode } });
       if (coupon && coupon.isActive) {
-        discountAmount = coupon.discountType === 'PERCENTAGE'
-          ? (subtotal * Number(coupon.discountValue)) / 100
-          : Number(coupon.discountValue);
+        discountAmount =
+          coupon.discountType === 'PERCENTAGE'
+            ? (subtotal * Number(coupon.discountValue)) / 100
+            : Number(coupon.discountValue);
       }
     }
 
@@ -297,7 +330,8 @@ export class PaymentsService {
             productId: item.productId,
             variantId: item.variantId,
             quantity: item.quantity,
-            priceAtPurchase: item.variant?.price ?? item.product.discountPrice ?? item.product.price,
+            priceAtPurchase:
+              item.variant?.price ?? item.product.discountPrice ?? item.product.price,
             productName: item.product.name,
             productImage: null,
           })),
@@ -345,25 +379,42 @@ export class PaymentsService {
       const items = await this.prisma.orderItem.findMany({ where: { orderId } });
       for (const item of items) {
         if (item.variantId) {
-          await this.prisma.productVariant.update({ where: { id: item.variantId }, data: { stock: { decrement: item.quantity } } }).catch(() => {});
+          await this.prisma.productVariant
+            .update({
+              where: { id: item.variantId },
+              data: { stock: { decrement: item.quantity } },
+            })
+            .catch(() => {});
         } else {
-          await this.prisma.product.update({ where: { id: item.productId }, data: { stock: { decrement: item.quantity } } }).catch(() => {});
+          await this.prisma.product
+            .update({
+              where: { id: item.productId },
+              data: { stock: { decrement: item.quantity } },
+            })
+            .catch(() => {});
         }
       }
 
       const user = await this.prisma.user.findUnique({ where: { id: order.userId } });
       if (user) {
         this.email.sendOrderConfirmationEmail(user.email, user.fullName, orderId).catch(() => {});
-        this.whatsapp.sendOrderConfirmation(user.phone, orderId, `${Number(order.totalAmount).toFixed(2)} сом`).catch(() => {});
+        this.whatsapp
+          .sendOrderConfirmation(user.phone, orderId, `${Number(order.totalAmount).toFixed(2)} сом`)
+          .catch(() => {});
       }
 
-      this.logger.log(`bePaid payment confirmed for order ${orderId}`);
+      this.logger.info(
+        { orderId, provider: 'bepaid', paymentStatus: tx.status },
+        'Payment confirmed',
+      );
     } else if (['failed', 'expired'].includes(tx.status)) {
-      await this.prisma.order.update({
-        where: { id: orderId },
-        data: { paymentStatus: 'FAILED', status: 'CANCELLED' },
-      }).catch(() => {});
-      this.logger.warn(`bePaid payment ${tx.status} for order ${orderId}`);
+      await this.prisma.order
+        .update({
+          where: { id: orderId },
+          data: { paymentStatus: 'FAILED', status: 'CANCELLED' },
+        })
+        .catch(() => {});
+      this.logger.warn({ orderId, provider: 'bepaid', paymentStatus: tx.status }, 'Payment failed');
     }
 
     return { received: true };
@@ -382,7 +433,9 @@ export class PaymentsService {
     }
     if (event.type === 'payment_intent.succeeded') {
       const pi = event.data.object as Stripe.PaymentIntent;
-      const existing = await this.prisma.order.findFirst({ where: { stripePaymentIntentId: pi.id } });
+      const existing = await this.prisma.order.findFirst({
+        where: { stripePaymentIntentId: pi.id },
+      });
       if (!existing) await this.fulfillOrder(pi);
     }
     return { received: true };
@@ -409,7 +462,8 @@ export class PaymentsService {
             productId: item.productId,
             variantId: item.variantId,
             quantity: item.quantity,
-            priceAtPurchase: item.variant?.price ?? item.product.discountPrice ?? item.product.price,
+            priceAtPurchase:
+              item.variant?.price ?? item.product.discountPrice ?? item.product.price,
             productName: item.product.name,
             productImage: null,
           })),
@@ -419,9 +473,15 @@ export class PaymentsService {
 
     for (const item of cart.items) {
       if (item.variantId) {
-        await this.prisma.productVariant.update({ where: { id: item.variantId }, data: { stock: { decrement: item.quantity } } });
+        await this.prisma.productVariant.update({
+          where: { id: item.variantId },
+          data: { stock: { decrement: item.quantity } },
+        });
       } else {
-        await this.prisma.product.update({ where: { id: item.productId }, data: { stock: { decrement: item.quantity } } });
+        await this.prisma.product.update({
+          where: { id: item.productId },
+          data: { stock: { decrement: item.quantity } },
+        });
       }
     }
 
