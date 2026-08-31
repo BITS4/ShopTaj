@@ -131,7 +131,9 @@ export class CloudinaryService {
     try {
       const filePath = path.join(this.uploadDir, publicId);
       if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    } catch {}
+    } catch {
+      // Deletion is best-effort for already-missing local uploads.
+    }
     return { result: 'ok' };
   }
 }

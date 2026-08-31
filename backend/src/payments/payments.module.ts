@@ -4,9 +4,10 @@ import { PaymentsController } from './payments.controller';
 import { EmailModule } from '../common/email/email.module';
 import { WhatsAppModule } from '../common/whatsapp/whatsapp.module';
 import { BePaidModule } from '../common/bepaid/bepaid.module';
+import { StripeModule } from '../common/stripe/stripe.module';
 
 @Module({
-  imports: [EmailModule, WhatsAppModule, BePaidModule],
+  imports: [EmailModule, WhatsAppModule, BePaidModule, StripeModule],
   providers: [PaymentsService],
   controllers: [PaymentsController],
 })

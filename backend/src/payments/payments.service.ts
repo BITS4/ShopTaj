@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Inject, Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IsString, IsOptional, IsUUID, IsNumber } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -7,6 +7,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../common/email/email.service';
 import { WhatsAppService } from '../common/whatsapp/whatsapp.service';
 import { BePaidService } from '../common/bepaid/bepaid.service';
+import {
+  STRIPE_GATEWAY,
+  StripeGateway,
+} from '../common/stripe/stripe.provider';
 
 export class CreatePaymentIntentDto {
   @ApiProperty() @IsUUID() addressId: string;
@@ -36,9 +40,16 @@ export class BePaidCreateDto {
   @ApiProperty() @IsString() failUrl: string;
 }
 
+interface BePaidWebhookPayload {
+  transaction?: {
+    tracking_id?: string;
+    status?: string;
+    payment?: { status?: string } | null;
+  } | null;
+}
+
 @Injectable()
 export class PaymentsService {
-  private stripe: Stripe;
   private readonly logger = new Logger(PaymentsService.name);
 
   constructor(
@@ -47,9 +58,8 @@ export class PaymentsService {
     private email: EmailService,
     private whatsapp: WhatsAppService,
     private bepaid: BePaidService,
-  ) {
-    this.stripe = new Stripe(this.config.get('STRIPE_SECRET_KEY'), { apiVersion: '2023-10-16' });
-  }
+    @Inject(STRIPE_GATEWAY) private stripe: StripeGateway,
+  ) {}
 
   async createPaymentIntent(userId: string, dto: CreatePaymentIntentDto) {
     const cart = await this.prisma.cart.findUnique({
@@ -59,7 +69,7 @@ export class PaymentsService {
 
     if (!cart || cart.items.length === 0) throw new BadRequestException('Cart is empty');
 
-    let subtotal = cart.items.reduce((sum, item) => {
+    const subtotal = cart.items.reduce((sum, item) => {
       const price = Number(item.variant?.price ?? item.product.discountPrice ?? item.product.price);
       return sum + price * item.quantity;
     }, 0);
@@ -80,7 +90,7 @@ export class PaymentsService {
     const shippingAmount = dto.shippingMethod === 'express' ? 15 : 5;
     const totalAmount = Math.max(0, subtotal - discountAmount) + shippingAmount;
 
-    const paymentIntent = await this.stripe.paymentIntents.create({
+    const paymentIntent = await this.stripe.createPaymentIntent({
       amount: Math.round(totalAmount * 100),
       currency: 'usd',
       metadata: { userId, addressId: dto.addressId, couponId: couponId || '' },
@@ -101,7 +111,7 @@ export class PaymentsService {
     this.logger.log(`confirmOrder called for user=${userId} pi=${dto.paymentIntentId}`);
 
     // Verify payment with Stripe
-    const pi = await this.stripe.paymentIntents.retrieve(dto.paymentIntentId);
+    const pi = await this.stripe.retrievePaymentIntent(dto.paymentIntentId);
     this.logger.log(`PaymentIntent status: ${pi.status}`);
 
     if (pi.status !== 'succeeded') {
@@ -192,7 +202,7 @@ export class PaymentsService {
     });
     if (!cart || cart.items.length === 0) throw new BadRequestException('Cart is empty');
 
-    let subtotal = cart.items.reduce((sum, item) => {
+    const subtotal = cart.items.reduce((sum, item) => {
       const price = Number(item.variant?.price ?? item.product.discountPrice ?? item.product.price);
       return sum + price * item.quantity;
     }, 0);
@@ -254,7 +264,7 @@ export class PaymentsService {
     });
     if (!cart || cart.items.length === 0) throw new BadRequestException('Cart is empty');
 
-    let subtotal = cart.items.reduce((sum, item) => {
+    const subtotal = cart.items.reduce((sum, item) => {
       const price = Number(item.variant?.price ?? item.product.discountPrice ?? item.product.price);
       return sum + price * item.quantity;
     }, 0);
@@ -315,7 +325,7 @@ export class PaymentsService {
     return { orderId: order.id, redirectUrl: checkout.redirectUrl };
   }
 
-  async handleBePaidWebhook(body: any) {
+  async handleBePaidWebhook(body: BePaidWebhookPayload) {
     const tx = body?.transaction;
     if (!tx) return { received: true };
 
@@ -366,7 +376,7 @@ export class PaymentsService {
     }
     let event: Stripe.Event;
     try {
-      event = this.stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
+      event = this.stripe.constructWebhookEvent(rawBody, signature, webhookSecret);
     } catch {
       throw new BadRequestException('Invalid webhook signature');
     }

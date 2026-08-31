@@ -3,6 +3,7 @@ import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
 import { PaymentsService, CreatePaymentIntentDto, ConfirmOrderDto, BankTransferOrderDto, BePaidCreateDto } from './payments.service';
 
 @ApiTags('payments')
@@ -13,33 +14,33 @@ export class PaymentsController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Post('create-intent')
-  createIntent(@CurrentUser() user: any, @Body() dto: CreatePaymentIntentDto) {
+  createIntent(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreatePaymentIntentDto) {
     return this.paymentsService.createPaymentIntent(user.id, dto);
   }
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Post('confirm-order')
-  confirmOrder(@CurrentUser() user: any, @Body() dto: ConfirmOrderDto) {
+  confirmOrder(@CurrentUser() user: AuthenticatedUser, @Body() dto: ConfirmOrderDto) {
     return this.paymentsService.confirmOrder(user.id, dto);
   }
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Post('bank-transfer-order')
-  bankTransferOrder(@CurrentUser() user: any, @Body() dto: BankTransferOrderDto) {
+  bankTransferOrder(@CurrentUser() user: AuthenticatedUser, @Body() dto: BankTransferOrderDto) {
     return this.paymentsService.createBankTransferOrder(user.id, dto);
   }
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Post('bepaid-create')
-  bepaidCreate(@CurrentUser() user: any, @Body() dto: BePaidCreateDto) {
+  bepaidCreate(@CurrentUser() user: AuthenticatedUser, @Body() dto: BePaidCreateDto) {
     return this.paymentsService.createBePaidOrder(user.id, dto);
   }
 
   @Post('bepaid-webhook')
-  bepaidWebhook(@Body() body: any) {
+  bepaidWebhook(@Body() body: unknown) {
     return this.paymentsService.handleBePaidWebhook(body);
   }
 
