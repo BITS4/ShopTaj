@@ -3,9 +3,12 @@ import {
   BadRequestException,
   UnauthorizedException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import type { CookieOptions } from 'express';
+import type { SellerProfile, User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { PrismaService } from '../prisma/prisma.service';
@@ -14,8 +17,21 @@ import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/reset-password.dto';
 import { EmailService } from '../common/email/email.service';
 import { WhatsAppService } from '../common/whatsapp/whatsapp.service';
+import type { GoogleAuthUser } from './strategies/google.strategy';
 
 const CODE_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
+
+interface AuthCookieResponse {
+  cookie(name: string, value: string, options?: CookieOptions): unknown;
+  clearCookie(name: string, options?: CookieOptions): unknown;
+}
+
+type TokenUser = Pick<
+  User,
+  'id' | 'email' | 'fullName' | 'role' | 'avatarUrl' | 'isEmailVerified'
+> & {
+  sellerProfile?: Pick<SellerProfile, 'status'> | null;
+};
 
 function generateCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -23,6 +39,8 @@ function generateCode(): string {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private prisma: PrismaService,
     private jwt: JwtService,
@@ -48,7 +66,9 @@ export class AuthService {
         where: { id: exists.id },
         data: { verifyCode: code, verifyCodeExpiry: new Date(Date.now() + CODE_EXPIRY_MS) },
       });
-      this.email.sendVerificationCode(exists.email, exists.fullName, code).catch((e) => console.error('[Email error]', e?.message || e));
+      this.email
+        .sendVerificationCode(exists.email, exists.fullName, code)
+        .catch((error) => this.logEmailError(error));
       return { message: 'A new verification code has been sent to your email.' };
     }
 
@@ -70,7 +90,9 @@ export class AuthService {
     });
 
     // Fire-and-forget — never block the response waiting for email
-    this.email.sendVerificationCode(user.email, user.fullName, code).catch((e) => console.error('[Email error]', e?.message || e));
+    this.email
+      .sendVerificationCode(user.email, user.fullName, code)
+      .catch((error) => this.logEmailError(error));
     return { message: 'Registration successful. Enter the 6-digit code to verify your account.' };
   }
 
@@ -85,12 +107,14 @@ export class AuthService {
       where: { id: user.id },
       data: { verifyCode: code, verifyCodeExpiry: new Date(Date.now() + CODE_EXPIRY_MS) },
     });
-    this.email.sendVerificationCode(user.email, user.fullName, code).catch((e) => console.error("[Email error]", e?.message || e));
+    this.email
+      .sendVerificationCode(user.email, user.fullName, code)
+      .catch((error) => this.logEmailError(error));
     return { message: 'New code sent.' };
   }
 
   // ─── Verify 6-digit code ──────────────────────────────────────────────────
-  async verifyCode(email: string, code: string, res: any) {
+  async verifyCode(email: string, code: string, res: AuthCookieResponse) {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) throw new BadRequestException('Invalid code');
     if (user.isEmailVerified) throw new BadRequestException('Email already verified');
@@ -111,7 +135,7 @@ export class AuthService {
   }
 
   // ─── Login ────────────────────────────────────────────────────────────────
-  async login(dto: LoginDto, res: any) {
+  async login(dto: LoginDto, res: AuthCookieResponse) {
     const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (!user || !user.passwordHash) throw new UnauthorizedException('Invalid credentials');
     if (user.isBanned) throw new UnauthorizedException('Account suspended');
@@ -125,7 +149,9 @@ export class AuthService {
         where: { id: user.id },
         data: { verifyCode: code, verifyCodeExpiry: new Date(Date.now() + CODE_EXPIRY_MS) },
       });
-      this.email.sendVerificationCode(user.email, user.fullName, code).catch((e) => console.error("[Email error]", e?.message || e));
+      this.email
+        .sendVerificationCode(user.email, user.fullName, code)
+        .catch((error) => this.logEmailError(error));
       throw new UnauthorizedException(
         `EMAIL_NOT_VERIFIED:${user.email}:A 6-digit code has been sent to your email. Please enter it to continue.`,
       );
@@ -135,7 +161,11 @@ export class AuthService {
   }
 
   // ─── Google OAuth ─────────────────────────────────────────────────────────
-  async googleLogin(googleUser: any, res: any) {
+  async googleLogin(googleUser: unknown, res: AuthCookieResponse) {
+    if (!this.isGoogleAuthUser(googleUser)) {
+      throw new UnauthorizedException('Invalid Google profile');
+    }
+
     let user = await this.prisma.user.findFirst({
       where: { OR: [{ googleId: googleUser.googleId }, { email: googleUser.email }] },
     });
@@ -153,7 +183,7 @@ export class AuthService {
   }
 
   // ─── Refresh ──────────────────────────────────────────────────────────────
-  async refresh(refreshToken: string, res: any) {
+  async refresh(refreshToken: string, res: AuthCookieResponse) {
     const stored = await this.prisma.refreshToken.findUnique({
       where: { token: refreshToken },
       include: { user: true },
@@ -166,7 +196,7 @@ export class AuthService {
   }
 
   // ─── Logout ───────────────────────────────────────────────────────────────
-  async logout(userId: string, res: any) {
+  async logout(userId: string, res: AuthCookieResponse) {
     await this.prisma.refreshToken.deleteMany({ where: { userId } });
     res.clearCookie('refresh_token', { path: '/' });
     return { message: 'Logged out successfully' };
@@ -193,7 +223,9 @@ export class AuthService {
       where: { id: user.id },
       data: { resetToken: code, resetTokenExpiry: new Date(Date.now() + 60 * 60 * 1000) },
     });
-    this.email.sendPasswordResetCode(user.email, user.fullName, code).catch((e) => console.error("[Email error]", e?.message || e));
+    this.email
+      .sendPasswordResetCode(user.email, user.fullName, code)
+      .catch((error) => this.logEmailError(error));
     return { message: 'If that email exists, a reset code was sent.' };
   }
 
@@ -214,7 +246,7 @@ export class AuthService {
   }
 
   // ─── Token generation ─────────────────────────────────────────────────────
-  private async generateTokens(user: any, res: any) {
+  private async generateTokens(user: TokenUser, res: AuthCookieResponse) {
     const payload = { sub: user.id, email: user.email };
     const accessToken = this.jwt.sign(payload, {
       secret: this.config.get('JWT_ACCESS_SECRET'),
@@ -243,7 +275,7 @@ export class AuthService {
         role: user.role,
         avatarUrl: user.avatarUrl,
         isEmailVerified: user.isEmailVerified,
-        sellerStatus: (user as any).sellerProfile?.status ?? null,
+        sellerStatus: user.sellerProfile?.status ?? null,
       },
     };
   }
@@ -277,5 +309,24 @@ export class AuthService {
       data: { isPhoneVerified: true, phoneOtp: null, phoneOtpExpiry: null },
     });
     return { message: 'Phone verified' };
+  }
+
+  private logEmailError(error: unknown): void {
+    const message = error instanceof Error ? error.message : String(error);
+    this.logger.error(`Email delivery failed: ${message}`);
+  }
+
+  private isGoogleAuthUser(value: unknown): value is GoogleAuthUser {
+    if (typeof value !== 'object' || value === null) return false;
+
+    const candidate = value as Record<string, unknown>;
+    return (
+      typeof candidate.googleId === 'string' &&
+      typeof candidate.email === 'string' &&
+      typeof candidate.fullName === 'string' &&
+      (candidate.avatarUrl === undefined ||
+        candidate.avatarUrl === null ||
+        typeof candidate.avatarUrl === 'string')
+    );
   }
 }

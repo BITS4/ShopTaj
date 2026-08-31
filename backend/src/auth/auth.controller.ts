@@ -15,13 +15,14 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
-import { IsEmail as ValidEmail, IsString as ValidString, Length, IsPhoneNumber } from 'class-validator';
+import { IsEmail as ValidEmail, IsString as ValidString, Length } from 'class-validator';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
+import { AuthenticatedUser } from './interfaces/authenticated-request.interface';
 
 class VerifyCodeDto {
   @ValidEmail() email: string;
@@ -84,7 +85,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  logout(@CurrentUser() user: any, @Res({ passthrough: true }) res: Response) {
+  logout(@CurrentUser() user: AuthenticatedUser, @Res({ passthrough: true }) res: Response) {
     return this.authService.logout(user.id, res);
   }
 
@@ -120,7 +121,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  sendPhoneOtp(@CurrentUser() user: any, @Body() dto: SendPhoneOtpDto) {
+  sendPhoneOtp(@CurrentUser() user: AuthenticatedUser, @Body() dto: SendPhoneOtpDto) {
     return this.authService.sendPhoneOtp(user.id, dto.phone);
   }
 
@@ -128,7 +129,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  verifyPhoneOtp(@CurrentUser() user: any, @Body() dto: VerifyPhoneOtpDto) {
+  verifyPhoneOtp(@CurrentUser() user: AuthenticatedUser, @Body() dto: VerifyPhoneOtpDto) {
     return this.authService.verifyPhoneOtp(user.id, dto.otp);
   }
 }

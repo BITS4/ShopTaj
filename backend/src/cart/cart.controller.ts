@@ -2,6 +2,7 @@ import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@n
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
 import { CartService, AddCartItemDto, UpdateCartItemDto } from './cart.service';
 
 @ApiTags('cart')
@@ -12,18 +13,18 @@ export class CartController {
   constructor(private cartService: CartService) {}
 
   @Get()
-  getCart(@CurrentUser() user: any) {
+  getCart(@CurrentUser() user: AuthenticatedUser) {
     return this.cartService.getCart(user.id);
   }
 
   @Post('items')
-  addItem(@CurrentUser() user: any, @Body() dto: AddCartItemDto) {
+  addItem(@CurrentUser() user: AuthenticatedUser, @Body() dto: AddCartItemDto) {
     return this.cartService.addItem(user.id, dto);
   }
 
   @Patch('items/:id')
   updateItem(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
     @Body() dto: UpdateCartItemDto,
   ) {
@@ -31,17 +32,17 @@ export class CartController {
   }
 
   @Delete('items/:id')
-  removeItem(@CurrentUser() user: any, @Param('id') id: string) {
+  removeItem(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.cartService.removeItem(user.id, id);
   }
 
   @Delete()
-  clearCart(@CurrentUser() user: any) {
+  clearCart(@CurrentUser() user: AuthenticatedUser) {
     return this.cartService.clearCart(user.id);
   }
 
   @Post('apply-coupon')
-  applyCoupon(@CurrentUser() user: any, @Body('code') code: string) {
+  applyCoupon(@CurrentUser() user: AuthenticatedUser, @Body('code') code: string) {
     return this.cartService.applyCoupon(user.id, code);
   }
 }

@@ -62,13 +62,14 @@ export class WhatsAppService {
         },
       );
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        this.logger.error(`WhatsApp API error to ${to}: ${JSON.stringify(err)}`);
+        const errorBody: unknown = await res.json().catch(() => ({}));
+        this.logger.error(`WhatsApp API error to ${to}: ${JSON.stringify(errorBody)}`);
       } else {
         this.logger.log(`WhatsApp message sent to ${to}`);
       }
-    } catch (err: any) {
-      this.logger.error(`WhatsApp failed to ${to}: ${err?.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`WhatsApp failed to ${to}: ${message}`);
     }
   }
 

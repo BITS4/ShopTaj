@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { IsString, IsOptional, IsInt, Min, IsUUID } from 'class-validator';
+import { IsOptional, IsInt, Min, IsUUID } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PrismaService } from '../prisma/prisma.service';
 

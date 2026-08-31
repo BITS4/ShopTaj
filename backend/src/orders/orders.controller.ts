@@ -2,6 +2,7 @@ import { Controller, Get, Post, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { AuthenticatedUser } from '../auth/interfaces/authenticated-request.interface';
 import { OrdersService } from './orders.service';
 
 @ApiTags('orders')
@@ -13,7 +14,7 @@ export class OrdersController {
 
   @Get()
   findAll(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Query('page') page: number,
     @Query('limit') limit: number,
   ) {
@@ -21,12 +22,12 @@ export class OrdersController {
   }
 
   @Get(':id')
-  findOne(@CurrentUser() user: any, @Param('id') id: string) {
+  findOne(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.ordersService.findOne(user.id, id);
   }
 
   @Post(':id/cancel')
-  cancel(@CurrentUser() user: any, @Param('id') id: string) {
+  cancel(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.ordersService.cancel(user.id, id);
   }
 }

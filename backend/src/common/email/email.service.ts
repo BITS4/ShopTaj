@@ -87,22 +87,26 @@ export class EmailService {
       try {
         await this.transporter.sendMail({ from: this.fromAddress, to, subject, html });
         this.logger.log(`✅ Email sent via Gmail to ${to}`);
-      } catch (err: any) {
-        this.logger.error(`❌ Gmail error: ${err.message}`);
+      } catch (error: unknown) {
+        this.logger.error(`❌ Gmail error: ${this.errorMessage(error)}`);
       }
 
     } else if (this.provider === 'resend' && this.resend) {
       try {
         const result = await this.resend.emails.send({ from: this.fromAddress, to, subject, html });
-        if ((result as any).error) {
-          this.logger.error(`❌ Resend error: ${JSON.stringify((result as any).error)}`);
+        if (result.error) {
+          this.logger.error(`❌ Resend error: ${JSON.stringify(result.error)}`);
         } else {
           this.logger.log(`✅ Email sent via Resend to ${to}`);
         }
-      } catch (err: any) {
-        this.logger.error(`❌ Resend error: ${err?.message}`);
+      } catch (error: unknown) {
+        this.logger.error(`❌ Resend error: ${this.errorMessage(error)}`);
       }
     }
+  }
+
+  private errorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
   }
 
   private codeTemplate(name: string, code: string, title: string, expiryMinutes: number) {
