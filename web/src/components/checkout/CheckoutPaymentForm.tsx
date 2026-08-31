@@ -7,8 +7,11 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { getApiErrorMessage } from '@/lib/api-error'
-import api from '@/lib/api'
 import { formatPrice } from '@/lib/utils'
+import {
+  confirmCardPayment as confirmStripeCardPayment,
+  confirmOrder,
+} from '@/services/payment.service'
 import { useCartStore } from '@/store/cart.store'
 import { useT } from '@/store/language.store'
 
@@ -46,32 +49,17 @@ export function CheckoutPaymentForm({
     event.preventDefault()
     if (!stripe || !elements || !cardReady || status !== 'idle') return
 
-    const cardElement = elements.getElement('card')
-    if (!cardElement) {
-      toast.error('Card element not ready')
-      return
-    }
-
     setStatus('paying')
     try {
-      const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: { card: cardElement },
-      })
-
-      if (error) {
-        toast.error(error.message || 'Payment could not be verified')
-        setStatus('idle')
-        return
-      }
-
-      if (paymentIntent?.status !== 'succeeded') {
-        toast.error('Payment is still pending. Please try again.')
+      const confirmation = await confirmStripeCardPayment(stripe, elements, clientSecret)
+      if (confirmation.status === 'failed') {
+        toast.error(confirmation.message)
         setStatus('idle')
         return
       }
 
       setStatus('creating')
-      await api.post('/payments/confirm-order', {
+      await confirmOrder({
         paymentIntentId,
         addressId,
         shippingAmount: Number(shippingAmount),
@@ -85,13 +73,9 @@ export function CheckoutPaymentForm({
       toast.success('Payment successful! 🎉')
       router.push('/checkout/success')
     } catch (error: unknown) {
-      toast.error(
-        getApiErrorMessage(
-          error,
-          'Order creation failed. Please contact support.',
-        ),
-        { duration: 8000 },
-      )
+      toast.error(getApiErrorMessage(error, 'Order creation failed. Please contact support.'), {
+        duration: 8000,
+      })
       setStatus('idle')
     }
   }
@@ -127,18 +111,11 @@ export function CheckoutPaymentForm({
           Loading payment form…
         </p>
       )}
-      <Button
-        type="submit"
-        className="w-full"
-        size="lg"
-        disabled={isSubmitting || !isReady}
-      >
+      <Button type="submit" className="w-full" size="lg" disabled={isSubmitting || !isReady}>
         {!isReady ? 'Loading…' : buttonLabel[status]}
       </Button>
       <p className="text-center text-xs text-muted-foreground">
-        {process.env.NODE_ENV === 'production'
-          ? '🔒 Secured by Stripe'
-          : t.checkout.test_card}
+        {process.env.NODE_ENV === 'production' ? '🔒 Secured by Stripe' : t.checkout.test_card}
       </p>
     </form>
   )

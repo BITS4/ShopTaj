@@ -2,55 +2,19 @@
 import { useEffect, useRef, useState } from 'react'
 import { MapPin, Locate, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import {
+  escapeHtml,
+  fallbackMapLocation,
+  reverseGeocode as fetchMapLocation,
+  type MapLocation,
+} from '@/services/geocoding.service'
 import type { LeafletEvent, LeafletMouseEvent, Map as LeafletMap, Marker } from 'leaflet'
+
+export type { MapLocation } from '@/services/geocoding.service'
 
 type LeafletContainer = HTMLDivElement & { _leaflet_id?: number }
 type DefaultIconPrototype = typeof import('leaflet').Icon.Default.prototype & {
   _getIconUrl?: () => string
-}
-
-interface NominatimAddress {
-  house_number?: string
-  'addr:housenumber'?: string
-  house?: string
-  road?: string
-  pedestrian?: string
-  path?: string
-  footway?: string
-  residential?: string
-  hamlet?: string
-  neighbourhood?: string
-  suburb?: string
-  quarter?: string
-  allotments?: string
-  city_district?: string
-  district?: string
-  state_district?: string
-  city?: string
-  town?: string
-  village?: string
-  county?: string
-  municipality?: string
-  state?: string
-  region?: string
-  postcode?: string
-}
-
-interface NominatimResponse {
-  address?: NominatimAddress
-  display_name?: string
-}
-
-export interface MapLocation {
-  lat: number
-  lng: number
-  address: string
-  city: string
-  district?: string
-  street?: string
-  houseNumber?: string
-  neighborhood?: string
-  fullAddress?: string
 }
 
 interface Props {
@@ -65,6 +29,7 @@ const TJ_ZOOM = 7
 export default function DeliveryMap({ onSelect, selected, disabled = false }: Props) {
   const mapRef = useRef<LeafletMap | null>(null)
   const markerRef = useRef<Marker | null>(null)
+  const geocodeControllerRef = useRef<AbortController | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const initializedRef = useRef(false)
   const [loading, setLoading] = useState(false)
@@ -130,6 +95,8 @@ export default function DeliveryMap({ onSelect, selected, disabled = false }: Pr
     })
 
     return () => {
+      geocodeControllerRef.current?.abort()
+      geocodeControllerRef.current = null
       if (mapRef.current) {
         mapRef.current.remove()
         mapRef.current = null
@@ -140,79 +107,59 @@ export default function DeliveryMap({ onSelect, selected, disabled = false }: Pr
   }, [])
 
   const reverseGeocode = async (lat: number, lng: number) => {
+    geocodeControllerRef.current?.abort()
+    const controller = new AbortController()
+    geocodeControllerRef.current = controller
     setLoading(true)
     try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&namedetails=1&zoom=19`,
-        { headers: { 'Accept-Language': 'ru,tg;q=0.9,en;q=0.8' } },
-      )
-      const data = await res.json() as NominatimResponse
-      const a = data.address || {}
+      const location = await fetchMapLocation(lat, lng, { signal: controller.signal })
+      const { street, houseNumber, neighborhood, district, city, region, postcode } = location
 
-      // Extract all available components
-      const houseNumber = a.house_number || a['addr:housenumber'] || a.house || ''
-      const road = a.road || a.pedestrian || a.path || a.footway || a.residential || a.hamlet || ''
-      const neighborhood = a.neighbourhood || a.suburb || a.quarter || a.allotments || ''
-      const district = a.city_district || a.district || a.state_district || ''
-      const city = a.city || a.town || a.village || a.county || a.municipality || a.state || 'Tajikistan'
-      const region = a.state || a.region || ''
-      const postcode = a.postcode || ''
-
-      // Full human-readable address (Russian style: street, house, district, city)
-      const lineParts = [
-        road && houseNumber ? `ул. ${road}, д. ${houseNumber}` : road ? `ул. ${road}` : '',
-        neighborhood,
-        district,
-        city,
-        region && region !== city ? region : '',
-        postcode,
-      ].filter(Boolean)
-
-      const fullAddress = lineParts.join(', ')
-        || data.display_name?.split(',').slice(0, 5).join(', ')
-        || 'Выбранная точка'
-
-      const shortAddress = (road && houseNumber)
-        ? `${road}, ${houseNumber}`
-        : road || neighborhood || 'Выбранная точка'
-
-      const location: MapLocation = {
-        lat, lng,
-        address: shortAddress,
-        city,
-        district: district || neighborhood,
-        street: road,
-        houseNumber,
-        neighborhood,
-        fullAddress,
-      }
-
-      setAddressLabel(fullAddress)
+      setAddressLabel(location.fullAddress || location.address)
       onSelect(location)
 
       if (markerRef.current) {
+        const safeStreet = street ? escapeHtml(street) : ''
+        const safeHouseNumber = houseNumber ? escapeHtml(houseNumber) : ''
+        const safeNeighborhood = neighborhood ? escapeHtml(neighborhood) : ''
+        const safeDistrict = district ? escapeHtml(district) : ''
+        const safeCity = escapeHtml(city)
+        const safeRegion = region ? escapeHtml(region) : ''
+        const safePostcode = postcode ? escapeHtml(postcode) : ''
         const rows = [
-          road ? `<b>🛣️ ${road}${houseNumber ? `, д. ${houseNumber}` : ''}</b>` : null,
-          neighborhood ? `🏘️ ${neighborhood}` : null,
-          district ? `📍 ${district}` : null,
-          `📦 ${city}${region && region !== city ? `, ${region}` : ''}`,
-          postcode ? `📮 ${postcode}` : null,
+          street ? `<b>🛣️ ${safeStreet}${houseNumber ? `, д. ${safeHouseNumber}` : ''}</b>` : null,
+          neighborhood ? `🏘️ ${safeNeighborhood}` : null,
+          district ? `📍 ${safeDistrict}` : null,
+          `📦 ${safeCity}${region && region !== city ? `, ${safeRegion}` : ''}`,
+          postcode ? `📮 ${safePostcode}` : null,
           `<small style="color:#888">GPS: ${lat.toFixed(5)}, ${lng.toFixed(5)}</small>`,
-        ].filter(Boolean).join('<br>')
+        ]
+          .filter(Boolean)
+          .join('<br>')
 
-        markerRef.current.bindPopup(
-          `<div style="font-size:13px;line-height:1.8;min-width:180px">${rows}</div>`,
-          { maxWidth: 260 }
-        ).openPopup()
+        markerRef.current
+          .bindPopup(`<div style="font-size:13px;line-height:1.8;min-width:180px">${rows}</div>`, {
+            maxWidth: 260,
+          })
+          .openPopup()
       }
     } catch {
-      onSelect({ lat, lng, address: 'Выбранная точка', city: 'Tajikistan', fullAddress: `${lat.toFixed(5)}, ${lng.toFixed(5)}` })
+      if (controller.signal.aborted) return
+      const location = fallbackMapLocation(lat, lng)
+      setAddressLabel(location.fullAddress || location.address)
+      onSelect(location)
     }
-    setLoading(false)
+    if (geocodeControllerRef.current === controller) {
+      geocodeControllerRef.current = null
+      setLoading(false)
+    }
   }
 
   const handleGeolocate = () => {
-    if (!navigator.geolocation) { alert('Geolocation not supported'); return }
+    if (!navigator.geolocation) {
+      alert('Geolocation not supported')
+      return
+    }
     setLoading(true)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -248,8 +195,19 @@ export default function DeliveryMap({ onSelect, selected, disabled = false }: Pr
 
         {!disabled && (
           <div className="absolute top-3 right-3 z-[1000]">
-            <Button type="button" size="sm" variant="default" className="shadow-lg gap-2" onClick={handleGeolocate} disabled={loading}>
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Locate className="h-4 w-4" />}
+            <Button
+              type="button"
+              size="sm"
+              variant="default"
+              className="shadow-lg gap-2"
+              onClick={handleGeolocate}
+              disabled={loading}
+            >
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Locate className="h-4 w-4" />
+              )}
               My Location
             </Button>
           </div>
