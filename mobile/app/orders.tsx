@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../store/auth.store'
 import { useLanguageStore } from '../store/language.store'
 import api from '../lib/api'
+import type { Order, PaginatedResponse } from '../types/api'
 
 const STEPS = ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED'] as const
 
@@ -28,7 +29,7 @@ function OrderTracker({ status }: { status: string }) {
     )
   }
 
-  const activeIndex = STEPS.indexOf(status as any)
+  const activeIndex = STEPS.findIndex((step) => step === status)
 
   return (
     <View style={tracker.container}>
@@ -58,9 +59,12 @@ export default function OrdersScreen() {
   const { user } = useAuthStore()
   const { locale } = useLanguageStore()
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<PaginatedResponse<Order>>({
     queryKey: ['orders'],
-    queryFn: async () => { const { data } = await api.get('/orders?limit=50'); return data },
+    queryFn: async () => {
+      const { data } = await api.get<PaginatedResponse<Order>>('/orders?limit=50')
+      return data
+    },
     enabled: !!user,
   })
 
@@ -93,7 +97,7 @@ export default function OrdersScreen() {
       )}
 
       <View style={styles.list}>
-        {data?.data?.map((order: any) => (
+        {data?.data?.map((order) => (
           <View key={order.id} style={styles.card}>
             <View style={styles.cardHeader}>
               <Text style={styles.orderId}>#{order.id.slice(0, 8).toUpperCase()}</Text>
@@ -104,7 +108,7 @@ export default function OrdersScreen() {
             <OrderTracker status={order.status} />
 
             <Text style={styles.items} numberOfLines={2}>
-              {order.items?.map((i: any) => i.productName).join(', ')}
+              {order.items?.map((item) => item.productName).join(', ')}
             </Text>
           </View>
         ))}

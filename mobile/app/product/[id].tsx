@@ -1,9 +1,10 @@
-import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, Alert, Dimensions } from 'react-native'
+import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, Alert, Dimensions, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
 import { useState, useRef } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api, { fixImageUrl } from '../../lib/api'
 import { useAuthStore } from '../../store/auth.store'
+import type { Product } from '../../types/api'
 
 const SCREEN_WIDTH = Dimensions.get('window').width
 
@@ -15,9 +16,12 @@ export default function ProductDetailScreen() {
   const [activeImg, setActiveImg] = useState(0)
   const scrollRef = useRef<ScrollView>(null)
 
-  const { data: product, isLoading } = useQuery({
+  const { data: product, isLoading } = useQuery<Product>({
     queryKey: ['product', id],
-    queryFn: async () => { const { data } = await api.get(`/products/${id}`); return data },
+    queryFn: async () => {
+      const { data } = await api.get<Product>(`/products/${id}`)
+      return data
+    },
   })
 
   const addToCart = useMutation({
@@ -31,12 +35,12 @@ export default function ProductDetailScreen() {
   )
 
   const price = Number(product.discountPrice ?? product.price)
-  const images: any[] = product.images ?? []
+  const images = product.images ?? []
   const discountPct = product.discountPrice
     ? Math.round((1 - Number(product.discountPrice) / Number(product.price)) * 100)
     : null
 
-  const onScroll = (e: any) => {
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH)
     setActiveImg(index)
   }
@@ -59,7 +63,7 @@ export default function ProductDetailScreen() {
             onMomentumScrollEnd={onScroll}
             scrollEventThrottle={16}
           >
-            {images.map((img: any, i: number) => (
+            {images.map((img, i) => (
               <Image
                 key={img.id ?? i}
                 source={{ uri: fixImageUrl(img.url) }}
@@ -94,7 +98,7 @@ export default function ProductDetailScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.thumbStrip}
         >
-          {images.map((img: any, i: number) => (
+          {images.map((img, i) => (
             <TouchableOpacity key={img.id ?? i} onPress={() => goToImage(i)}>
               <Image
                 source={{ uri: fixImageUrl(img.url) }}
@@ -109,7 +113,7 @@ export default function ProductDetailScreen() {
       {/* Dot indicators */}
       {images.length > 1 && (
         <View style={styles.dots}>
-          {images.map((_: any, i: number) => (
+          {images.map((_, i) => (
             <TouchableOpacity key={i} onPress={() => goToImage(i)}>
               <View style={[styles.dot, i === activeImg && styles.dotActive]} />
             </TouchableOpacity>
@@ -142,7 +146,7 @@ export default function ProductDetailScreen() {
           <Text style={styles.rating}>⭐ {product.avgRating.toFixed(1)} ({product.reviewCount} reviews)</Text>
         )}
 
-        {product.tags?.length > 0 && (
+        {product.tags && product.tags.length > 0 && (
           <View style={styles.tags}>
             {product.tags.map((tag: string) => (
               <View key={tag} style={styles.tag}><Text style={styles.tagText}>{tag}</Text></View>
@@ -162,10 +166,10 @@ export default function ProductDetailScreen() {
         </TouchableOpacity>
 
         {/* Reviews */}
-        {product.reviews?.length > 0 && (
+        {product.reviews && product.reviews.length > 0 && (
           <View style={styles.reviews}>
             <Text style={styles.reviewsTitle}>Reviews</Text>
-            {product.reviews.map((r: any) => (
+            {product.reviews.map((r) => (
               <View key={r.id} style={styles.reviewCard}>
                 <Text style={styles.reviewer}>{r.user.fullName}</Text>
                 <Text style={styles.reviewRating}>{'⭐'.repeat(r.rating)}</Text>

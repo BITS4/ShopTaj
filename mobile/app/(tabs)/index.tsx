@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
 import api, { fixImageUrl } from '../../lib/api'
 import { useLanguageStore, LOCALES } from '../../store/language.store'
+import type { Category, PaginatedResponse, Product } from '../../types/api'
 
 const LABELS = {
   en: { categories: 'Categories', products: 'All Products', subtitle: 'Discover amazing products' },
@@ -10,7 +11,7 @@ const LABELS = {
   tg: { categories: 'Категорияҳо', products: 'Ҳамаи молҳо', subtitle: 'Молҳои нав кашф кунед' },
 }
 
-function ProductCard({ product }: { product: any }) {
+function ProductCard({ product }: { product: Product }) {
   const router = useRouter()
   const price = Number(product.discountPrice ?? product.price)
   const mainImage = fixImageUrl(product.images?.[0]?.url)
@@ -37,14 +38,20 @@ export default function HomeTab() {
   const { locale, setLocale } = useLanguageStore()
   const L = LABELS[locale]
 
-  const { data: featured, isLoading } = useQuery({
+  const { data: featured, isLoading } = useQuery<Product[]>({
     queryKey: ['featured'],
-    queryFn: async () => { const { data } = await api.get('/products?limit=12&sortBy=newest'); return data.data },
+    queryFn: async () => {
+      const { data } = await api.get<PaginatedResponse<Product>>('/products?limit=12&sortBy=newest')
+      return data.data
+    },
   })
 
-  const { data: categories } = useQuery({
+  const { data: categories } = useQuery<Category[]>({
     queryKey: ['categories'],
-    queryFn: async () => { const { data } = await api.get('/categories'); return data },
+    queryFn: async () => {
+      const { data } = await api.get<Category[]>('/categories')
+      return data
+    },
   })
 
   const router = useRouter()
@@ -71,11 +78,11 @@ export default function HomeTab() {
       </View>
 
       {/* Categories */}
-      {categories?.length > 0 && (
+      {categories && categories.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{L.categories}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 10 }}>
-            {categories.map((cat: any) => (
+            {categories.map((cat) => (
               <TouchableOpacity key={cat.id} style={styles.catChip} onPress={() => router.push({ pathname: '/(tabs)/search', params: { categoryId: cat.id } })}>
                 <Text style={styles.catChipText}>{cat.name}</Text>
               </TouchableOpacity>

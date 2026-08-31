@@ -2,6 +2,14 @@ import { Stack } from 'expo-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import type { ComponentType, PropsWithChildren } from 'react'
+import type { ViewProps } from 'react-native'
+
+// npm hoists the gesture-handler declaration above React Native's workspace.
+// Rebind its documented children/ViewProps contract to the mobile type tree.
+const MobileGestureHandlerRootView = GestureHandlerRootView as unknown as ComponentType<
+  PropsWithChildren<ViewProps>
+>
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 60_000, retry: 1 } },
@@ -9,7 +17,7 @@ const queryClient = new QueryClient({
 
 export default function RootLayout() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <MobileGestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <Stack screenOptions={{ headerShown: false }}>
@@ -20,6 +28,6 @@ export default function RootLayout() {
           </Stack>
         </QueryClientProvider>
       </SafeAreaProvider>
-    </GestureHandlerRootView>
+    </MobileGestureHandlerRootView>
   )
 }

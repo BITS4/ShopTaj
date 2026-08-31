@@ -1,7 +1,8 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native'
+import { Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native'
 import { useState } from 'react'
 import { useRouter } from 'expo-router'
 import api from '../../lib/api'
+import { getApiErrorMessage } from '../../lib/api-error'
 
 export default function RegisterScreen() {
   const [fullName, setFullName] = useState('')
@@ -17,8 +18,8 @@ export default function RegisterScreen() {
     try {
       await api.post('/auth/register', { fullName, email, password })
       Alert.alert('Success', 'Account created! Please check your email to verify.', [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }])
-    } catch (e: any) {
-      Alert.alert('Error', e.response?.data?.message || 'Registration failed')
+    } catch (error: unknown) {
+      Alert.alert('Error', getApiErrorMessage(error, 'Registration failed'))
     }
     setLoading(false)
   }

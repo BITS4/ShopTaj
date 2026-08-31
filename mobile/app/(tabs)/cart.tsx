@@ -1,15 +1,19 @@
-import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, Alert } from 'react-native'
+import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api, { fixImageUrl } from '../../lib/api'
+import type { Cart } from '../../types/api'
 
 export default function CartTab() {
   const router = useRouter()
   const qc = useQueryClient()
 
-  const { data: cart, isLoading } = useQuery({
+  const { data: cart, isLoading } = useQuery<Cart>({
     queryKey: ['cart'],
-    queryFn: async () => { const { data } = await api.get('/cart'); return data },
+    queryFn: async () => {
+      const { data } = await api.get<Cart>('/cart')
+      return data
+    },
   })
 
   const removeItem = useMutation({
@@ -22,6 +26,14 @@ export default function CartTab() {
       api.patch(`/cart/items/${id}`, { quantity }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cart'] }),
   })
+
+  if (isLoading) {
+    return (
+      <View style={styles.empty}>
+        <Text style={styles.emptyTitle}>Loading cart...</Text>
+      </View>
+    )
+  }
 
   if (!cart?.items?.length) {
     return (

@@ -5,6 +5,7 @@ import * as SecureStore from 'expo-secure-store'
 import { useAuthStore } from '../../store/auth.store'
 import { useLanguageStore, LOCALES } from '../../store/language.store'
 import api from '../../lib/api'
+import type { Order, PaginatedResponse } from '../../types/api'
 
 const LABELS = {
   en: { signIn: 'Sign In to Continue', signInSub: 'Access your orders, wishlist, and more', signInBtn: 'Sign In', createBtn: 'Create Account', orders: 'My Orders', wishlist: 'Wishlist', addresses: 'Saved Addresses', editProfile: 'Edit Profile', recentOrders: 'Recent Orders', logout: 'Logout', language: 'Language' },
@@ -18,14 +19,21 @@ export default function ProfileTab() {
   const { locale, setLocale } = useLanguageStore()
   const L = LABELS[locale]
 
-  const { data: orders } = useQuery({
+  const { data: orders } = useQuery<PaginatedResponse<Order>>({
     queryKey: ['orders'],
-    queryFn: async () => { const { data } = await api.get('/orders?limit=5'); return data },
+    queryFn: async () => {
+      const { data } = await api.get<PaginatedResponse<Order>>('/orders?limit=5')
+      return data
+    },
     enabled: !!user,
   })
 
   const logout = async () => {
-    try { await api.post('/auth/logout') } catch {}
+    try {
+      await api.post('/auth/logout')
+    } catch {
+      // Local credential cleanup must still run when the server session expired.
+    }
     await SecureStore.deleteItemAsync('access_token')
     clearAuth()
     router.replace('/(auth)/login')
@@ -80,10 +88,10 @@ export default function ProfileTab() {
         </View>
       </View>
 
-      {orders?.data?.length > 0 && (
+      {orders?.data && orders.data.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{L.recentOrders}</Text>
-          {orders.data.slice(0, 3).map((order: any) => (
+          {orders.data.slice(0, 3).map((order) => (
             <TouchableOpacity key={order.id} style={styles.orderRow} onPress={() => router.push(`/order/${order.id}`)}>
               <View>
                 <Text style={styles.orderId}>#{order.id.slice(0, 8).toUpperCase()}</Text>

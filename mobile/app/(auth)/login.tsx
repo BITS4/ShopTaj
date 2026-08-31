@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router'
 import * as SecureStore from 'expo-secure-store'
 import { useAuthStore } from '../../store/auth.store'
 import api from '../../lib/api'
+import { getApiErrorMessage } from '../../lib/api-error'
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('')
@@ -20,8 +21,8 @@ export default function LoginScreen() {
       await SecureStore.setItemAsync('access_token', data.accessToken)
       setAuth(data.user, data.accessToken)
       router.replace('/(tabs)')
-    } catch (e: any) {
-      Alert.alert('Error', e.response?.data?.message || 'Invalid credentials')
+    } catch (error: unknown) {
+      Alert.alert('Error', getApiErrorMessage(error, 'Invalid credentials'))
     }
     setLoading(false)
   }

@@ -10,7 +10,6 @@
     "plugins": ["expo-router"],
     "scheme": "shoptaj",
     "extra": {
-      "apiUrl": "https://your-backend.railway.app/api",
       "eas": { "projectId": "your-eas-project-id" },
       "router": {}
     }
